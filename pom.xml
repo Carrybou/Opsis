@@ -9,10 +9,10 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>altn72</groupId>
-    <artifactId>TpFilRouge</artifactId>
+    <artifactId>Opsis</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>TpFilRouge</name>
-    <description>TpFilRouge</description>
+    <name>Opsis</name>
+    <description>Opsis</description>
     <url/>
     <licenses>
         <license/>
@@ -27,7 +27,7 @@
         <url/>
     </scm>
     <properties>
-        <java.version>21</java.version>
+        <java.version>25</java.version>
     </properties>
     <dependencies>
         <dependency>

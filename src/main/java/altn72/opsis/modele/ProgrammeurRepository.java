@@ -1,4 +1,4 @@
-package altn72.tpfilrouge.modele;
+package altn72.opsis.modele;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
