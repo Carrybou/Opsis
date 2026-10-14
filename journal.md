@@ -41,9 +41,9 @@
 - @Transactional : où ? pourquoi ?
 
 ## LOT ALPHA
-### Fonctionnalité transverse 1 : ...
+### Fonctionnalité transverse 1 : Cartographie du réseau
 - Besoin · périmètre envisagé · choix et essais · ce qui fonctionne · difficultés · reste à faire
-### Fonctionnalité transverse 2 : ...
+### Fonctionnalité transverse 2 : Qualité renforcée
 
 ## BILAN
 - Contribution de chacun : ...
