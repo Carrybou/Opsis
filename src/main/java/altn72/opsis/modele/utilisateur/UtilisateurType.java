@@ -1,4 +1,4 @@
-package altn72.opsis.modele.programmeur;
+package altn72.opsis.modele.utilisateur;
 
 public enum UtilisateurType {
     ADMIN,

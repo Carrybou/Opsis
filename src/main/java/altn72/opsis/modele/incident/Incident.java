@@ -1,7 +1,7 @@
 package altn72.opsis.modele.incident;
 
 import altn72.opsis.modele.prestataire.Prestataire;
-import altn72.opsis.modele.programmeur.Utilisateur;
+import altn72.opsis.modele.utilisateur.Utilisateur;
 import altn72.opsis.modele.equipement.Equipement;
 import jakarta.persistence.*;
 import org.hibernate.annotations.OnDelete;
