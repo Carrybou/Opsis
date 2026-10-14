@@ -11,9 +11,13 @@
 - Limites connues : ...
 
 ## ARCHITECTURE
-- Dépôt : https://...
-- Schéma : ![architecture](docs/architecture.png)
+- Dépôt : https://github.com/Carrybou/Opsis
 
+### Schéma  
+![architecture](docs/Architecture.png)
+
+### MCD
+![mcd](docs/MCD.png)
 ## TESTS
 - Stratégie : ...
 - Commande : `mvn verify`
