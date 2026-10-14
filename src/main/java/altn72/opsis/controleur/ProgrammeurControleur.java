@@ -1,6 +1,5 @@
 package altn72.opsis.controleur;
 
-import altn72.opsis.modele.Programmeur;
 import altn72.opsis.service.ProgrammeurService;
 // 5.4 -- Imports utiles à la couche "V" : Controller, Model (données transmises à la vue), HttpStatus et ResponseStatusException (erreur 404 si l'id n'existe pas).
 import org.springframework.http.HttpStatus;

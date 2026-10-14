@@ -1,7 +1,5 @@
 package altn72.opsis.service;
 
-import altn72.opsis.modele.Programmeur;
-import altn72.opsis.modele.ProgrammeurRepository;
 // import jakarta.transaction.Transactional;
 // 4.6.2 -- On utilise le @Transactional de Spring (et non celui de Jakarta) : c'est celui que Spring gère nativement,
 // et il offre plus d'options (readOnly, rollbackFor, propagation...).
