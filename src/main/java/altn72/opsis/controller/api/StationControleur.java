@@ -1,9 +1,9 @@
-package altn72.opsis.controleur;
+package altn72.opsis.controller.api;
 
-import altn72.opsis.modele.equipement.Equipement;
-import altn72.opsis.modele.equipement.EquipementRepository;
-import altn72.opsis.modele.station.Station;
-import altn72.opsis.modele.station.StationRepository;
+import altn72.opsis.model.equipement.Equipement;
+import altn72.opsis.model.equipement.EquipementRepository;
+import altn72.opsis.model.station.Station;
+import altn72.opsis.model.station.StationRepository;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
