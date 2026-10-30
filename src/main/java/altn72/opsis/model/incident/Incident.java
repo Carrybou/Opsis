@@ -7,7 +7,7 @@ import jakarta.persistence.*;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "incident")
@@ -22,14 +22,14 @@ public class Incident {
     private String description;
 
     @Column(name = "date_heure_ouverture", nullable = false)
-    private Instant dateHeureOuverture;
+    private LocalDateTime dateHeureOuverture;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "statut", nullable = false, length = 50)
     private IncidentStatut statut;
 
     @Column(name = "date_heure_resolution")
-    private Instant dateHeureResolution;
+    private LocalDateTime dateHeureResolution;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @OnDelete(action = OnDeleteAction.CASCADE)
@@ -62,11 +62,11 @@ public class Incident {
         this.description = description;
     }
 
-    public Instant getDateHeureOuverture() {
+    public LocalDateTime getDateHeureOuverture() {
         return dateHeureOuverture;
     }
 
-    public void setDateHeureOuverture(Instant dateHeureOuverture) {
+    public void setDateHeureOuverture(LocalDateTime dateHeureOuverture) {
         this.dateHeureOuverture = dateHeureOuverture;
     }
 
@@ -82,11 +82,11 @@ public class Incident {
         return statut == IncidentStatut.RESOLU;
     }
 
-    public Instant getDateHeureResolution() {
+    public LocalDateTime getDateHeureResolution() {
         return dateHeureResolution;
     }
 
-    public void setDateHeureResolution(Instant dateHeureResolution) {
+    public void setDateHeureResolution(LocalDateTime dateHeureResolution) {
         this.dateHeureResolution = dateHeureResolution;
     }
 

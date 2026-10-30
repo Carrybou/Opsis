@@ -3,16 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Erreur - Opsis</title>
+    <title>Page introuvable - Opsis</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
-<div th:replace="~{fragments/entete :: entete}"></div>
+<div th:replace="~{fragments/entete :: entete('')}"></div>
 
 <main class="contenu">
-    <h1>Page introuvable</h1>
+    <div class="titre-page">
+        <div>
+            <div class="surtitre">Erreur 404</div>
+            <h1>Page introuvable</h1>
+        </div>
+    </div>
     <p class="message erreur" th:text="${message}">Message d'erreur</p>
-    <a th:href="@{/accueil}" class="retour">&larr; Retour à l'accueil</a>
+    <p><a th:href="@{/stations}">&larr; Retour aux stations</a></p>
 </main>
 </body>
 </html>

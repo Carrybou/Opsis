@@ -15,7 +15,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
@@ -40,7 +40,7 @@ class EquipementServiceTest {
 
     @Test
     void consulterFiche_separeIncidentsEnCoursEtPassesEnConservantLOrdre() {
-        Instant maintenant = Instant.now();
+        LocalDateTime maintenant = LocalDateTime.now();
         Incident enCoursRecent = incident(10L, IncidentStatut.OUVERT, maintenant.minus(1, ChronoUnit.HOURS));
         Incident resoluRecent = incident(11L, IncidentStatut.RESOLU, maintenant.minus(2, ChronoUnit.DAYS));
         Incident enCoursAncien = incident(12L, IncidentStatut.EN_COURS, maintenant.minus(3, ChronoUnit.DAYS));
@@ -90,7 +90,7 @@ class EquipementServiceTest {
         return equipement;
     }
 
-    private static Incident incident(Long id, IncidentStatut statut, Instant ouverture) {
+    private static Incident incident(Long id, IncidentStatut statut, LocalDateTime ouverture) {
         Incident incident = new Incident();
         incident.setId(id);
         incident.setStatut(statut);

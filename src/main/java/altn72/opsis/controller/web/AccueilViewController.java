@@ -8,6 +8,6 @@ public class AccueilViewController {
 
     @GetMapping({"/", "/accueil"})
     public String accueil() {
-        return "accueil";
+        return "redirect:/stations";
     }
 }

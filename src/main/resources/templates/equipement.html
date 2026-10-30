@@ -7,32 +7,49 @@
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
-<div th:replace="~{fragments/entete :: entete}"></div>
+<div th:replace="~{fragments/entete :: entete('stations')}"></div>
 
 <main class="contenu">
-    <a th:href="@{/stations}" class="retour">&larr; Retour aux stations</a>
+    <nav class="fil-ariane" aria-label="Fil d'Ariane">
+        <a th:href="@{/stations}">Stations</a>
+        <a th:href="@{|/stations#station-${fiche.idStation}|}" th:text="${fiche.nomStation}">Station</a>
+        <span th:text="${fiche.referenceUnique}">ESC-STA-001</span>
+    </nav>
 
-    <section class="carte fiche-equipement">
-        <h1 th:text="${fiche.referenceUnique}">ESC-STA-001</h1>
-        <p th:text="${fiche.libelleDescription}">Description de l'équipement</p>
-        <dl>
-            <dt>Type</dt>
-            <dd th:text="${fiche.type}">ESCALATOR</dd>
-            <dt>Station</dt>
-            <dd th:text="${fiche.nomStation}">Station</dd>
-            <dt>État de fonctionnement</dt>
-            <dd th:text="${fiche.etatFonctionnement}">FONCTIONNEL</dd>
-        </dl>
+    <div class="titre-page">
+        <div>
+            <div class="surtitre" th:text="|Équipement · ${fiche.type}|">Équipement · ESCALATOR</div>
+            <h1 th:text="${fiche.referenceUnique}">ESC-STA-001</h1>
+        </div>
+        <div th:replace="~{fragments/badges :: etatEquipement(${fiche.etatFonctionnement})}"></div>
+    </div>
+
+    <section class="carte">
+        <div class="carte-corps">
+            <dl class="details">
+                <dt>Description</dt>
+                <dd th:text="${fiche.libelleDescription}">Description de l'équipement</dd>
+                <dt>Type</dt>
+                <dd th:text="${fiche.type}">ESCALATOR</dd>
+                <dt>Station</dt>
+                <dd><a th:href="@{|/stations#station-${fiche.idStation}|}" th:text="${fiche.nomStation}">Station</a></dd>
+            </dl>
+        </div>
+    </section>
+
+    <section class="indicateurs" aria-label="Synthèse des incidents">
+        <div class="indicateur"><strong th:text="${#lists.size(fiche.incidentsEnCours)}">0</strong><span>incidents en cours</span></div>
+        <div class="indicateur"><strong th:text="${#lists.size(fiche.incidentsPasses)}">0</strong><span>incidents passés</span></div>
     </section>
 
     <section class="carte">
-        <h2>Incidents en cours</h2>
-        <table th:replace="~{:: tableIncidents(${fiche.incidentsEnCours}, 'Aucun incident en cours.')}"></table>
+        <div class="carte-entete"><h2>Incidents en cours</h2></div>
+        <th:block th:replace="~{:: tableIncidents(${fiche.incidentsEnCours}, 'Aucun incident en cours.')}"></th:block>
     </section>
 
     <section class="carte">
-        <h2>Incidents passés</h2>
-        <table th:replace="~{:: tableIncidents(${fiche.incidentsPasses}, 'Aucun incident passé.')}"></table>
+        <div class="carte-entete"><h2>Incidents passés</h2></div>
+        <th:block th:replace="~{:: tableIncidents(${fiche.incidentsPasses}, 'Aucun incident passé.')}"></th:block>
     </section>
 </main>
 
@@ -51,7 +68,7 @@
         <tr th:each="incident : ${incidents}">
             <td th:text="${#temporals.format(incident.dateHeureOuverture, 'dd/MM/yyyy HH:mm')}">01/01/2026 08:00</td>
             <td th:text="${incident.description}">Description</td>
-            <td th:text="${incident.statut}">OUVERT</td>
+            <td th:insert="~{fragments/badges :: statutIncident(${incident.statut})}"></td>
             <td th:text="${incident.nomPrestataire} ?: 'Non affecté'">Prestataire</td>
             <td th:text="${incident.dateHeureResolution != null} ? ${#temporals.format(incident.dateHeureResolution, 'dd/MM/yyyy HH:mm')} : '—'">—</td>
         </tr>
