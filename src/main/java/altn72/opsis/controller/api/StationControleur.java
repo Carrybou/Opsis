@@ -23,7 +23,7 @@ public class StationControleur {
         this.equipementRepository = equipementRepository;
     }
 
-    @GetMapping({"/", "/stations"})
+    @GetMapping( "/stations")
     public String afficherStations(Model model) {
         List<Station> stations = stationRepository.findAll();
         List<Equipement> equipements = equipementRepository.findAll();
