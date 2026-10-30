@@ -1,8 +1,8 @@
 package altn72.opsis.exception;
 
-public class RessourceIntrouvableException extends RuntimeException {
+public abstract class RessourceIntrouvableException extends RuntimeException {
 
-    public RessourceIntrouvableException(String ressource, Long id) {
-        super(ressource + " introuvable (identifiant " + id + ")");
+    protected RessourceIntrouvableException(String message) {
+        super(message);
     }
 }

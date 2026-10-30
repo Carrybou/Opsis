@@ -78,6 +78,10 @@ public class Incident {
         this.statut = statut;
     }
 
+    public boolean estResolu() {
+        return statut == IncidentStatut.RESOLU;
+    }
+
     public Instant getDateHeureResolution() {
         return dateHeureResolution;
     }

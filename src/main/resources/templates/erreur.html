@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Erreur - Opsis</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div th:replace="~{fragments/entete :: entete}"></div>
+
+<main class="contenu">
+    <h1>Page introuvable</h1>
+    <p class="message erreur" th:text="${message}">Message d'erreur</p>
+    <a th:href="@{/accueil}" class="retour">&larr; Retour à l'accueil</a>
+</main>
+</body>
+</html>
