@@ -25,7 +25,8 @@
         </div>
         <div class="titre-actions">
             <div th:replace="~{fragments/badges :: etatEquipement(${fiche.etatFonctionnement})}"></div>
-            <a th:href="@{/equipements/{id}/incidents/nouveau(id=${idEquipement})}" class="bouton">
+            <a th:if="${utilisateurConnecte.profil.name() == 'AGENT'}"
+               th:href="@{/equipements/{id}/incidents/nouveau(id=${idEquipement})}" class="bouton">
                 Déclarer un incident
             </a>
         </div>
@@ -69,6 +70,7 @@
             <th>Statut</th>
             <th>Prestataire</th>
             <th>Résolution</th>
+            <th><span class="sr-only">Actions</span></th>
         </tr>
         </thead>
         <tbody>
@@ -78,6 +80,10 @@
             <td th:insert="~{fragments/badges :: statutIncident(${incident.statut})}"></td>
             <td th:text="${incident.nomPrestataire} ?: 'Non affecté'">Prestataire</td>
             <td th:text="${incident.dateHeureResolution != null} ? ${#temporals.format(incident.dateHeureResolution, 'dd/MM/yyyy HH:mm')} : '—'">—</td>
+            <td>
+                <a th:if="${incidentsModifiables.contains(incident.identifiant)}"
+                   th:href="@{/incidents/{id}/modifier(id=${incident.identifiant})}">Modifier</a>
+            </td>
         </tr>
         </tbody>
     </table>

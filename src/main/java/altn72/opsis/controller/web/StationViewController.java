@@ -1,6 +1,7 @@
 package altn72.opsis.controller.web;
 
 import altn72.opsis.model.equipement.Equipement;
+import altn72.opsis.model.equipement.EquipementEtat;
 import altn72.opsis.model.equipement.EquipementRepository;
 import altn72.opsis.model.station.Station;
 import altn72.opsis.model.station.StationRepository;
@@ -35,10 +36,10 @@ public class StationViewController {
         model.addAttribute("nombreStations", stations.size());
         model.addAttribute("nombreEquipements", equipements.size());
         model.addAttribute("nombreEnPanne", equipements.stream()
-                .filter(equipement -> "EN_PANNE".equals(equipement.getEtatFonctionnement()))
+                .filter(equipement -> equipement.getEtatFonctionnement() == EquipementEtat.EN_PANNE)
                 .count());
         model.addAttribute("nombreEnMaintenance", equipements.stream()
-                .filter(equipement -> "EN_MAINTENANCE".equals(equipement.getEtatFonctionnement()))
+                .filter(equipement -> equipement.getEtatFonctionnement() == EquipementEtat.EN_MAINTENANCE)
                 .count());
         return "stations";
     }

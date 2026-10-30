@@ -1,7 +1,10 @@
 package altn72.opsis.controller.web;
 
+import altn72.opsis.dto.incident.IncidentModificationRequest;
 import altn72.opsis.dto.incident.IncidentRequest;
 import altn72.opsis.dto.incident.IncidentResponse;
+import altn72.opsis.model.utilisateur.UtilisateurType;
+import altn72.opsis.security.ProfilRequis;
 import altn72.opsis.security.UtilisateurConnecte;
 import altn72.opsis.service.equipement.EquipementInterface;
 import altn72.opsis.service.incident.IncidentInterface;
@@ -13,6 +16,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.SessionAttribute;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -28,6 +32,7 @@ public class IncidentViewController {
     }
 
     @GetMapping("/equipements/{idEquipement}/incidents/nouveau")
+    @ProfilRequis(UtilisateurType.AGENT)
     public String afficherFormulaire(@PathVariable Long idEquipement, Model model) {
         model.addAttribute("equipement", equipementService.trouver(idEquipement));
         model.addAttribute("incidentRequest", new IncidentRequest(idEquipement, ""));
@@ -35,6 +40,7 @@ public class IncidentViewController {
     }
 
     @PostMapping("/incidents")
+    @ProfilRequis(UtilisateurType.AGENT)
     public String declarer(@Valid @ModelAttribute("incidentRequest") IncidentRequest request,
                            BindingResult resultat,
                            @SessionAttribute(UtilisateurConnecte.ATTRIBUT) UtilisateurConnecte utilisateur,
@@ -54,6 +60,36 @@ public class IncidentViewController {
         redirectAttributes.addFlashAttribute("succes",
                 "L'incident n°" + incident.identifiant() + " a bien été déclaré sur l'équipement "
                         + incident.referenceEquipement() + ".");
+        return "redirect:/equipements/" + incident.idEquipement();
+    }
+
+    @GetMapping("/incidents/{id}/modifier")
+    @ProfilRequis({UtilisateurType.ADMIN, UtilisateurType.AGENT})
+    public String afficherModification(@PathVariable Long id,
+                                       @SessionAttribute(UtilisateurConnecte.ATTRIBUT) UtilisateurConnecte utilisateur,
+                                       Model model) {
+        IncidentResponse incident = incidentService.trouverPourModification(id, utilisateur);
+        model.addAttribute("incident", incident);
+        model.addAttribute("incidentModificationRequest", new IncidentModificationRequest(incident.description()));
+        return "incidents/modifier";
+    }
+
+    @PutMapping("/incidents/{id}")
+    @ProfilRequis({UtilisateurType.ADMIN, UtilisateurType.AGENT})
+    public String modifier(@PathVariable Long id,
+                           @Valid @ModelAttribute("incidentModificationRequest") IncidentModificationRequest request,
+                           BindingResult resultat,
+                           @SessionAttribute(UtilisateurConnecte.ATTRIBUT) UtilisateurConnecte utilisateur,
+                           Model model,
+                           RedirectAttributes redirectAttributes) {
+        if (resultat.hasErrors()) {
+            model.addAttribute("incident", incidentService.trouverPourModification(id, utilisateur));
+            return "incidents/modifier";
+        }
+
+        IncidentResponse incident = incidentService.modifier(id, request, utilisateur);
+
+        redirectAttributes.addFlashAttribute("succes", "L'incident n°" + incident.identifiant() + " a bien été modifié.");
         return "redirect:/equipements/" + incident.idEquipement();
     }
 }

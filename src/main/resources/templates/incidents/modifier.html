@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="|Modifier l'incident n°${incident.identifiant} - Opsis|">Modifier un incident - Opsis</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div th:replace="~{fragments/entete :: entete('stations')}"></div>
+
+<main class="contenu">
+    <nav class="fil-ariane" aria-label="Fil d'Ariane">
+        <a th:href="@{/stations}">Stations</a>
+        <span th:text="${incident.nomStation}">Station</span>
+        <a th:href="@{/equipements/{id}(id=${incident.idEquipement})}" th:text="${incident.referenceEquipement}">REF</a>
+        <span th:text="|Incident n°${incident.identifiant}|">Incident</span>
+    </nav>
+
+    <div class="titre-page">
+        <div>
+            <div class="surtitre">Incident</div>
+            <h1 th:text="|Modifier l'incident n°${incident.identifiant}|">Modifier l'incident</h1>
+        </div>
+        <div th:replace="~{fragments/badges :: statutIncident(${incident.statut})}"></div>
+    </div>
+
+    <section class="carte">
+        <div class="carte-corps">
+            <dl class="details">
+                <dt>Équipement</dt>
+                <dd th:text="|${incident.referenceEquipement} — ${incident.libelleEquipement}|">REF — Libellé</dd>
+                <dt>Station</dt>
+                <dd th:text="${incident.nomStation}">Station</dd>
+                <dt>Ouverture</dt>
+                <dd th:text="${#temporals.format(incident.dateHeureOuverture, 'dd/MM/yyyy HH:mm')}">01/01/2026 08:00</dd>
+                <dt>Déclaré par</dt>
+                <dd th:text="${incident.prenomUtilisateur}">Prénom</dd>
+                <dt>Prestataire</dt>
+                <dd th:text="${incident.nomPrestataire} ?: 'Non affecté'">Prestataire</dd>
+            </dl>
+        </div>
+    </section>
+
+    <form class="formulaire" th:action="@{/incidents/{id}(id=${incident.identifiant})}" th:method="put"
+          th:object="${incidentModificationRequest}" novalidate>
+
+        <div class="message erreur" th:if="${#fields.hasErrors('*')}">
+            Le formulaire contient des erreurs, merci de les corriger.
+        </div>
+
+        <label for="description">Description de l'incident</label>
+        <textarea id="description" th:field="*{description}" rows="6"
+                  th:classappend="${#fields.hasErrors('description')} ? 'champ-invalide'"></textarea>
+        <p class="erreur-champ" th:if="${#fields.hasErrors('description')}" th:errors="*{description}"></p>
+
+        <div class="actions">
+            <a th:href="@{/equipements/{id}(id=${incident.idEquipement})}" class="bouton secondaire">Annuler</a>
+            <button type="submit" class="bouton">Enregistrer</button>
+        </div>
+    </form>
+</main>
+</body>
+</html>

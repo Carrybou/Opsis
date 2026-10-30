@@ -5,7 +5,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
-import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 import java.io.IOException;
@@ -40,23 +39,11 @@ public class JwtInterceptor implements HandlerInterceptor {
 
         request.setAttribute(UtilisateurConnecte.ATTRIBUT, utilisateur.get());
 
-        ProfilRequis profilRequis = trouverAnnotation(handler);
-        if (profilRequis != null && !utilisateur.get().aUnProfil(profilRequis.value())) {
+        if (!ControleProfil.estAutorise(handler, utilisateur.get())) {
             return refuser(response, HttpServletResponse.SC_FORBIDDEN, "Accès refusé pour ce profil");
         }
 
         return true;
-    }
-
-    private ProfilRequis trouverAnnotation(Object handler) {
-        if (!(handler instanceof HandlerMethod methode)) {
-            return null;
-        }
-        ProfilRequis surMethode = methode.getMethodAnnotation(ProfilRequis.class);
-        if (surMethode != null) {
-            return surMethode;
-        }
-        return methode.getBeanType().getAnnotation(ProfilRequis.class);
     }
 
     private boolean refuser(HttpServletResponse response, int status, String message) throws IOException {

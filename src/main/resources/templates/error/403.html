@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Accès refusé - Opsis</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<main class="contenu page-erreur">
+    <h1>Accès refusé</h1>
+    <p>Votre profil ne vous permet pas d'accéder à cette page.</p>
+    <div class="actions-erreur">
+        <a th:href="@{/stations}" class="bouton">Voir les stations</a>
+    </div>
+</main>
+</body>
+</html>

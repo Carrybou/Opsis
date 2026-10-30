@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Page introuvable - Opsis</title>
+    <title th:text="|${titre} - Opsis|">Erreur - Opsis</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
@@ -12,8 +12,8 @@
 <main class="contenu">
     <div class="titre-page">
         <div>
-            <div class="surtitre">Erreur 404</div>
-            <h1>Page introuvable</h1>
+            <div class="surtitre" th:text="|Erreur ${statut}|">Erreur</div>
+            <h1 th:text="${titre}">Une erreur est survenue</h1>
         </div>
     </div>
     <p class="message erreur" th:text="${message}">Message d'erreur</p>

@@ -3,8 +3,8 @@
 <body>
 
 <span th:fragment="etatEquipement(etat)" class="badge"
-      th:classappend="${etat == 'FONCTIONNEL'} ? 'badge-ok' : (${etat == 'EN_PANNE'} ? 'badge-danger' : 'badge-alerte')"
-      th:text="${etat == 'FONCTIONNEL'} ? 'Fonctionnel' : (${etat == 'EN_PANNE'} ? 'En panne' : 'En maintenance')">Fonctionnel</span>
+      th:classappend="${etat.name() == 'FONCTIONNEL'} ? 'badge-ok' : (${etat.name() == 'EN_PANNE'} ? 'badge-danger' : 'badge-alerte')"
+      th:text="${etat.name() == 'FONCTIONNEL'} ? 'Fonctionnel' : (${etat.name() == 'EN_PANNE'} ? 'En panne' : 'En maintenance')">Fonctionnel</span>
 
 <span th:fragment="statutIncident(statut)" class="badge"
       th:classappend="${statut.name() == 'OUVERT'} ? 'badge-danger' : (${statut.name() == 'EN_COURS'} ? 'badge-info' : 'badge-neutre')"

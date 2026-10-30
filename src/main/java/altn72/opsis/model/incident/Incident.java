@@ -82,6 +82,14 @@ public class Incident {
         return statut == IncidentStatut.RESOLU;
     }
 
+    public boolean estAffecte() {
+        return statut == IncidentStatut.EN_COURS;
+    }
+
+    public boolean estDeclarePar(Long idUtilisateurConnecte) {
+        return idUtilisateur.getId().equals(idUtilisateurConnecte);
+    }
+
     public LocalDateTime getDateHeureResolution() {
         return dateHeureResolution;
     }

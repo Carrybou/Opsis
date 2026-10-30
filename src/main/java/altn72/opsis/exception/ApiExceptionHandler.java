@@ -20,6 +20,12 @@ public class ApiExceptionHandler {
                 .body(new ApiError(404, e.getMessage(), Map.of(), LocalDateTime.now()));
     }
 
+    @ExceptionHandler(ModificationIncidentInterditeException.class)
+    public ResponseEntity<ApiError> handleModificationInterdite(ModificationIncidentInterditeException e) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(new ApiError(403, e.getMessage(), Map.of(), LocalDateTime.now()));
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiError> handleValidation(MethodArgumentNotValidException e) {
         Map<String, String> erreurs = new LinkedHashMap<>();

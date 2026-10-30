@@ -1,6 +1,7 @@
 package altn72.opsis.controller.web;
 
 import altn72.opsis.model.equipement.Equipement;
+import altn72.opsis.model.equipement.EquipementEtat;
 import altn72.opsis.model.equipement.EquipementRepository;
 import altn72.opsis.model.equipement.EquipementType;
 import altn72.opsis.model.station.Station;
@@ -66,9 +67,9 @@ class StationViewControllerTest {
     void afficherStations_regroupeLesEquipementsParStationEtCalculeLaSynthese() throws Exception {
         Station chatelet = station(1L, "Châtelet");
         Station gareDeLyon = station(2L, "Gare de Lyon");
-        Equipement escalator = equipement(1L, "ESC-CHT-001", "FONCTIONNEL", chatelet);
-        Equipement ascenseur = equipement(2L, "ASC-CHT-001", "EN_PANNE", chatelet);
-        Equipement ecran = equipement(3L, "ECR-GDL-001", "EN_MAINTENANCE", gareDeLyon);
+        Equipement escalator = equipement(1L, "ESC-CHT-001", EquipementEtat.FONCTIONNEL, chatelet);
+        Equipement ascenseur = equipement(2L, "ASC-CHT-001", EquipementEtat.EN_PANNE, chatelet);
+        Equipement ecran = equipement(3L, "ECR-GDL-001", EquipementEtat.EN_MAINTENANCE, gareDeLyon);
         when(stationRepository.findAll()).thenReturn(List.of(chatelet, gareDeLyon));
         when(equipementRepository.findAll()).thenReturn(List.of(escalator, ascenseur, ecran));
 
@@ -92,7 +93,7 @@ class StationViewControllerTest {
     void afficherStations_afficheTypeEtatEtLienVersLaFicheDeChaqueEquipement() throws Exception {
         Station chatelet = station(1L, "Châtelet");
         when(stationRepository.findAll()).thenReturn(List.of(chatelet));
-        when(equipementRepository.findAll()).thenReturn(List.of(equipement(2L, "ASC-CHT-001", "EN_PANNE", chatelet)));
+        when(equipementRepository.findAll()).thenReturn(List.of(equipement(2L, "ASC-CHT-001", EquipementEtat.EN_PANNE, chatelet)));
 
         mockMvc.perform(get("/stations").sessionAttr(UtilisateurConnecte.ATTRIBUT, THOMAS))
                 .andExpect(content().string(allOf(
@@ -130,7 +131,7 @@ class StationViewControllerTest {
         return station;
     }
 
-    private static Equipement equipement(Long id, String reference, String etat, Station station) {
+    private static Equipement equipement(Long id, String reference, EquipementEtat etat, Station station) {
         Equipement equipement = new Equipement();
         equipement.setId(id);
         equipement.setReferenceUnique(reference);

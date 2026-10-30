@@ -13,11 +13,23 @@ public class SessionInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws IOException {
-        HttpSession session = request.getSession(false);
-        if (session != null && session.getAttribute(UtilisateurConnecte.ATTRIBUT) != null) {
-            return true;
+        UtilisateurConnecte utilisateur = utilisateurEnSession(request);
+        if (utilisateur == null) {
+            response.sendRedirect(request.getContextPath() + "/login");
+            return false;
         }
-        response.sendRedirect(request.getContextPath() + "/login");
-        return false;
+        if (!ControleProfil.estAutorise(handler, utilisateur)) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN);
+            return false;
+        }
+        return true;
+    }
+
+    private UtilisateurConnecte utilisateurEnSession(HttpServletRequest request) {
+        HttpSession session = request.getSession(false);
+        if (session == null) {
+            return null;
+        }
+        return (UtilisateurConnecte) session.getAttribute(UtilisateurConnecte.ATTRIBUT);
     }
 }
