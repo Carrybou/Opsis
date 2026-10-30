@@ -1,4 +1,4 @@
-package altn72.opsis.dto;
+package altn72.opsis.dto.login;
 
 import altn72.opsis.model.utilisateur.UtilisateurType;
 

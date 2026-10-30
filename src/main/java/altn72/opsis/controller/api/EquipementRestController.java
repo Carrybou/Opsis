@@ -1,6 +1,6 @@
 package altn72.opsis.controller.api;
 
-import altn72.opsis.dto.FicheEquipementResponse;
+import altn72.opsis.dto.equipement.FicheEquipementResponse;
 import altn72.opsis.service.equipement.EquipementInterface;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;

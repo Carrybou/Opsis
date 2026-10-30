@@ -12,8 +12,15 @@
 <main class="contenu">
     <a th:href="@{/stations}" class="retour">&larr; Retour aux stations</a>
 
+    <p class="message succes" th:if="${succes}" th:text="${succes}"></p>
+
     <section class="carte fiche-equipement">
-        <h1 th:text="${fiche.referenceUnique}">ESC-STA-001</h1>
+        <div class="entete-fiche">
+            <h1 th:text="${fiche.referenceUnique}">ESC-STA-001</h1>
+            <a th:href="@{/equipements/{id}/incidents/nouveau(id=${fiche.identifiant})}" class="bouton">
+                Déclarer un incident
+            </a>
+        </div>
         <p th:text="${fiche.libelleDescription}">Description de l'équipement</p>
         <dl>
             <dt>Type</dt>

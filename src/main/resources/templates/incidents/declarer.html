@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Déclarer un incident - Opsis</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div th:replace="~{fragments/entete :: entete}"></div>
+
+<main class="contenu">
+    <h1>Déclarer un incident</h1>
+
+    <section class="fiche-equipement">
+        <p><strong>Équipement :</strong> <span th:text="${equipement.referenceUnique}">REF</span>
+            — <span th:text="${equipement.libelleDescription}">Libellé</span></p>
+        <p><strong>Station :</strong> <span th:text="${equipement.nomStation}">Station</span></p>
+        <p><strong>État actuel :</strong> <span th:text="${equipement.etatFonctionnement}">ETAT</span></p>
+    </section>
+
+    <form class="formulaire" th:action="@{/incidents}" th:object="${incidentRequest}" method="post" novalidate>
+
+        <div class="message erreur" th:if="${#fields.hasErrors('*')}">
+            Le formulaire contient des erreurs, merci de les corriger.
+        </div>
+
+        <input type="hidden" th:field="*{idEquipement}">
+
+        <label for="description">Description de l'incident</label>
+        <textarea id="description" th:field="*{description}" rows="6"
+                  th:classappend="${#fields.hasErrors('description')} ? 'champ-invalide'"
+                  placeholder="Décrivez le problème constaté : ce qui ne fonctionne pas, depuis quand, à quel endroit précis..."></textarea>
+        <p class="erreur-champ" th:if="${#fields.hasErrors('description')}" th:errors="*{description}"></p>
+
+        <div class="actions">
+            <a th:href="@{/equipements/{id}(id=${incidentRequest.idEquipement})}" class="bouton secondaire">Annuler</a>
+            <button type="submit" class="bouton">Déclarer l'incident</button>
+        </div>
+    </form>
+</main>
+</body>
+</html>

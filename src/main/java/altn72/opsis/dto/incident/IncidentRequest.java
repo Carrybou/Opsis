@@ -1,4 +1,4 @@
-package altn72.opsis.dto;
+package altn72.opsis.dto.incident;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

@@ -1,7 +1,7 @@
 package altn72.opsis.controller.api;
 
-import altn72.opsis.dto.UtilisateurRequest;
-import altn72.opsis.dto.UtilisateurResponse;
+import altn72.opsis.dto.utilisateur.UtilisateurRequest;
+import altn72.opsis.dto.utilisateur.UtilisateurResponse;
 import altn72.opsis.exception.IdentifiantDejaUtiliseException;
 import altn72.opsis.service.utilisateur.UtilisateurInterface;
 import org.springframework.http.HttpStatus;

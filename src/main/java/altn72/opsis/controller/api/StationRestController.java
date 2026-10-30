@@ -1,6 +1,6 @@
 package altn72.opsis.controller.api;
 
-import altn72.opsis.dto.StationResponse;
+import altn72.opsis.dto.station.StationResponse;
 import altn72.opsis.model.station.StationRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

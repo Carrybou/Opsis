@@ -1,4 +1,4 @@
-package altn72.opsis.dto;
+package altn72.opsis.dto.incident;
 
 import altn72.opsis.model.equipement.Equipement;
 import altn72.opsis.model.incident.Incident;

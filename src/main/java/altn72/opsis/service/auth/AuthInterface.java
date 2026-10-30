@@ -1,7 +1,7 @@
 package altn72.opsis.service.auth;
 
-import altn72.opsis.dto.LoginRequest;
-import altn72.opsis.dto.LoginResponse;
+import altn72.opsis.dto.login.LoginRequest;
+import altn72.opsis.dto.login.LoginResponse;
 import altn72.opsis.security.UtilisateurConnecte;
 
 public interface AuthInterface {

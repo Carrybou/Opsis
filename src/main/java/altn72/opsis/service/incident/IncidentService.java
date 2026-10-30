@@ -1,7 +1,8 @@
 package altn72.opsis.service.incident;
 
-import altn72.opsis.dto.IncidentRequest;
-import altn72.opsis.dto.IncidentResponse;
+import altn72.opsis.dto.incident.IncidentRequest;
+import altn72.opsis.dto.incident.IncidentResponse;
+import altn72.opsis.exception.EquipementIntrouvableException;
 import altn72.opsis.exception.RessourceIntrouvableException;
 import altn72.opsis.model.equipement.Equipement;
 import altn72.opsis.model.equipement.EquipementEtat;
@@ -11,7 +12,6 @@ import altn72.opsis.model.utilisateur.Utilisateur;
 import altn72.opsis.model.equipement.EquipementRepository;
 import altn72.opsis.model.incident.IncidentRepository;
 import altn72.opsis.model.utilisateur.UtilisateurRepository;
-import altn72.opsis.model.equipement.EquipementType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,10 +36,10 @@ public class IncidentService implements IncidentInterface {
     @Transactional
     public IncidentResponse declarer(IncidentRequest request, Long idUtilisateur) {
         Equipement equipement = equipementRepository.findById(request.getIdEquipement())
-                .orElseThrow(() -> new RessourceIntrouvableException("Équipement", request.getIdEquipement()));
+                .orElseThrow(() -> new EquipementIntrouvableException(request.getIdEquipement()));
 
         Utilisateur utilisateur = utilisateurRepository.findById(idUtilisateur)
-                .orElseThrow(() -> new RessourceIntrouvableException("Utilisateur", idUtilisateur));
+                .orElseThrow(() -> new EquipementIntrouvableException(idUtilisateur));
 
         Incident incident = new Incident();
         incident.setDescription(request.getDescription().trim());

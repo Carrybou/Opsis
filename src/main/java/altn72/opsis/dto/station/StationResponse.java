@@ -1,4 +1,4 @@
-package altn72.opsis.dto;
+package altn72.opsis.dto.station;
 
 import altn72.opsis.model.station.Station;
 

@@ -1,7 +1,7 @@
 package altn72.opsis.service.equipement;
 
-import altn72.opsis.dto.FicheEquipementResponse;
-import altn72.opsis.dto.IncidentResume;
+import altn72.opsis.dto.equipement.FicheEquipementResponse;
+import altn72.opsis.dto.incident.IncidentResume;
 import altn72.opsis.exception.EquipementIntrouvableException;
 import altn72.opsis.model.equipement.Equipement;
 import altn72.opsis.model.equipement.EquipementRepository;

@@ -1,4 +1,4 @@
-package altn72.opsis.dto;
+package altn72.opsis.dto.utilisateur;
 
 import altn72.opsis.model.utilisateur.UtilisateurType;
 import jakarta.validation.constraints.NotBlank;
