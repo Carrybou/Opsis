@@ -13,12 +13,12 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Controller
-public class StationControleur {
+public class StationController {
 
     private final StationRepository stationRepository;
     private final EquipementRepository equipementRepository;
 
-    public StationControleur(StationRepository stationRepository, EquipementRepository equipementRepository) {
+    public StationController(StationRepository stationRepository, EquipementRepository equipementRepository) {
         this.stationRepository = stationRepository;
         this.equipementRepository = equipementRepository;
     }
