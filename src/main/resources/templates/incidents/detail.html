@@ -92,16 +92,49 @@
         </div>
     </section>
 
-    <section class="carte">
-        <div class="carte-entete"><h2>Prestataire</h2></div>
+    <section class="carte" id="prestataire">
+        <div class="carte-entete">
+            <h2>Prestataire</h2>
+            <!-- Lien de repli sans JS : le script le transforme en bascule d'affectation en place. -->
+            <a th:if="${affectable}" id="bouton-affecter" class="bouton secondaire"
+               th:href="@{/incidents/{id}(id=${incident.identifiant}, affecter=true)} + '#prestataire'"
+               th:text="${incident.idPrestataire != null} ? 'Réaffecter' : 'Affecter'"
+               th:hidden="${enAffectation}" aria-controls="formulaire-affectation">Affecter</a>
+        </div>
         <div class="carte-corps">
-            <dl class="details" th:if="${incident.nomPrestataire != null}">
-                <dt>Nom</dt>
-                <dd th:text="${incident.nomPrestataire}">Prestataire</dd>
-                <dt>Contact</dt>
-                <dd th:text="${incident.contactPrestataire}">contact</dd>
-            </dl>
-            <p class="vide" th:if="${incident.nomPrestataire == null}">Aucun prestataire affecté pour le moment.</p>
+            <div id="prestataire-lecture" th:hidden="${enAffectation}">
+                <dl class="details" th:if="${incident.nomPrestataire != null}">
+                    <dt>Nom</dt>
+                    <dd th:text="${incident.nomPrestataire}">Prestataire</dd>
+                    <dt>Contact</dt>
+                    <dd th:text="${incident.contactPrestataire}">contact</dd>
+                </dl>
+                <p class="vide" th:if="${incident.nomPrestataire == null}">Aucun prestataire affecté pour le moment.</p>
+            </div>
+
+            <form th:if="${affectable}" id="formulaire-affectation" class="formulaire edition-incident"
+                  th:action="@{/incidents/{id}/prestataire(id=${incident.identifiant})}" th:method="put"
+                  th:object="${affectationRequest}" th:hidden="${!enAffectation}" novalidate>
+
+                <label for="prestataire-choix"
+                       th:text="${incident.nomPrestataire != null} ? |Remplacer ${incident.nomPrestataire} par| : 'Prestataire à affecter'">Prestataire à affecter</label>
+                <select id="prestataire-choix" name="idPrestataire"
+                        th:classappend="${#fields.hasErrors('idPrestataire')} ? 'champ-invalide'">
+                    <option value="">Choisir un prestataire…</option>
+                    <option th:each="p : ${prestataires}" th:value="${p.identifiant}"
+                            th:selected="${p.identifiant == affectationRequest.idPrestataire}"
+                            th:disabled="${p.identifiant == incident.idPrestataire}"
+                            th:text="${p.identifiant == incident.idPrestataire} ? |${p.nom} (actuel)| : |${p.nom} — ${p.contact}|">Prestataire</option>
+                </select>
+                <p class="erreur-champ" th:if="${#fields.hasErrors('idPrestataire')}" th:errors="*{idPrestataire}"></p>
+
+                <div class="actions">
+                    <a id="bouton-annuler-affectation" class="bouton secondaire"
+                       th:href="@{/incidents/{id}(id=${incident.identifiant})}">Annuler</a>
+                    <button type="submit" class="bouton"
+                            th:text="${incident.idPrestataire != null} ? 'Réaffecter' : 'Affecter'">Affecter</button>
+                </div>
+            </form>
         </div>
     </section>
 
@@ -169,6 +202,48 @@
         majCompteur();
         if (!formulaire.hidden) {
             saisie.focus();
+        }
+    })();
+</script>
+
+<script th:if="${affectable}">
+    (function () {
+        const bouton = document.getElementById('bouton-affecter');
+        const annuler = document.getElementById('bouton-annuler-affectation');
+        const lecture = document.getElementById('prestataire-lecture');
+        const formulaire = document.getElementById('formulaire-affectation');
+        const choix = document.getElementById('prestataire-choix');
+
+        function basculer(affectation) {
+            lecture.hidden = affectation;
+            bouton.hidden = affectation;
+            formulaire.hidden = !affectation;
+            if (affectation) {
+                choix.focus();
+            } else {
+                choix.value = '';
+                choix.classList.remove('champ-invalide');
+                formulaire.querySelectorAll('.erreur-champ').forEach(function (e) { e.remove(); });
+                bouton.focus();
+            }
+        }
+
+        bouton.addEventListener('click', function (e) {
+            e.preventDefault();
+            basculer(true);
+        });
+        annuler.addEventListener('click', function (e) {
+            e.preventDefault();
+            basculer(false);
+        });
+        formulaire.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                basculer(false);
+            }
+        });
+
+        if (!formulaire.hidden) {
+            choix.focus();
         }
     })();
 </script>

@@ -1,14 +1,19 @@
 package altn72.opsis.service.incident;
 
+import altn72.opsis.dto.incident.AffectationRequest;
 import altn72.opsis.dto.incident.IncidentModificationRequest;
 import altn72.opsis.dto.incident.IncidentResponse;
+import altn72.opsis.exception.AffectationIncidentImpossibleException;
 import altn72.opsis.exception.IncidentIntrouvableException;
 import altn72.opsis.exception.ModificationIncidentInterditeException;
+import altn72.opsis.exception.PrestataireIntrouvableException;
 import altn72.opsis.model.equipement.Equipement;
 import altn72.opsis.model.equipement.EquipementRepository;
 import altn72.opsis.model.incident.Incident;
 import altn72.opsis.model.incident.IncidentRepository;
 import altn72.opsis.model.incident.IncidentStatut;
+import altn72.opsis.model.prestataire.Prestataire;
+import altn72.opsis.model.prestataire.PrestataireRepository;
 import altn72.opsis.model.station.Station;
 import altn72.opsis.model.utilisateur.Utilisateur;
 import altn72.opsis.model.utilisateur.UtilisateurRepository;
@@ -51,6 +56,9 @@ class IncidentServiceTest {
 
     @Mock
     private UtilisateurRepository utilisateurRepository;
+
+    @Mock
+    private PrestataireRepository prestataireRepository;
 
     @InjectMocks
     private IncidentService incidentService;
@@ -139,6 +147,87 @@ class IncidentServiceTest {
         assertThat(incidentService.estModifiable(1L, TECHNICIEN)).isFalse();
     }
 
+    @Test
+    void affecter_incidentNonAffecte_leRattacheAuPrestataireEtLePasseEnCours() {
+        Incident incident = incident(1L, IncidentStatut.OUVERT);
+        when(incidentRepository.findById(1L)).thenReturn(Optional.of(incident));
+        when(prestataireRepository.findById(2L)).thenReturn(Optional.of(prestataire(2L, "Mobilis Maintenance")));
+
+        IncidentResponse reponse = incidentService.affecter(1L, new AffectationRequest(2L), RESPONSABLE);
+
+        assertThat(incident.getStatut()).isEqualTo(IncidentStatut.EN_COURS);
+        assertThat(incident.getIdPrestataire().getId()).isEqualTo(2L);
+        assertThat(reponse.nomPrestataire()).isEqualTo("Mobilis Maintenance");
+    }
+
+    @Test
+    void affecter_incidentDejaAffecte_remplaceLePrestataire() {
+        Incident incident = incidentAffecteA(1L, prestataire(1L, "AscenTech Services"));
+        when(incidentRepository.findById(1L)).thenReturn(Optional.of(incident));
+        when(prestataireRepository.findById(2L)).thenReturn(Optional.of(prestataire(2L, "Mobilis Maintenance")));
+
+        incidentService.affecter(1L, new AffectationRequest(2L), RESPONSABLE);
+
+        assertThat(incident.getIdPrestataire().getId()).isEqualTo(2L);
+        assertThat(incident.getStatut()).isEqualTo(IncidentStatut.EN_COURS);
+    }
+
+    @Test
+    void affecter_memePrestataire_refuseSansRienModifier() {
+        Prestataire actuel = prestataire(1L, "AscenTech Services");
+        Incident incident = incidentAffecteA(1L, actuel);
+        when(incidentRepository.findById(1L)).thenReturn(Optional.of(incident));
+        when(prestataireRepository.findById(1L)).thenReturn(Optional.of(actuel));
+
+        assertThatThrownBy(() -> incidentService.affecter(1L, new AffectationRequest(1L), RESPONSABLE))
+                .isInstanceOf(AffectationIncidentImpossibleException.class)
+                .hasMessage("L'incident n°1 est déjà affecté à AscenTech Services");
+    }
+
+    @Test
+    void affecter_incidentResolu_refuseSansRienModifier() {
+        Incident incident = incidentAffecteA(1L, prestataire(1L, "AscenTech Services"));
+        incident.setStatut(IncidentStatut.RESOLU);
+        when(incidentRepository.findById(1L)).thenReturn(Optional.of(incident));
+
+        assertThatThrownBy(() -> incidentService.affecter(1L, new AffectationRequest(2L), RESPONSABLE))
+                .isInstanceOf(AffectationIncidentImpossibleException.class)
+                .hasMessage("L'incident n°1 est résolu : il ne peut plus être affecté ni réaffecté");
+        assertThat(incident.getIdPrestataire().getId()).isEqualTo(1L);
+        assertThat(incident.getStatut()).isEqualTo(IncidentStatut.RESOLU);
+    }
+
+    @Test
+    void affecter_prestataireInexistant_leveUneExceptionSansRienModifier() {
+        Incident incident = incident(1L, IncidentStatut.OUVERT);
+        when(incidentRepository.findById(1L)).thenReturn(Optional.of(incident));
+        when(prestataireRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> incidentService.affecter(1L, new AffectationRequest(99L), RESPONSABLE))
+                .isInstanceOf(PrestataireIntrouvableException.class)
+                .hasMessage("Le prestataire n°99 est introuvable");
+        assertThat(incident.getStatut()).isEqualTo(IncidentStatut.OUVERT);
+        assertThat(incident.getIdPrestataire()).isNull();
+    }
+
+    @Test
+    void affecter_agent_refuse() {
+        assertThatThrownBy(() -> incidentService.affecter(1L, new AffectationRequest(2L), AGENT_AUTEUR))
+                .isInstanceOf(ModificationIncidentInterditeException.class)
+                .hasMessage("Seul un responsable d'exploitation peut affecter un prestataire");
+    }
+
+    @Test
+    void estAffectable_reserveAuResponsableSurUnIncidentNonResolu() {
+        when(incidentRepository.findById(1L)).thenReturn(Optional.of(incident(1L, IncidentStatut.EN_COURS)));
+        when(incidentRepository.findById(2L)).thenReturn(Optional.of(incident(2L, IncidentStatut.RESOLU)));
+
+        assertThat(incidentService.estAffectable(1L, RESPONSABLE)).isTrue();
+        assertThat(incidentService.estAffectable(1L, AGENT_AUTEUR)).isFalse();
+        assertThat(incidentService.estAffectable(1L, TECHNICIEN)).isFalse();
+        assertThat(incidentService.estAffectable(2L, RESPONSABLE)).isFalse();
+    }
+
     private void verifierRefus(Incident incident, UtilisateurConnecte utilisateur, String motifAttendu) {
         String descriptionInitiale = incident.getDescription();
         when(incidentRepository.findById(incident.getId())).thenReturn(Optional.of(incident));
@@ -173,5 +262,19 @@ class IncidentServiceTest {
         incident.setIdEquipement(equipement);
         incident.setIdUtilisateur(auteur);
         return incident;
+    }
+
+    private static Incident incidentAffecteA(Long id, Prestataire prestataire) {
+        Incident incident = incident(id, IncidentStatut.EN_COURS);
+        incident.setIdPrestataire(prestataire);
+        return incident;
+    }
+
+    private static Prestataire prestataire(Long id, String nom) {
+        Prestataire prestataire = new Prestataire();
+        prestataire.setId(id);
+        prestataire.setNom(nom);
+        prestataire.setContact("contact@exemple.fr");
+        return prestataire;
     }
 }

@@ -31,6 +31,14 @@ public class VueExceptionHandler {
                 utilisateur, response, model);
     }
 
+    @ExceptionHandler(AffectationIncidentImpossibleException.class)
+    public String handleAffectationImpossible(AffectationIncidentImpossibleException e,
+                                              @SessionAttribute(name = UtilisateurConnecte.ATTRIBUT, required = false) UtilisateurConnecte utilisateur,
+                                              HttpServletResponse response, Model model) {
+        return afficherErreur(HttpServletResponse.SC_CONFLICT, "Affectation impossible", e.getMessage(),
+                utilisateur, response, model);
+    }
+
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public String handleParametreInvalide(MethodArgumentTypeMismatchException e,
                                           @SessionAttribute(name = UtilisateurConnecte.ATTRIBUT, required = false) UtilisateurConnecte utilisateur,

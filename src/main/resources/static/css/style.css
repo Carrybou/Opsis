@@ -492,3 +492,18 @@ h2 {
     font-size: 0.85rem;
     text-align: right;
 }
+
+/* F7 : liste de choix du prestataire, alignée sur la zone de saisie de la description */
+
+.formulaire select {
+    padding: 10px;
+    border: 1px solid #cbd2d9;
+    border-radius: 4px;
+    background: #fff;
+    font: inherit;
+}
+
+/* .vide porte déjà son propre espacement quand il est posé directement dans une carte */
+.carte-corps .vide {
+    padding: 0;
+}

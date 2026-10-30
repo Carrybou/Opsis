@@ -86,6 +86,10 @@ public class Incident {
         return statut == IncidentStatut.EN_COURS;
     }
 
+    public boolean estAffecteA(Long idPrestataireCandidat) {
+        return idPrestataire != null && idPrestataire.getId().equals(idPrestataireCandidat);
+    }
+
     public boolean estDeclarePar(Long idUtilisateurConnecte) {
         return idUtilisateur.getId().equals(idUtilisateurConnecte);
     }

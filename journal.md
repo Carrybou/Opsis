@@ -78,15 +78,17 @@ En cas de problème :
   - F1 / F2 / RG11 (`StationViewControllerTest`) : page protégée sans session → redirection vers `/login` ; en-tête « Bonjour [Prénom] ([profil]) | Déconnectez-vous » ; équipements regroupés par station avec type, état et lien vers la fiche ; indicateurs de synthèse ; station sans équipement ; `/` redirige vers les stations.
   - F3 / RG7 (`EquipementServiceTest`) : séparation incidents en cours / passés avec conservation de l'ordre par date d'ouverture, équipement sans incident, équipement inexistant → `EquipementIntrouvableException`.
   - F6 / RG5 (`IncidentServiceTest`) : le responsable modifie tout incident non résolu, même affecté ; l'agent ne modifie que les incidents qu'il a déclarés et qui ne sont pas encore affectés ; refus pour un autre agent, pour un technicien et pour un incident résolu (même pour le responsable), avec à chaque fois le motif affiché ; incident inexistant ; `incidentsModifiables` et `estModifiable` appliquent les mêmes règles.
+  - F7 / RG2 / RG5 (`IncidentServiceTest`) : l'affectation rattache le prestataire et passe l'incident en `EN_COURS` ; la réaffectation remplace le prestataire ; refus sans rien modifier pour un incident résolu, pour le même prestataire et pour un prestataire inexistant ; refus pour un agent ; `estAffectable` réservé au responsable, sur un incident non résolu.
   - Droits par profil, pages web :
     - `EquipementViewControllerTest` : sur la fiche équipement, seul l'agent voit « Déclarer un incident » ; le lien « Modifier » n'apparaît que sur les incidents autorisés pour le profil connecté ; le technicien ne voit ni l'un ni l'autre.
-    - `IncidentViewControllerTest` : page détail redirigée vers `/login` sans session ; bouton « Modifier » et formulaire présents seulement si l'incident est modifiable ; `?modifier=true` ouvre le formulaire ; enregistrement → retour sur la page détail avec message ; description invalide → page détail réaffichée avec le formulaire ouvert et l'erreur ; 403 pour un technicien ou en cas de règle métier non respectée ; déclaration refusée au responsable et au technicien (affichage du formulaire et envoi).
+    - `IncidentViewControllerTest` : page détail redirigée vers `/login` sans session ; bouton « Modifier » et formulaire présents seulement si l'incident est modifiable ; `?modifier=true` ouvre le formulaire ; enregistrement → retour sur la page détail avec message ; description invalide → page détail réaffichée avec le formulaire ouvert et l'erreur ; 403 pour un technicien ou en cas de règle métier non respectée ; déclaration refusée au responsable et au technicien (affichage du formulaire et envoi) ; F7 : bouton « Affecter » et liste des prestataires pour le responsable seulement, `?affecter=true` ouvre le formulaire, affectation → retour sur la page détail avec message, sans choix → formulaire réaffiché avec l'erreur, 403 pour l'agent et le technicien, 409 (page d'erreur) sur un incident résolu.
   - Droits par profil, API (`IncidentRestControllerTest`, token JWT simulé par profil) :
     - `GET /api/incidents/{id}` : 401 sans token, 200 pour tout profil connecté, 404 si l'incident n'existe pas.
     - `POST /api/incidents` : 403 pour le responsable, 201 pour l'agent.
     - `PATCH /api/incidents/{id}` : 403 pour le technicien, 200 pour le responsable, 403 avec le motif quand une règle métier refuse, 400 si la description est invalide.
-- Résultat : 52 tests, tous verts (`mvn test`, base démarrée et `.env` chargé).
-- Non couvert : repositories (`@DataJpaTest`) et contrôleurs REST des stations / équipements, prévus dans le lot alpha « Qualité renforcée » ; règles RG1 à RG4 et RG8 non encore implémentées.
+    - `PUT /api/incidents/{id}/prestataire` : 403 pour l'agent et le technicien, 200 pour le responsable, 409 sur un incident résolu, 404 si le prestataire n'existe pas, 400 sans prestataire.
+- Résultat : 71 tests, tous verts (`mvn test`, base démarrée et `.env` chargé).
+- Non couvert : repositories (`@DataJpaTest`) et contrôleurs REST des stations / équipements, prévus dans le lot alpha « Qualité renforcée » ; règles RG3, RG4, RG6 à RG8 et fonctionnalités F8 à F12 non encore implémentées.
 
 ## CHOIX TECHNIQUES
 - Droits par profil :
@@ -102,8 +104,11 @@ En cas de problème :
   | F11   |            Tableau de bord            |                                  OUI |             NON |
 
   - F6 « partiellement » pour l'agent : il ne modifie que les incidents qu'il a déclarés, tant qu'aucun prestataire n'est affecté. Un incident résolu n'est plus modifiable par personne (RG5).
+  - F7 réservé au responsable d'exploitation : il affecte un incident non affecté ou le réaffecte à un autre prestataire. Un incident résolu ne peut plus être affecté ni réaffecté (RG5). Une fois l'incident affecté, l'agent qui l'a déclaré ne peut plus modifier sa description (F6).
   - Double contrôle : `@ProfilRequis` filtre la route selon le profil (intercepteur session ou JWT), puis le service vérifie les règles qui dépendent de l'incident (auteur, affectation, statut) et lève `ModificationIncidentInterditeException` (403) avec le motif. Les vues n'affichent le bouton « Modifier » que si `estModifiable` le permet ; elles s'appuient donc sur la même règle que le service.
 - Modification d'un incident (F5 + F6) : édition directement sur la page détail plutôt que sur une page séparée. Le bouton « Modifier » remplace la description par un champ prérempli, avec un compteur de caractères et les boutons Annuler / Enregistrer. L'enregistrement fait un `PUT /incidents/{id}` (champ caché `_method`) et revient sur la même page avec un message de confirmation ; en cas d'erreur de validation, la page se réaffiche avec le champ ouvert. Sans JavaScript, le bouton reste un lien `?modifier=true` qui ouvre le formulaire côté serveur.
+- Affectation d'un prestataire (F7) : même principe, dans la carte « Prestataire » de la page détail. Le bouton s'appelle « Affecter » ou « Réaffecter » selon la situation et ouvre une liste des prestataires ; lors d'une réaffectation, le prestataire actuel est marqué « (actuel) » et ne peut pas être choisi. L'envoi fait un `PUT /incidents/{id}/prestataire` puis revient sur la page avec « L'incident n°X est maintenant affecté à … ». Côté API : `PUT /api/incidents/{id}/prestataire` avec `{"idPrestataire": 2}`.
+- Codes d'erreur F7 : 403 quand le profil n'a pas le droit (`ModificationIncidentInterditeException`), 409 Conflict quand l'état de l'incident empêche l'opération (`AffectationIncidentImpossibleException` : incident résolu, prestataire déjà affecté), 404 pour un prestataire inexistant (`PrestataireIntrouvableException`, qui hérite de `RessourceIntrouvableException` et est donc traité sans toucher aux advices).
 
 - Exceptions : **@ControllerAdvice**.
   - Les exceptions métier sont personnalisées, avec un message en français, et héritent d'une classe mère par type d'erreur (`RessourceIntrouvableException` → `EquipementIntrouvableException`…).
@@ -119,7 +124,8 @@ En cas de problème :
 - @Transactional (dans `IncidentService`) :
   - `declarer` : la création de l'incident et le passage de l'équipement à « en panne » sont enregistrés ensemble ou pas du tout.
   - `modifier` : l'incident chargé reste suivi par JPA, donc la nouvelle description est enregistrée à la fin de la méthode sans `save` explicite.
-  - Les lectures (`consulterDetail`, `estModifiable`, `incidentsModifiables`) sont en `readOnly = true`.
+  - `affecter` (F7, RG10) : le prestataire et le passage au statut `EN_COURS` sont enregistrés ensemble ; si une vérification échoue (incident résolu, prestataire inexistant), rien n'est modifié.
+  - Les lectures (`consulterDetail`, `estModifiable`, `estAffectable`, `incidentsModifiables`) sont en `readOnly = true`.
 
 ## LOT ALPHA
 ### Fonctionnalité transverse 1 : Cartographie du réseau

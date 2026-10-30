@@ -1,8 +1,11 @@
 package altn72.opsis.controller.web;
 
+import altn72.opsis.dto.incident.AffectationRequest;
 import altn72.opsis.dto.incident.IncidentDetailResponse;
 import altn72.opsis.dto.incident.IncidentModificationRequest;
 import altn72.opsis.dto.incident.IncidentResponse;
+import altn72.opsis.dto.prestataire.PrestataireResponse;
+import altn72.opsis.exception.AffectationIncidentImpossibleException;
 import altn72.opsis.exception.ModificationIncidentInterditeException;
 import altn72.opsis.model.equipement.EquipementType;
 import altn72.opsis.model.incident.IncidentStatut;
@@ -11,6 +14,7 @@ import altn72.opsis.security.JwtService;
 import altn72.opsis.security.UtilisateurConnecte;
 import altn72.opsis.service.equipement.EquipementInterface;
 import altn72.opsis.service.incident.IncidentInterface;
+import altn72.opsis.service.prestataire.PrestataireInterface;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -18,6 +22,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasProperty;
@@ -57,6 +62,9 @@ class IncidentViewControllerTest {
 
     @MockitoBean
     private EquipementInterface equipementService;
+
+    @MockitoBean
+    private PrestataireInterface prestataireService;
 
     // Requis par le JwtInterceptor enregistré dans WebConfig.
     @MockitoBean
@@ -181,6 +189,100 @@ class IncidentViewControllerTest {
     }
 
     @Test
+    void afficherDetail_responsable_proposeLAffectationAvecLaListeDesPrestataires() throws Exception {
+        when(incidentService.consulterDetail(1L)).thenReturn(detail());
+        when(incidentService.estAffectable(1L, RESPONSABLE)).thenReturn(true);
+        when(prestataireService.lister()).thenReturn(prestataires());
+
+        mockMvc.perform(get("/incidents/1").sessionAttr(UtilisateurConnecte.ATTRIBUT, RESPONSABLE))
+                .andExpect(status().isOk())
+                .andExpect(model().attribute("affectable", true))
+                .andExpect(model().attribute("enAffectation", false))
+                .andExpect(content().string(containsString("id=\"bouton-affecter\"")))
+                .andExpect(content().string(containsString("Mobilis Maintenance")));
+    }
+
+    @Test
+    void afficherDetail_parametreAffecter_ouvreLeFormulaireDAffectation() throws Exception {
+        when(incidentService.consulterDetail(1L)).thenReturn(detail());
+        when(incidentService.estAffectable(1L, RESPONSABLE)).thenReturn(true);
+        when(prestataireService.lister()).thenReturn(prestataires());
+
+        mockMvc.perform(get("/incidents/1").param("affecter", "true").sessionAttr(UtilisateurConnecte.ATTRIBUT, RESPONSABLE))
+                .andExpect(status().isOk())
+                .andExpect(model().attribute("enAffectation", true));
+    }
+
+    @Test
+    void afficherDetail_agent_nAPasAccesALAffectation() throws Exception {
+        when(incidentService.consulterDetail(1L)).thenReturn(detail());
+        when(incidentService.estAffectable(1L, AGENT)).thenReturn(false);
+
+        mockMvc.perform(get("/incidents/1").param("affecter", "true").sessionAttr(UtilisateurConnecte.ATTRIBUT, AGENT))
+                .andExpect(status().isOk())
+                .andExpect(model().attribute("enAffectation", false))
+                .andExpect(content().string(not(containsString("bouton-affecter"))))
+                .andExpect(content().string(not(containsString("formulaire-affectation"))));
+
+        verifyNoInteractions(prestataireService);
+    }
+
+    @Test
+    void affecter_agentOuTechnicien_estRefuseParLaRoute() throws Exception {
+        for (UtilisateurConnecte utilisateur : List.of(AGENT, TECHNICIEN)) {
+            mockMvc.perform(put("/incidents/1/prestataire")
+                            .sessionAttr(UtilisateurConnecte.ATTRIBUT, utilisateur)
+                            .param("idPrestataire", "2"))
+                    .andExpect(status().isForbidden());
+        }
+
+        verifyNoInteractions(incidentService);
+    }
+
+    @Test
+    void affecter_responsable_enregistreEtResteSurLaPageDetail() throws Exception {
+        when(incidentService.affecter(eq(1L), any(AffectationRequest.class), eq(RESPONSABLE))).thenReturn(incidentAffecte());
+
+        mockMvc.perform(put("/incidents/1/prestataire")
+                        .sessionAttr(UtilisateurConnecte.ATTRIBUT, RESPONSABLE)
+                        .param("idPrestataire", "2"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/incidents/1"))
+                .andExpect(flash().attribute("succes", "L'incident n°1 est maintenant affecté à Mobilis Maintenance."));
+    }
+
+    @Test
+    void affecter_sansPrestataireChoisi_reafficheLeDetailAvecLeFormulaireOuvert() throws Exception {
+        when(incidentService.consulterDetail(1L)).thenReturn(detail());
+        when(incidentService.estAffectable(1L, RESPONSABLE)).thenReturn(true);
+        when(prestataireService.lister()).thenReturn(prestataires());
+
+        mockMvc.perform(put("/incidents/1/prestataire")
+                        .sessionAttr(UtilisateurConnecte.ATTRIBUT, RESPONSABLE)
+                        .param("idPrestataire", ""))
+                .andExpect(status().isOk())
+                .andExpect(view().name("incidents/detail"))
+                .andExpect(model().attribute("enAffectation", true))
+                .andExpect(model().attributeHasFieldErrors("affectationRequest", "idPrestataire"))
+                .andExpect(content().string(containsString("Veuillez choisir un prestataire")));
+
+        verify(incidentService, never()).affecter(any(), any(), any());
+    }
+
+    @Test
+    void affecter_incidentResolu_afficheLaPageDErreur409() throws Exception {
+        when(incidentService.affecter(eq(6L), any(AffectationRequest.class), eq(RESPONSABLE)))
+                .thenThrow(new AffectationIncidentImpossibleException("L'incident n°6 est résolu : il ne peut plus être affecté ni réaffecté"));
+
+        mockMvc.perform(put("/incidents/6/prestataire")
+                        .sessionAttr(UtilisateurConnecte.ATTRIBUT, RESPONSABLE)
+                        .param("idPrestataire", "2"))
+                .andExpect(status().isConflict())
+                .andExpect(view().name("erreur"))
+                .andExpect(content().string(containsString("ne peut plus être affecté ni réaffecté")));
+    }
+
+    @Test
     void declarer_responsable_estRefuseParLaRoute() throws Exception {
         mockMvc.perform(get("/equipements/2/incidents/nouveau").sessionAttr(UtilisateurConnecte.ATTRIBUT, RESPONSABLE))
                 .andExpect(status().isForbidden());
@@ -192,7 +294,19 @@ class IncidentViewControllerTest {
         return new IncidentDetailResponse(1L, "Ascenseur bloqué entre deux niveaux", IncidentStatut.OUVERT,
                 LocalDateTime.of(2026, 10, 10, 8, 15), null, false, "2 h 0 min",
                 2L, "ASC-CHT-001", "Ascenseur accès quai ligne 1", EquipementType.ASCENSEUR,
-                3L, "Châtelet", null, null, "Hugo", null);
+                3L, "Châtelet", null, null, null, "Hugo", null);
+    }
+
+    private static List<PrestataireResponse> prestataires() {
+        return List.of(new PrestataireResponse(1L, "AscenTech Services", "astreinte@ascentech-exemple.fr"),
+                new PrestataireResponse(2L, "Mobilis Maintenance", "01 45 67 89 10"));
+    }
+
+    private static IncidentResponse incidentAffecte() {
+        return new IncidentResponse(1L, "Ascenseur bloqué entre deux niveaux", IncidentStatut.EN_COURS,
+                LocalDateTime.of(2026, 10, 10, 8, 15), null,
+                2L, "ASC-CHT-001", "Ascenseur accès quai ligne 1", "Châtelet",
+                2L, "Mobilis Maintenance", 4L, "Hugo");
     }
 
     private static IncidentResponse incident() {

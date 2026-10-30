@@ -1,5 +1,6 @@
 package altn72.opsis.controller.api;
 
+import altn72.opsis.dto.incident.AffectationRequest;
 import altn72.opsis.dto.incident.IncidentDetailResponse;
 import altn72.opsis.dto.incident.IncidentModificationRequest;
 import altn72.opsis.dto.incident.IncidentRequest;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -52,5 +54,13 @@ public class IncidentRestController {
                                      @Valid @RequestBody IncidentModificationRequest request,
                                      @RequestAttribute(UtilisateurConnecte.ATTRIBUT) UtilisateurConnecte utilisateur) {
         return incidentService.modifier(id, request, utilisateur);
+    }
+
+    @PutMapping("/{id}/prestataire")
+    @ProfilRequis(UtilisateurType.ADMIN)
+    public IncidentResponse affecter(@PathVariable Long id,
+                                     @Valid @RequestBody AffectationRequest request,
+                                     @RequestAttribute(UtilisateurConnecte.ATTRIBUT) UtilisateurConnecte utilisateur) {
+        return incidentService.affecter(id, request, utilisateur);
     }
 }

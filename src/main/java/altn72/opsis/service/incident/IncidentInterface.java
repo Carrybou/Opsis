@@ -1,5 +1,6 @@
 package altn72.opsis.service.incident;
 
+import altn72.opsis.dto.incident.AffectationRequest;
 import altn72.opsis.dto.incident.IncidentDetailResponse;
 import altn72.opsis.dto.incident.IncidentModificationRequest;
 import altn72.opsis.dto.incident.IncidentRequest;
@@ -18,4 +19,8 @@ public interface IncidentInterface {
     boolean estModifiable(Long idIncident, UtilisateurConnecte utilisateur);
 
     Set<Long> incidentsModifiables(Long idEquipement, UtilisateurConnecte utilisateur);
+
+    IncidentResponse affecter(Long idIncident, AffectationRequest request, UtilisateurConnecte utilisateur);
+
+    boolean estAffectable(Long idIncident, UtilisateurConnecte utilisateur);
 }

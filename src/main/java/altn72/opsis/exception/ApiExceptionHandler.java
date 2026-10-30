@@ -26,6 +26,12 @@ public class ApiExceptionHandler {
                 .body(new ApiError(403, e.getMessage(), Map.of(), LocalDateTime.now()));
     }
 
+    @ExceptionHandler(AffectationIncidentImpossibleException.class)
+    public ResponseEntity<ApiError> handleAffectationImpossible(AffectationIncidentImpossibleException e) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ApiError(409, e.getMessage(), Map.of(), LocalDateTime.now()));
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiError> handleValidation(MethodArgumentNotValidException e) {
         Map<String, String> erreurs = new LinkedHashMap<>();
