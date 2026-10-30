@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="|Incident n°${incident.identifiant} - Opsis|">Incident - Opsis</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div th:replace="~{fragments/entete :: entete('stations')}"></div>
+
+<main class="contenu">
+    <nav class="fil-ariane" aria-label="Fil d'Ariane">
+        <a th:href="@{/stations}">Stations</a>
+        <a th:href="@{|/stations#station-${incident.idStation}|}" th:text="${incident.nomStation}">Station</a>
+        <a th:href="@{/equipements/{id}(id=${incident.idEquipement})}" th:text="${incident.referenceEquipement}">REF</a>
+        <span th:text="|Incident n°${incident.identifiant}|">Incident</span>
+    </nav>
+
+    <div class="titre-page">
+        <div>
+            <div class="surtitre" th:text="|Déclaré par ${incident.prenomDeclarant}|">Déclaré par</div>
+            <h1 th:text="|Incident n°${incident.identifiant}|">Incident n°1</h1>
+        </div>
+        <div th:replace="~{fragments/badges :: statutIncident(${incident.statut})}"></div>
+    </div>
+
+    <section class="indicateurs" aria-label="Synthèse de l'incident">
+        <div class="indicateur">
+            <strong th:text="${incident.dureeOuverture}">2 h 30 min</strong>
+            <span th:if="${incident.resolu}">durée d'ouverture</span>
+            <span th:unless="${incident.resolu}">ouvert depuis</span>        <div class="indicateur">
+            <strong th:text="${#temporals.format(incident.dateHeureOuverture, 'dd/MM/yyyy HH:mm')}">01/01/2026 08:00</strong>
+            <span>ouverture</span>
+        </div>
+        <div class="indicateur">
+            <strong th:text="${incident.dateHeureResolution != null} ? ${#temporals.format(incident.dateHeureResolution, 'dd/MM/yyyy HH:mm')} : '—'">—</strong>
+            <span>résolution</span>
+        </div>
+    </section>
+
+    <section class="carte">
+        <div class="carte-entete"><h2>Description</h2></div>
+        <div class="carte-corps">
+            <p class="description-incident" th:text="${incident.description}">Description de l'incident</p>
+        </div>
+    </section>
+
+    <section class="carte">
+        <div class="carte-entete"><h2>Équipement concerné</h2></div>
+        <div class="carte-corps">
+            <dl class="details">
+                <dt>Référence</dt>
+                <dd><a th:href="@{/equipements/{id}(id=${incident.idEquipement})}" th:text="${incident.referenceEquipement}">REF</a></dd>
+                <dt>Libellé</dt>
+                <dd th:text="${incident.libelleEquipement}">Libellé</dd>
+                <dt>Type</dt>
+                <dd th:text="${incident.typeEquipement}">TYPE</dd>
+                <dt>Station</dt>
+                <dd><a th:href="@{|/stations#station-${incident.idStation}|}" th:text="${incident.nomStation}">Station</a></dd>
+            </dl>
+        </div>
+    </section>
+
+    <section class="carte">
+        <div class="carte-entete"><h2>Prestataire</h2></div>
+        <div class="carte-corps">
+            <dl class="details" th:if="${incident.nomPrestataire != null}">
+                <dt>Nom</dt>
+                <dd th:text="${incident.nomPrestataire}">Prestataire</dd>
+                <dt>Contact</dt>
+                <dd th:text="${incident.contactPrestataire}">contact</dd>
+            </dl>
+            <p class="vide" th:if="${incident.nomPrestataire == null}">Aucun prestataire affecté pour le moment.</p>
+        </div>
+    </section>
+
+    <section class="carte">
+        <div class="carte-entete"><h2>Évaluation</h2></div>
+        <div class="carte-corps">
+            <th:block th:if="${incident.evaluation != null}">
+                <p class="note-etoiles"
+                   th:text="${#strings.repeat('★', incident.evaluation.note) + #strings.repeat('☆', 5 - incident.evaluation.note)}"
+                   th:attr="aria-label=|Note : ${incident.evaluation.note} sur 5|">★★★★☆</p>
+                <p th:text="${incident.evaluation.commentaire} ?: 'Aucun commentaire.'">Commentaire</p>
+                <p class="date-evaluation" th:text="|Évalué le ${#temporals.format(incident.evaluation.date, 'dd/MM/yyyy')}|">Évalué le</p>
+            </th:block>
+            <p class="vide" th:if="${incident.evaluation == null and incident.resolu}">Cet incident n'a pas encore été évalué.</p>
+            <p class="vide" th:if="${incident.evaluation == null and !incident.resolu}">L'évaluation sera possible une fois l'incident résolu.</p>
+        </div>
+    </section>
+</main>
+</body>
+</html>

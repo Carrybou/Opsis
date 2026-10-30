@@ -445,3 +445,21 @@ h2 {
     flex-wrap: wrap;
     gap: 12px;
 }
+
+.description-incident {
+    white-space: pre-line;
+    margin: 0;
+}
+
+.note-etoiles {
+    margin: 0 0 8px;
+    font-size: 1.5rem;
+    color: #f59e0b;
+    letter-spacing: 2px;
+}
+
+.date-evaluation {
+    margin: 8px 0 0;
+    color: #6b7280;
+    font-size: 0.9rem;
+}

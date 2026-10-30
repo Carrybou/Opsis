@@ -56,4 +56,10 @@ public class IncidentViewController {
                         + incident.referenceEquipement() + ".");
         return "redirect:/equipements/" + incident.idEquipement();
     }
+
+    @GetMapping("/incidents/{id}")
+    public String afficherDetail(@PathVariable Long id, Model model) {
+        model.addAttribute("incident", incidentService.consulterDetail(id));
+        return "incidents/detail";
+    }
 }
