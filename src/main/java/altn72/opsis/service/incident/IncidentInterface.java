@@ -1,5 +1,6 @@
 package altn72.opsis.service.incident;
 
+import altn72.opsis.dto.incident.IncidentDetailResponse;
 import altn72.opsis.dto.incident.IncidentModificationRequest;
 import altn72.opsis.dto.incident.IncidentRequest;
 import altn72.opsis.dto.incident.IncidentResponse;
@@ -10,9 +11,11 @@ import java.util.Set;
 public interface IncidentInterface {
     IncidentResponse declarer(IncidentRequest request, Long idUtilisateur);
 
-    IncidentResponse trouverPourModification(Long idIncident, UtilisateurConnecte utilisateur);
+    IncidentDetailResponse consulterDetail(Long id);
 
     IncidentResponse modifier(Long idIncident, IncidentModificationRequest request, UtilisateurConnecte utilisateur);
+
+    boolean estModifiable(Long idIncident, UtilisateurConnecte utilisateur);
 
     Set<Long> incidentsModifiables(Long idEquipement, UtilisateurConnecte utilisateur);
 }

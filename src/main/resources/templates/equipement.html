@@ -76,13 +76,13 @@
         <tbody>
         <tr th:each="incident : ${incidents}">
             <td th:text="${#temporals.format(incident.dateHeureOuverture, 'dd/MM/yyyy HH:mm')}">01/01/2026 08:00</td>
-            <td th:text="${incident.description}">Description</td>
+            <td><a th:href="@{/incidents/{id}(id=${incident.identifiant})}" th:text="${incident.description}">Description</a></td>
             <td th:insert="~{fragments/badges :: statutIncident(${incident.statut})}"></td>
             <td th:text="${incident.nomPrestataire} ?: 'Non affecté'">Prestataire</td>
             <td th:text="${incident.dateHeureResolution != null} ? ${#temporals.format(incident.dateHeureResolution, 'dd/MM/yyyy HH:mm')} : '—'">—</td>
             <td>
                 <a th:if="${incidentsModifiables.contains(incident.identifiant)}"
-                   th:href="@{/incidents/{id}/modifier(id=${incident.identifiant})}">Modifier</a>
+                   th:href="@{/incidents/{id}(id=${incident.identifiant}, modifier=true)} + '#description'">Modifier</a>
             </td>
         </tr>
         </tbody>

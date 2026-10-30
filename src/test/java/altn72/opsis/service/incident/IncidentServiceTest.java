@@ -130,6 +130,15 @@ class IncidentServiceTest {
         assertThat(incidentService.incidentsModifiables(10L, RESPONSABLE)).containsExactlyInAnyOrder(1L, 2L);
     }
 
+    @Test
+    void estModifiable_appliqueLesMemesReglesQueLaModification() {
+        when(incidentRepository.findById(1L)).thenReturn(Optional.of(incident(1L, IncidentStatut.EN_COURS)));
+
+        assertThat(incidentService.estModifiable(1L, RESPONSABLE)).isTrue();
+        assertThat(incidentService.estModifiable(1L, AGENT_AUTEUR)).isFalse();
+        assertThat(incidentService.estModifiable(1L, TECHNICIEN)).isFalse();
+    }
+
     private void verifierRefus(Incident incident, UtilisateurConnecte utilisateur, String motifAttendu) {
         String descriptionInitiale = incident.getDescription();
         when(incidentRepository.findById(incident.getId())).thenReturn(Optional.of(incident));

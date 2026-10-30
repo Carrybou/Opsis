@@ -2,6 +2,23 @@
 
 **Groupe :** Thomas GUIBERT, Roméo FROGER
 
+## LANCER L'APPLICATION EN 3 COMMANDES
+Prérequis : Java 25, Docker Desktop démarré, et un fichier `.env` à la racine (voir le tableau du README ci-dessous).
+
+```bash
+docker compose up -d                      # 1. base MySQL (port 3307) + Adminer (http://localhost:8081)
+set -a; source .env; set +a               # 2. charge les variables (JWT_SECRET, identifiants MySQL)
+sh mvnw spring-boot:run                   # 3. lance l'application
+```
+
+Ouvrir ensuite http://localhost:8080 et se connecter (ex. `thomas` / `1234`, profil responsable d'exploitation).
+
+En cas de problème :
+- **`Port 8080 was already in use`** : une ancienne instance tourne encore. `lsof -ti:8080` donne son PID, puis `kill <PID>`.
+- **`Unable to determine Dialect without JDBC metadata`** : l'application ne joint pas MySQL. Vérifier que le conteneur tourne (`docker ps`). Pour utiliser un MySQL local sur un autre port : `DB_PORT=3306 sh mvnw spring-boot:run`.
+- **Erreur sur `jwt.secret`** : le `.env` n'a pas été chargé (étape 2), ou VS Code / IntelliJ lance l'application sans lui. Il faut alors ajouter le `.env` dans la configuration de lancement de l'IDE.
+- **Repartir d'une base propre** : `docker compose down -v && docker compose up -d`.
+
 ## README
 - Prérequis : Java 25, Maven 3.9+, Docker (Docker Desktop ou Docker Engine + Compose).
 - Configuration : créer un fichier `.env` à la racine (non versionné) contenant :
@@ -15,7 +32,7 @@
   | `JWT_SECRET`          | Clé de signature des JWT de l'API (32 caractères minimum)   |
 
 - Initialiser la base : `docker compose up -d`
-  - MySQL 8 est exposé sur le port **3307**, Adminer sur http://localhost:8081.
+  - MySQL 8 est exposé sur le port **3307**, Adminer sur http://localhost:8081. Le port utilisé par l'application vaut 3307 par défaut et se change avec la variable `DB_PORT`.
   - `bdd.sql` (schéma + données de démonstration) n'est joué qu'à la première création du volume. Pour repartir d'une base propre : `docker compose down -v && docker compose up -d`.
 - Lancer (en chargeant `.env`, nécessaire pour `JWT_SECRET`) :
   ```bash
@@ -60,7 +77,16 @@
   - F1 (`LoginViewControllerTest`) : affichage du formulaire, ouverture de la session après connexion, réaffichage de la même page avec le message d'erreur et l'identifiant saisi, redirection si déjà connecté, déconnexion (session invalidée, retour à la page de connexion avec message).
   - F1 / F2 / RG11 (`StationViewControllerTest`) : page protégée sans session → redirection vers `/login` ; en-tête « Bonjour [Prénom] ([profil]) | Déconnectez-vous » ; équipements regroupés par station avec type, état et lien vers la fiche ; indicateurs de synthèse ; station sans équipement ; `/` redirige vers les stations.
   - F3 / RG7 (`EquipementServiceTest`) : séparation incidents en cours / passés avec conservation de l'ordre par date d'ouverture, équipement sans incident, équipement inexistant → `EquipementIntrouvableException`.
-- Non couvert : contrôleurs REST et repositories (`@DataJpaTest`), prévus dans le lot alpha « Qualité renforcée » ; règles RG1 à RG6, RG8 non encore implémentées.
+  - F6 / RG5 (`IncidentServiceTest`) : le responsable modifie tout incident non résolu, même affecté ; l'agent ne modifie que les incidents qu'il a déclarés et qui ne sont pas encore affectés ; refus pour un autre agent, pour un technicien et pour un incident résolu (même pour le responsable), avec à chaque fois le motif affiché ; incident inexistant ; `incidentsModifiables` et `estModifiable` appliquent les mêmes règles.
+  - Droits par profil, pages web :
+    - `EquipementViewControllerTest` : sur la fiche équipement, seul l'agent voit « Déclarer un incident » ; le lien « Modifier » n'apparaît que sur les incidents autorisés pour le profil connecté ; le technicien ne voit ni l'un ni l'autre.
+    - `IncidentViewControllerTest` : page détail redirigée vers `/login` sans session ; bouton « Modifier » et formulaire présents seulement si l'incident est modifiable ; `?modifier=true` ouvre le formulaire ; enregistrement → retour sur la page détail avec message ; description invalide → page détail réaffichée avec le formulaire ouvert et l'erreur ; 403 pour un technicien ou en cas de règle métier non respectée ; déclaration refusée au responsable et au technicien (affichage du formulaire et envoi).
+  - Droits par profil, API (`IncidentRestControllerTest`, token JWT simulé par profil) :
+    - `GET /api/incidents/{id}` : 401 sans token, 200 pour tout profil connecté, 404 si l'incident n'existe pas.
+    - `POST /api/incidents` : 403 pour le responsable, 201 pour l'agent.
+    - `PATCH /api/incidents/{id}` : 403 pour le technicien, 200 pour le responsable, 403 avec le motif quand une règle métier refuse, 400 si la description est invalide.
+- Résultat : 52 tests, tous verts (`mvn test`, base démarrée et `.env` chargé).
+- Non couvert : repositories (`@DataJpaTest`) et contrôleurs REST des stations / équipements, prévus dans le lot alpha « Qualité renforcée » ; règles RG1 à RG4 et RG8 non encore implémentées.
 
 ## CHOIX TECHNIQUES
 - Droits par profil :
@@ -75,6 +101,10 @@
   | F10   |        Évaluer un prestataire         |                                  OUI |             NON |
   | F11   |            Tableau de bord            |                                  OUI |             NON |
 
+  - F6 « partiellement » pour l'agent : il ne modifie que les incidents qu'il a déclarés, tant qu'aucun prestataire n'est affecté. Un incident résolu n'est plus modifiable par personne (RG5).
+  - Double contrôle : `@ProfilRequis` filtre la route selon le profil (intercepteur session ou JWT), puis le service vérifie les règles qui dépendent de l'incident (auteur, affectation, statut) et lève `ModificationIncidentInterditeException` (403) avec le motif. Les vues n'affichent le bouton « Modifier » que si `estModifiable` le permet ; elles s'appuient donc sur la même règle que le service.
+- Modification d'un incident (F5 + F6) : édition directement sur la page détail plutôt que sur une page séparée. Le bouton « Modifier » remplace la description par un champ prérempli, avec un compteur de caractères et les boutons Annuler / Enregistrer. L'enregistrement fait un `PUT /incidents/{id}` (champ caché `_method`) et revient sur la même page avec un message de confirmation ; en cas d'erreur de validation, la page se réaffiche avec le champ ouvert. Sans JavaScript, le bouton reste un lien `?modifier=true` qui ouvre le formulaire côté serveur.
+
 - Exceptions : **@ControllerAdvice**.
   - Les exceptions métier sont personnalisées, avec un message en français, et héritent d'une classe mère par type d'erreur (`RessourceIntrouvableException` → `EquipementIntrouvableException`…).
   - Deux advices distincts, ciblés par `basePackages` : `ApiExceptionHandler` (`controller.api`) traduit l'erreur en JSON `ApiError` avec le bon code HTTP ; `VueExceptionHandler` (`controller.web`) affiche la page `erreur.html` avec un message lisible, sans trace technique.
@@ -86,7 +116,10 @@
   - **O — Ouvert/fermé** : les advices traitent `RessourceIntrouvableException` ; une nouvelle ressource introuvable (incident, prestataire…) produit un 404 sans modifier les handlers.
   - L, I : ...
 - Requête SQL native : ...
-- @Transactional : aucun usage pour l'instant (F3 est en lecture seule). À justifier lors des opérations qui modifient plusieurs données (RG10).
+- @Transactional (dans `IncidentService`) :
+  - `declarer` : la création de l'incident et le passage de l'équipement à « en panne » sont enregistrés ensemble ou pas du tout.
+  - `modifier` : l'incident chargé reste suivi par JPA, donc la nouvelle description est enregistrée à la fin de la méthode sans `save` explicite.
+  - Les lectures (`consulterDetail`, `estModifiable`, `incidentsModifiables`) sont en `readOnly = true`.
 
 ## LOT ALPHA
 ### Fonctionnalité transverse 1 : Cartographie du réseau

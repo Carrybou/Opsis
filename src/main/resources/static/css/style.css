@@ -453,3 +453,42 @@ h2 {
     clip: rect(0, 0, 0, 0);
     white-space: nowrap;
 }
+
+.description-incident {
+    white-space: pre-line;
+    margin: 0;
+}
+
+.note-etoiles {
+    margin: 0 0 8px;
+    font-size: 1.5rem;
+    color: #f59e0b;
+    letter-spacing: 2px;
+}
+
+.date-evaluation {
+    margin: 8px 0 0;
+    color: #6b7280;
+    font-size: 0.9rem;
+}
+
+/* F6 : édition en place de la description sur la page détail d'un incident */
+
+[hidden] {
+    display: none !important;
+}
+
+.formulaire.edition-incident {
+    max-width: none;
+}
+
+.formulaire.edition-incident .actions {
+    margin-top: 4px;
+}
+
+.compteur-caracteres {
+    margin: 0;
+    color: #6b7280;
+    font-size: 0.85rem;
+    text-align: right;
+}

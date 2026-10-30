@@ -1,5 +1,6 @@
 package altn72.opsis.controller.web;
 
+import altn72.opsis.dto.incident.IncidentDetailResponse;
 import altn72.opsis.dto.incident.IncidentModificationRequest;
 import altn72.opsis.dto.incident.IncidentRequest;
 import altn72.opsis.dto.incident.IncidentResponse;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.SessionAttribute;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -63,15 +65,18 @@ public class IncidentViewController {
         return "redirect:/equipements/" + incident.idEquipement();
     }
 
-    @GetMapping("/incidents/{id}/modifier")
-    @ProfilRequis({UtilisateurType.ADMIN, UtilisateurType.AGENT})
-    public String afficherModification(@PathVariable Long id,
-                                       @SessionAttribute(UtilisateurConnecte.ATTRIBUT) UtilisateurConnecte utilisateur,
-                                       Model model) {
-        IncidentResponse incident = incidentService.trouverPourModification(id, utilisateur);
-        model.addAttribute("incident", incident);
+    // F5 + F6 : la modification de la description se fait directement sur la page détail.
+    // Le paramètre "modifier" ouvre le formulaire dès l'affichage (lien depuis la fiche équipement, navigateur sans JS).
+    @GetMapping("/incidents/{id}")
+    public String afficherDetail(@PathVariable Long id,
+                                 @RequestParam(defaultValue = "false") boolean modifier,
+                                 @SessionAttribute(UtilisateurConnecte.ATTRIBUT) UtilisateurConnecte utilisateur,
+                                 Model model) {
+        IncidentDetailResponse incident = incidentService.consulterDetail(id);
+        boolean modifiable = incidentService.estModifiable(id, utilisateur);
+        preparerDetail(incident, modifiable, modifier && modifiable, model);
         model.addAttribute("incidentModificationRequest", new IncidentModificationRequest(incident.description()));
-        return "incidents/modifier";
+        return "incidents/detail";
     }
 
     @PutMapping("/incidents/{id}")
@@ -83,13 +88,19 @@ public class IncidentViewController {
                            Model model,
                            RedirectAttributes redirectAttributes) {
         if (resultat.hasErrors()) {
-            model.addAttribute("incident", incidentService.trouverPourModification(id, utilisateur));
-            return "incidents/modifier";
+            preparerDetail(incidentService.consulterDetail(id), incidentService.estModifiable(id, utilisateur), true, model);
+            return "incidents/detail";
         }
 
         IncidentResponse incident = incidentService.modifier(id, request, utilisateur);
 
         redirectAttributes.addFlashAttribute("succes", "L'incident n°" + incident.identifiant() + " a bien été modifié.");
-        return "redirect:/equipements/" + incident.idEquipement();
+        return "redirect:/incidents/" + incident.identifiant();
+    }
+
+    private void preparerDetail(IncidentDetailResponse incident, boolean modifiable, boolean enEdition, Model model) {
+        model.addAttribute("incident", incident);
+        model.addAttribute("modifiable", modifiable);
+        model.addAttribute("enEdition", enEdition);
     }
 }

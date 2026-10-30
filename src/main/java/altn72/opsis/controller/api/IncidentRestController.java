@@ -1,5 +1,6 @@
 package altn72.opsis.controller.api;
 
+import altn72.opsis.dto.incident.IncidentDetailResponse;
 import altn72.opsis.dto.incident.IncidentModificationRequest;
 import altn72.opsis.dto.incident.IncidentRequest;
 import altn72.opsis.dto.incident.IncidentResponse;
@@ -9,6 +10,7 @@ import altn72.opsis.security.UtilisateurConnecte;
 import altn72.opsis.service.incident.IncidentInterface;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -37,6 +39,11 @@ public class IncidentRestController {
         return ResponseEntity
                 .created(URI.create("/api/incidents/" + incident.identifiant()))
                 .body(incident);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<IncidentDetailResponse> consulter(@PathVariable Long id) {
+        return ResponseEntity.ok(incidentService.consulterDetail(id));
     }
 
     @PatchMapping("/{id}")

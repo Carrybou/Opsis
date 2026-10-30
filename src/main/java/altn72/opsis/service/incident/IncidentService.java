@@ -1,5 +1,6 @@
 package altn72.opsis.service.incident;
 
+import altn72.opsis.dto.incident.IncidentDetailResponse;
 import altn72.opsis.dto.incident.IncidentModificationRequest;
 import altn72.opsis.dto.incident.IncidentRequest;
 import altn72.opsis.dto.incident.IncidentResponse;
@@ -9,6 +10,8 @@ import altn72.opsis.exception.ModificationIncidentInterditeException;
 import altn72.opsis.exception.UtilisateurIntrouvableException;
 import altn72.opsis.model.equipement.Equipement;
 import altn72.opsis.model.equipement.EquipementEtat;
+import altn72.opsis.model.evaluation.Evaluation;
+import altn72.opsis.model.evaluation.EvaluationRepository;
 import altn72.opsis.model.incident.Incident;
 import altn72.opsis.model.incident.IncidentStatut;
 import altn72.opsis.model.utilisateur.Utilisateur;
@@ -31,13 +34,16 @@ public class IncidentService implements IncidentInterface {
     private final IncidentRepository incidentRepository;
     private final EquipementRepository equipementRepository;
     private final UtilisateurRepository utilisateurRepository;
+    private final EvaluationRepository evaluationRepository;
 
     public IncidentService(IncidentRepository incidentRepository,
                            EquipementRepository equipementRepository,
-                           UtilisateurRepository utilisateurRepository) {
+                           UtilisateurRepository utilisateurRepository,
+                           EvaluationRepository evaluationRepository) {
         this.incidentRepository = incidentRepository;
         this.equipementRepository = equipementRepository;
         this.utilisateurRepository = utilisateurRepository;
+        this.evaluationRepository = evaluationRepository;
     }
 
     @Override
@@ -64,8 +70,13 @@ public class IncidentService implements IncidentInterface {
 
     @Override
     @Transactional(readOnly = true)
-    public IncidentResponse trouverPourModification(Long idIncident, UtilisateurConnecte utilisateur) {
-        return IncidentResponse.from(chargerModifiable(idIncident, utilisateur));
+    public IncidentDetailResponse consulterDetail(Long id) {
+        Incident incident = incidentRepository.findById(id)
+                .orElseThrow(() -> new IncidentIntrouvableException(id));
+
+        Evaluation evaluation = evaluationRepository.findByIdIncident_Id(id).orElse(null);
+
+        return IncidentDetailResponse.from(incident, evaluation);
     }
 
     // Transactionnel pour que la modification de l'entité chargée soit enregistrée en fin de méthode.
@@ -75,6 +86,14 @@ public class IncidentService implements IncidentInterface {
         Incident incident = chargerModifiable(idIncident, utilisateur);
         incident.setDescription(request.getDescription().trim());
         return IncidentResponse.from(incident);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean estModifiable(Long idIncident, UtilisateurConnecte utilisateur) {
+        Incident incident = incidentRepository.findById(idIncident)
+                .orElseThrow(() -> new IncidentIntrouvableException(idIncident));
+        return motifRefusModification(incident, utilisateur).isEmpty();
     }
 
     @Override
