@@ -1,4 +1,4 @@
-package altn72.opsis.modele.incident;
+package altn72.opsis.model.incident;
 
 public enum IncidentStatut {
     OUVERT,

@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<body>
+<header th:fragment="entete" class="entete">
+    <a th:href="@{/accueil}" class="logo">Opsis</a>
+    <div class="utilisateur" th:if="${utilisateurConnecte != null}">
+        Bonjour <strong th:text="${utilisateurConnecte.prenom}">Prénom</strong>
+        (<span th:text="${utilisateurConnecte.profil}">PROFIL</span>)
+        | <a th:href="@{/deconnexion}">Déconnectez-vous</a>
+    </div>
+</header>
+</body>
+</html>

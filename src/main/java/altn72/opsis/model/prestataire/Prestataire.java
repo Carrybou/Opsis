@@ -1,4 +1,4 @@
-package altn72.opsis.modele.prestataire;
+package altn72.opsis.model.prestataire;
 
 import jakarta.persistence.*;
 

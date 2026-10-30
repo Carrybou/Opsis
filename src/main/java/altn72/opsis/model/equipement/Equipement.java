@@ -1,6 +1,6 @@
-package altn72.opsis.modele.equipement;
+package altn72.opsis.model.equipement;
 
-import altn72.opsis.modele.station.Station;
+import altn72.opsis.model.station.Station;
 import jakarta.persistence.*;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;

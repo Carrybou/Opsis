@@ -1,4 +1,4 @@
-package altn72.opsis.modele.equipement;
+package altn72.opsis.model.equipement;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 

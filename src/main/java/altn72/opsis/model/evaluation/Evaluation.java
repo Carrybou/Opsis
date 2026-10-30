@@ -1,6 +1,6 @@
-package altn72.opsis.modele.evaluation;
+package altn72.opsis.model.evaluation;
 
-import altn72.opsis.modele.incident.Incident;
+import altn72.opsis.model.incident.Incident;
 import jakarta.persistence.*;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;

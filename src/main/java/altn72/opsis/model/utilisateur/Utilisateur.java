@@ -1,4 +1,4 @@
-package altn72.opsis.modele.utilisateur;
+package altn72.opsis.model.utilisateur;
 
 import jakarta.persistence.*;
 

@@ -28,7 +28,7 @@ CREATE TABLE station (
                          longitude DECIMAL(11, 8)
 );
 
--- Table Utilisateur
+-- Table altn72.opsis.model.utilisateur.Utilisateur
 CREATE TABLE utilisateur (
                              identifiant BIGINT AUTO_INCREMENT PRIMARY KEY,
                              identifiant_connexion VARCHAR(100) NOT NULL UNIQUE,
@@ -90,7 +90,7 @@ INSERT INTO station (identifiant, nom, latitude, longitude) VALUES
                                                                 (5, 'Montparnasse', 48.84211000, 2.32128000);
 
 INSERT INTO utilisateur (identifiant, identifiant_connexion, mot_de_passe, prenom, profil) VALUES
-                                                                                               (1, 'admin', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BW', 'Alice', 'ADMIN'),
+                                                                                               (1, 'admin', '$2a$10$jNBhGF1F4bapKO6PMVXI9.Of8UWhnfNkrF.wbMPQpwDgRGoubekLW', 'Roméo', 'ADMIN'),
                                                                                                (2, 'tech.martin', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BW', 'Lucas', 'TECHNICIEN'),
                                                                                                (3, 'tech.dubois', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BW', 'Inès', 'TECHNICIEN'),
                                                                                                (4, 'agent.bernard', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BW', 'Hugo', 'AGENT'),
