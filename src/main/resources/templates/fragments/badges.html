@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<span th:fragment="etatEquipement(etat)" class="badge"
+      th:classappend="${etat == 'FONCTIONNEL'} ? 'badge-ok' : (${etat == 'EN_PANNE'} ? 'badge-danger' : 'badge-alerte')"
+      th:text="${etat == 'FONCTIONNEL'} ? 'Fonctionnel' : (${etat == 'EN_PANNE'} ? 'En panne' : 'En maintenance')">Fonctionnel</span>
+
+<span th:fragment="statutIncident(statut)" class="badge"
+      th:classappend="${statut.name() == 'OUVERT'} ? 'badge-danger' : (${statut.name() == 'EN_COURS'} ? 'badge-info' : 'badge-neutre')"
+      th:text="${statut.name() == 'OUVERT'} ? 'Non affecté' : (${statut.name() == 'EN_COURS'} ? 'Affecté' : 'Résolu')">Non affecté</span>
+
+</body>
+</html>

@@ -3,19 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title th:text="|${titre} - Opsis|">Erreur - Opsis</title>
+    <title>Page introuvable - Opsis</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
-<div th:replace="~{fragments/entete :: entete}"></div>
+<div th:replace="~{fragments/entete :: entete('')}"></div>
 
-<main class="contenu page-erreur">
-    <h1 th:text="${titre}">Une erreur est survenue</h1>
-    <p th:text="${message}">Message</p>
-    <div class="actions-erreur">
-        <a href="javascript:history.back()" class="bouton secondaire">Retour</a>
-        <a th:href="@{/stations}" class="bouton">Voir les stations</a>
+<main class="contenu">
+    <div class="titre-page">
+        <div>
+            <div class="surtitre">Erreur 404</div>
+            <h1>Page introuvable</h1>
+        </div>
     </div>
+    <p class="message erreur" th:text="${message}">Message d'erreur</p>
+    <p><a th:href="@{/stations}">&larr; Retour aux stations</a></p>
 </main>
 </body>
 </html>
