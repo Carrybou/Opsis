@@ -1,4 +1,4 @@
-package altn72.opsis.controller.api;
+package altn72.opsis.controller.web;
 
 import altn72.opsis.model.equipement.Equipement;
 import altn72.opsis.model.equipement.EquipementRepository;
@@ -13,12 +13,12 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Controller
-public class StationController {
+public class StationViewController {
 
     private final StationRepository stationRepository;
     private final EquipementRepository equipementRepository;
 
-    public StationController(StationRepository stationRepository, EquipementRepository equipementRepository) {
+    public StationViewController(StationRepository stationRepository, EquipementRepository equipementRepository) {
         this.stationRepository = stationRepository;
         this.equipementRepository = equipementRepository;
     }
