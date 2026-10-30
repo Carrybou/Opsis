@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 
 @Service
 public class IncidentService implements IncidentInterface {
@@ -43,7 +44,7 @@ public class IncidentService implements IncidentInterface {
 
         Incident incident = new Incident();
         incident.setDescription(request.getDescription().trim());
-        incident.setDateHeureOuverture(Instant.now());
+        incident.setDateHeureOuverture(LocalDateTime.now());
         incident.setStatut(IncidentStatut.OUVERT);
         incident.setDateHeureResolution(null);
         incident.setIdEquipement(equipement);

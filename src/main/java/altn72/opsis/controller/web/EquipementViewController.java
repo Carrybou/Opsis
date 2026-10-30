@@ -18,6 +18,7 @@ public class EquipementViewController {
     @GetMapping("/equipements/{id}")
     public String afficherFiche(@PathVariable Long id, Model model) {
         model.addAttribute("fiche", equipementService.consulterFiche(id));
+        model.addAttribute("idEquipement", id);
         return "equipement";
     }
 }

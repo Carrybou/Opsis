@@ -6,14 +6,14 @@ import altn72.opsis.model.incident.IncidentStatut;
 import altn72.opsis.model.prestataire.Prestataire;
 import altn72.opsis.model.utilisateur.Utilisateur;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 public record IncidentResponse(
         Long identifiant,
         String description,
         IncidentStatut statut,
-        Instant dateHeureOuverture,
-        Instant dateHeureResolution,
+        LocalDateTime dateHeureOuverture,
+        LocalDateTime dateHeureResolution,
         Long idEquipement,
         String referenceEquipement,
         String libelleEquipement,
