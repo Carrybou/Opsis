@@ -40,4 +40,10 @@ public class ApiExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(new ApiError(401, e.getMessage(), Map.of(), LocalDateTime.now()));
     }
+
+    @ExceptionHandler(RessourceIntrouvableException.class)
+    public ResponseEntity<ApiError> handleIntrouvable(RessourceIntrouvableException e) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new ApiError(404, e.getMessage(), Map.of(), LocalDateTime.now()));
+    }
 }

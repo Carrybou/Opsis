@@ -23,8 +23,9 @@ public class Equipement {
     @Column(name = "type", nullable = false, length = 100)
     private EquipementType type;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "etat_fonctionnement", nullable = false, length = 50)
-    private String etatFonctionnement;
+    private EquipementEtat etatFonctionnement;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @OnDelete(action = OnDeleteAction.CASCADE)
@@ -63,11 +64,11 @@ public class Equipement {
         this.type = type;
     }
 
-    public String getEtatFonctionnement() {
+    public EquipementEtat getEtatFonctionnement() {
         return etatFonctionnement;
     }
 
-    public void setEtatFonctionnement(String etatFonctionnement) {
+    public void setEtatFonctionnement(EquipementEtat etatFonctionnement) {
         this.etatFonctionnement = etatFonctionnement;
     }
 
