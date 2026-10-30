@@ -45,6 +45,7 @@
         th { color: var(--muted); font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; }
         tr:last-child td { border-bottom: 0; }
         .reference { color: var(--accent); font-weight: 700; white-space: nowrap; }
+        .reference a { color: inherit; }
         .state { display: inline-flex; align-items: center; gap: 7px; font-size: .84rem; font-weight: 700; }
         .state::before { width: 8px; height: 8px; border-radius: 50%; background: currentColor; content: ""; }
         .fonctionnel { color: var(--accent); }
@@ -96,7 +97,9 @@
             </thead>
             <tbody>
             <tr th:each="equipement : ${equipementsParStation[station.id]}">
-                <td class="reference" th:text="${equipement.referenceUnique}">ESC-STA-001</td>
+                <td class="reference">
+                    <a th:href="@{/equipements/{id}(id=${equipement.id})}" th:text="${equipement.referenceUnique}">ESC-STA-001</a>
+                </td>
                 <td th:text="${equipement.type}">ESCALATOR</td>
                 <td th:text="${equipement.libelleDescription}">Description</td>
                 <td>

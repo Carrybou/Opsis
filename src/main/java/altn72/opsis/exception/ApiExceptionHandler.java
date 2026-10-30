@@ -11,8 +11,14 @@ import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-@RestControllerAdvice(basePackages = "altn72.opsis.controleur.api")
+@RestControllerAdvice(basePackages = "altn72.opsis.controller.api")
 public class ApiExceptionHandler {
+
+    @ExceptionHandler(RessourceIntrouvableException.class)
+    public ResponseEntity<ApiError> handleRessourceIntrouvable(RessourceIntrouvableException e) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new ApiError(404, e.getMessage(), Map.of(), LocalDateTime.now()));
+    }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiError> handleValidation(MethodArgumentNotValidException e) {

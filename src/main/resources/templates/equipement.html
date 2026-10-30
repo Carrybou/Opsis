@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="|${fiche.referenceUnique} - Opsis|">Équipement - Opsis</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div th:replace="~{fragments/entete :: entete}"></div>
+
+<main class="contenu">
+    <a th:href="@{/stations}" class="retour">&larr; Retour aux stations</a>
+
+    <section class="carte fiche-equipement">
+        <h1 th:text="${fiche.referenceUnique}">ESC-STA-001</h1>
+        <p th:text="${fiche.libelleDescription}">Description de l'équipement</p>
+        <dl>
+            <dt>Type</dt>
+            <dd th:text="${fiche.type}">ESCALATOR</dd>
+            <dt>Station</dt>
+            <dd th:text="${fiche.nomStation}">Station</dd>
+            <dt>État de fonctionnement</dt>
+            <dd th:text="${fiche.etatFonctionnement}">FONCTIONNEL</dd>
+        </dl>
+    </section>
+
+    <section class="carte">
+        <h2>Incidents en cours</h2>
+        <table th:replace="~{:: tableIncidents(${fiche.incidentsEnCours}, 'Aucun incident en cours.')}"></table>
+    </section>
+
+    <section class="carte">
+        <h2>Incidents passés</h2>
+        <table th:replace="~{:: tableIncidents(${fiche.incidentsPasses}, 'Aucun incident passé.')}"></table>
+    </section>
+</main>
+
+<th:block th:fragment="tableIncidents(incidents, messageVide)">
+    <table class="tableau" th:unless="${#lists.isEmpty(incidents)}">
+        <thead>
+        <tr>
+            <th>Ouverture</th>
+            <th>Description</th>
+            <th>Statut</th>
+            <th>Prestataire</th>
+            <th>Résolution</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="incident : ${incidents}">
+            <td th:text="${#temporals.format(incident.dateHeureOuverture, 'dd/MM/yyyy HH:mm')}">01/01/2026 08:00</td>
+            <td th:text="${incident.description}">Description</td>
+            <td th:text="${incident.statut}">OUVERT</td>
+            <td th:text="${incident.nomPrestataire} ?: 'Non affecté'">Prestataire</td>
+            <td th:text="${incident.dateHeureResolution != null} ? ${#temporals.format(incident.dateHeureResolution, 'dd/MM/yyyy HH:mm')} : '—'">—</td>
+        </tr>
+        </tbody>
+    </table>
+    <p class="vide" th:if="${#lists.isEmpty(incidents)}" th:text="${messageVide}">Aucun incident.</p>
+</th:block>
+</body>
+</html>
