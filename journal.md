@@ -50,11 +50,17 @@
 ### MCD
 ![mcd](docs/MCD.png)
 ## TESTS
-- Stratégie : tests unitaires des services avec JUnit 5 + Mockito (repositories simulés, aucune base nécessaire), pour vérifier les règles métier isolément. Un test `@SpringBootTest` vérifie que le contexte démarre.
+- Stratégie :
+  - Tests unitaires des services avec JUnit 5 + Mockito (repositories simulés, aucune base nécessaire), pour vérifier les règles métier isolément.
+  - Tests des contrôleurs web avec `@WebMvcTest` + MockMvc : seule la couche web est chargée (contrôleurs, advices, intercepteurs), les dépendances sont remplacées par des `@MockitoBean`. Les templates Thymeleaf sont réellement rendus, ce qui permet de vérifier le contenu affiché.
+  - Un test `@SpringBootTest` vérifie que le contexte complet démarre.
 - Commande : `mvn verify` (charger `.env` et lancer la base au préalable : `OpsisApplicationTests` démarre le contexte complet).
 - Couvert :
+  - F1 (`AuthServiceTest`) : identifiants valides, mot de passe incorrect, identifiant inconnu (même message dans les deux cas pour ne pas révéler les identifiants existants), comparaison au hash BCrypt.
+  - F1 (`LoginViewControllerTest`) : affichage du formulaire, ouverture de la session après connexion, réaffichage de la même page avec le message d'erreur et l'identifiant saisi, redirection si déjà connecté, déconnexion (session invalidée, retour à la page de connexion avec message).
+  - F1 / F2 / RG11 (`StationViewControllerTest`) : page protégée sans session → redirection vers `/login` ; en-tête « Bonjour [Prénom] ([profil]) | Déconnectez-vous » ; équipements regroupés par station avec type, état et lien vers la fiche ; indicateurs de synthèse ; station sans équipement ; `/` redirige vers les stations.
   - F3 / RG7 (`EquipementServiceTest`) : séparation incidents en cours / passés avec conservation de l'ordre par date d'ouverture, équipement sans incident, équipement inexistant → `EquipementIntrouvableException`.
-- Non couvert : contrôleurs (MockMvc) et repositories (`@DataJpaTest`), prévus dans le lot alpha « Qualité renforcée » ; règles RG1 à RG6, RG8 non encore implémentées.
+- Non couvert : contrôleurs REST et repositories (`@DataJpaTest`), prévus dans le lot alpha « Qualité renforcée » ; règles RG1 à RG6, RG8 non encore implémentées.
 
 ## CHOIX TECHNIQUES
 - Droits par profil :
