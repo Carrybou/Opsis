@@ -63,13 +63,13 @@ class EquipementViewControllerTest {
     }
 
     @Test
-    void afficherFiche_responsable_nePeutPasDeclarerMaisPeutModifier() throws Exception {
+    void afficherFiche_responsable_peutDeclarerEtModifier() throws Exception {
         when(equipementService.consulterFiche(2L)).thenReturn(fiche());
         when(incidentService.incidentsModifiables(2L, RESPONSABLE)).thenReturn(Set.of(1L, 3L));
 
         mockMvc.perform(get("/equipements/2").sessionAttr(UtilisateurConnecte.ATTRIBUT, RESPONSABLE))
                 .andExpect(status().isOk())
-                .andExpect(content().string(not(containsString("Déclarer un incident"))))
+                .andExpect(content().string(containsString("Déclarer un incident")))
                 .andExpect(content().string(containsString("/incidents/1?modifier=true")))
                 .andExpect(content().string(containsString("/incidents/3?modifier=true")));
     }

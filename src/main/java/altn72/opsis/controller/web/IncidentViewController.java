@@ -121,6 +121,7 @@ public class IncidentViewController {
     }
 
     @PostMapping("/incidents/{id}/resolution")
+    @ProfilRequis({UtilisateurType.ADMIN, UtilisateurType.TECHNICIEN})
     public String resoudre(@PathVariable Long id,
                            @SessionAttribute(UtilisateurConnecte.ATTRIBUT) UtilisateurConnecte utilisateur,
                            RedirectAttributes redirectAttributes) {

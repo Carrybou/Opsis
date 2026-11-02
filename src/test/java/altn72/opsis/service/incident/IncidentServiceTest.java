@@ -1,14 +1,19 @@
 package altn72.opsis.service.incident;
 
 import altn72.opsis.dto.incident.AffectationRequest;
+import altn72.opsis.dto.incident.IncidentDetailResponse;
 import altn72.opsis.dto.incident.IncidentModificationRequest;
 import altn72.opsis.dto.incident.IncidentResponse;
+import altn72.opsis.exception.AccesRefuseException;
 import altn72.opsis.exception.AffectationIncidentImpossibleException;
+import altn72.opsis.exception.IncidentDejaResoluException;
 import altn72.opsis.exception.IncidentIntrouvableException;
 import altn72.opsis.exception.ModificationIncidentInterditeException;
 import altn72.opsis.exception.PrestataireIntrouvableException;
 import altn72.opsis.model.equipement.Equipement;
+import altn72.opsis.model.equipement.EquipementEtat;
 import altn72.opsis.model.equipement.EquipementRepository;
+import altn72.opsis.model.evaluation.EvaluationRepository;
 import altn72.opsis.model.incident.Incident;
 import altn72.opsis.model.incident.IncidentRepository;
 import altn72.opsis.model.incident.IncidentStatut;
@@ -31,6 +36,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -59,6 +65,9 @@ class IncidentServiceTest {
 
     @Mock
     private PrestataireRepository prestataireRepository;
+
+    @Mock
+    private EvaluationRepository evaluationRepository;
 
     @InjectMocks
     private IncidentService incidentService;
@@ -226,6 +235,60 @@ class IncidentServiceTest {
         assertThat(incidentService.estAffectable(1L, AGENT_AUTEUR)).isFalse();
         assertThat(incidentService.estAffectable(1L, TECHNICIEN)).isFalse();
         assertThat(incidentService.estAffectable(2L, RESPONSABLE)).isFalse();
+    }
+
+    @Test
+    void resoudre_responsableOuTechnicien_cloturePuisRemetLEquipementEnService() {
+        for (UtilisateurConnecte autorise : List.of(RESPONSABLE, TECHNICIEN)) {
+            Incident incident = incident(1L, IncidentStatut.EN_COURS);
+            incident.getIdEquipement().setEtatFonctionnement(EquipementEtat.EN_PANNE);
+            when(incidentRepository.findById(1L)).thenReturn(Optional.of(incident));
+
+            IncidentDetailResponse reponse = incidentService.resoudre(1L, autorise);
+
+            assertThat(reponse.statut()).isEqualTo(IncidentStatut.RESOLU);
+            assertThat(incident.getDateHeureResolution()).isNotNull();
+            assertThat(incident.getIdEquipement().getEtatFonctionnement()).isEqualTo(EquipementEtat.FONCTIONNEL);
+        }
+    }
+
+    @Test
+    void resoudre_autreIncidentEnCours_laisseLEquipementEnPanne() {
+        Incident incident = incident(1L, IncidentStatut.EN_COURS);
+        incident.getIdEquipement().setEtatFonctionnement(EquipementEtat.EN_PANNE);
+        when(incidentRepository.findById(1L)).thenReturn(Optional.of(incident));
+        when(incidentRepository.existsByIdEquipement_IdAndStatutNotAndIdNot(10L, IncidentStatut.RESOLU, 1L)).thenReturn(true);
+
+        incidentService.resoudre(1L, TECHNICIEN);
+
+        assertThat(incident.getStatut()).isEqualTo(IncidentStatut.RESOLU);
+        assertThat(incident.getIdEquipement().getEtatFonctionnement()).isEqualTo(EquipementEtat.EN_PANNE);
+    }
+
+    @Test
+    void resoudre_agent_refuseSansRienModifier() {
+        assertThatThrownBy(() -> incidentService.resoudre(1L, AGENT_AUTEUR))
+                .isInstanceOf(AccesRefuseException.class)
+                .hasMessage("Seul un administrateur ou un technicien peut déclarer un incident comme résolu");
+
+        verifyNoInteractions(incidentRepository);
+    }
+
+    @Test
+    void resoudre_incidentDejaResolu_refuse() {
+        when(incidentRepository.findById(1L)).thenReturn(Optional.of(incident(1L, IncidentStatut.RESOLU)));
+
+        assertThatThrownBy(() -> incidentService.resoudre(1L, TECHNICIEN))
+                .isInstanceOf(IncidentDejaResoluException.class)
+                .hasMessage("L'incident n°1 est déjà résolu");
+    }
+
+    @Test
+    void resoudre_incidentInexistant_refuse() {
+        when(incidentRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> incidentService.resoudre(99L, TECHNICIEN))
+                .isInstanceOf(IncidentIntrouvableException.class);
     }
 
     private void verifierRefus(Incident incident, UtilisateurConnecte utilisateur, String motifAttendu) {

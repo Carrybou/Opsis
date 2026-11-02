@@ -25,7 +25,8 @@
         </div>
         <div class="titre-actions">
             <div th:replace="~{fragments/badges :: etatEquipement(${fiche.etatFonctionnement})}"></div>
-            <a th:href="@{/equipements/{id}/incidents/nouveau(id=${idEquipement})}" class="bouton">
+            <a th:if="${utilisateurConnecte != null and utilisateurConnecte.peutDeclarerIncident()}"
+               th:href="@{/equipements/{id}/incidents/nouveau(id=${idEquipement})}" class="bouton">
                 Déclarer un incident
             </a>
         </div>

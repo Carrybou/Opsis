@@ -1,12 +1,16 @@
 package altn72.opsis.controller.web;
 
+import altn72.opsis.dto.equipement.EquipementResponse;
 import altn72.opsis.dto.incident.AffectationRequest;
 import altn72.opsis.dto.incident.IncidentDetailResponse;
 import altn72.opsis.dto.incident.IncidentModificationRequest;
 import altn72.opsis.dto.incident.IncidentResponse;
 import altn72.opsis.dto.prestataire.PrestataireResponse;
+import altn72.opsis.exception.AccesRefuseException;
 import altn72.opsis.exception.AffectationIncidentImpossibleException;
+import altn72.opsis.exception.IncidentDejaResoluException;
 import altn72.opsis.exception.ModificationIncidentInterditeException;
+import altn72.opsis.model.equipement.EquipementEtat;
 import altn72.opsis.model.equipement.EquipementType;
 import altn72.opsis.model.incident.IncidentStatut;
 import altn72.opsis.model.utilisateur.UtilisateurType;
@@ -170,9 +174,21 @@ class IncidentViewControllerTest {
     }
 
     @Test
-    void declarer_responsableEnvoieLeFormulaire_estRefuseParLaRoute() throws Exception {
+    void declarer_responsableEnvoieLeFormulaire_enregistreLIncident() throws Exception {
+        when(incidentService.declarer(any(), eq(RESPONSABLE.id()))).thenReturn(incident());
+
         mockMvc.perform(post("/incidents")
                         .sessionAttr(UtilisateurConnecte.ATTRIBUT, RESPONSABLE)
+                        .param("idEquipement", "2")
+                        .param("description", "Ascenseur bloqué entre deux niveaux"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/equipements/2"));
+    }
+
+    @Test
+    void declarer_technicienEnvoieLeFormulaire_estRefuseParLaRoute() throws Exception {
+        mockMvc.perform(post("/incidents")
+                        .sessionAttr(UtilisateurConnecte.ATTRIBUT, TECHNICIEN)
                         .param("idEquipement", "2")
                         .param("description", "Ascenseur bloqué entre deux niveaux"))
                 .andExpect(status().isForbidden());
@@ -283,11 +299,66 @@ class IncidentViewControllerTest {
     }
 
     @Test
-    void declarer_responsable_estRefuseParLaRoute() throws Exception {
+    void declarer_responsable_afficheLeFormulaire() throws Exception {
+        when(equipementService.trouver(2L)).thenReturn(new EquipementResponse(2L, "ASC-CHT-001",
+                "Ascenseur accès quai ligne 1", EquipementType.ASCENSEUR, EquipementEtat.FONCTIONNEL, "Châtelet"));
+
         mockMvc.perform(get("/equipements/2/incidents/nouveau").sessionAttr(UtilisateurConnecte.ATTRIBUT, RESPONSABLE))
+                .andExpect(status().isOk())
+                .andExpect(view().name("incidents/declarer"));
+    }
+
+    @Test
+    void afficherDetail_boutonResolution_reserveAuResponsableEtAuTechnicien() throws Exception {
+        when(incidentService.consulterDetail(1L)).thenReturn(detail());
+
+        for (UtilisateurConnecte autorise : List.of(RESPONSABLE, TECHNICIEN)) {
+            mockMvc.perform(get("/incidents/1").sessionAttr(UtilisateurConnecte.ATTRIBUT, autorise))
+                    .andExpect(content().string(containsString("Déclarer comme résolu")));
+        }
+        mockMvc.perform(get("/incidents/1").sessionAttr(UtilisateurConnecte.ATTRIBUT, AGENT))
+                .andExpect(content().string(not(containsString("Déclarer comme résolu"))));
+    }
+
+    @Test
+    void resoudre_agent_estRefuseParLaRoute() throws Exception {
+        mockMvc.perform(post("/incidents/1/resolution").sessionAttr(UtilisateurConnecte.ATTRIBUT, AGENT))
                 .andExpect(status().isForbidden());
 
-        verifyNoInteractions(equipementService);
+        verifyNoInteractions(incidentService);
+    }
+
+    @Test
+    void resoudre_responsableOuTechnicien_enregistreEtResteSurLaPageDetail() throws Exception {
+        for (UtilisateurConnecte autorise : List.of(RESPONSABLE, TECHNICIEN)) {
+            mockMvc.perform(post("/incidents/1/resolution").sessionAttr(UtilisateurConnecte.ATTRIBUT, autorise))
+                    .andExpect(status().is3xxRedirection())
+                    .andExpect(redirectedUrl("/incidents/1"))
+                    .andExpect(flash().attribute("succes", "L'incident n°1 a été déclaré comme résolu."));
+
+            verify(incidentService).resoudre(1L, autorise);
+        }
+    }
+
+    @Test
+    void resoudre_incidentDejaResolu_afficheLeMotifSurLaPageDetail() throws Exception {
+        when(incidentService.resoudre(1L, TECHNICIEN)).thenThrow(new IncidentDejaResoluException(1L));
+
+        mockMvc.perform(post("/incidents/1/resolution").sessionAttr(UtilisateurConnecte.ATTRIBUT, TECHNICIEN))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/incidents/1"))
+                .andExpect(flash().attribute("erreur", "L'incident n°1 est déjà résolu"));
+    }
+
+    @Test
+    void resoudre_refusDuService_afficheLaPageDErreur403() throws Exception {
+        when(incidentService.resoudre(1L, TECHNICIEN)).thenThrow(new AccesRefuseException("Accès refusé pour ce profil"));
+
+        mockMvc.perform(post("/incidents/1/resolution").sessionAttr(UtilisateurConnecte.ATTRIBUT, TECHNICIEN))
+                .andExpect(status().isForbidden())
+                .andExpect(view().name("erreur"))
+                .andExpect(content().string(containsString("Erreur 403")))
+                .andExpect(content().string(containsString("Accès refusé pour ce profil")));
     }
 
     private static IncidentDetailResponse detail() {

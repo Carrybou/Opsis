@@ -34,7 +34,7 @@ public class IncidentRestController {
     }
 
     @PostMapping
-    @ProfilRequis(UtilisateurType.AGENT)
+    @ProfilRequis({UtilisateurType.AGENT, UtilisateurType.ADMIN})
     public ResponseEntity<IncidentResponse> declarer(@Valid @RequestBody IncidentRequest request,
                                                      @RequestAttribute(UtilisateurConnecte.ATTRIBUT) UtilisateurConnecte utilisateur) {
         IncidentResponse incident = incidentService.declarer(request, utilisateur.id());

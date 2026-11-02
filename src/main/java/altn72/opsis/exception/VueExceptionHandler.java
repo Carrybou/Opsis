@@ -58,11 +58,11 @@ public class VueExceptionHandler {
     }
 
     @ExceptionHandler(AccesRefuseException.class)
-    public String handleAccesRefuse(AccesRefuseException e, HttpServletResponse response, Model model) {
-        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-        model.addAttribute("titre", "Accès refusé");
-        model.addAttribute("message", e.getMessage());
-        return "erreur";
+    public String handleAccesRefuse(AccesRefuseException e,
+                                    @SessionAttribute(name = UtilisateurConnecte.ATTRIBUT, required = false) UtilisateurConnecte utilisateur,
+                                    HttpServletResponse response, Model model) {
+        return afficherErreur(HttpServletResponse.SC_FORBIDDEN, "Accès refusé", e.getMessage(),
+                utilisateur, response, model);
     }
 
     private String afficherErreur(int statut, String titre, String message, UtilisateurConnecte utilisateur,

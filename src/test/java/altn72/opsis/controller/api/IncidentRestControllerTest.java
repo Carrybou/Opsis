@@ -5,6 +5,7 @@ import altn72.opsis.dto.incident.IncidentDetailResponse;
 import altn72.opsis.dto.incident.IncidentModificationRequest;
 import altn72.opsis.dto.incident.IncidentResponse;
 import altn72.opsis.exception.AffectationIncidentImpossibleException;
+import altn72.opsis.exception.IncidentDejaResoluException;
 import altn72.opsis.exception.IncidentIntrouvableException;
 import altn72.opsis.exception.ModificationIncidentInterditeException;
 import altn72.opsis.exception.PrestataireIntrouvableException;
@@ -97,9 +98,21 @@ class IncidentRestControllerTest {
     }
 
     @Test
-    void declarer_responsable_renvoie403() throws Exception {
+    void declarer_responsable_renvoie201() throws Exception {
+        when(incidentService.declarer(any(), eq(RESPONSABLE.id()))).thenReturn(incident());
+
         mockMvc.perform(post("/api/incidents")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer token-responsable")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(DECLARATION_JSON))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.identifiant").value(1));
+    }
+
+    @Test
+    void declarer_technicien_renvoie403() throws Exception {
+        mockMvc.perform(post("/api/incidents")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer token-technicien")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(DECLARATION_JSON))
                 .andExpect(status().isForbidden());
@@ -235,6 +248,37 @@ class IncidentRestControllerTest {
                 .andExpect(jsonPath("$.erreurs.idPrestataire").value("Veuillez choisir un prestataire"));
 
         verifyNoInteractions(incidentService);
+    }
+
+    @Test
+    void resoudre_agent_renvoie403() throws Exception {
+        mockMvc.perform(post("/api/incidents/1/resolution")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer token-agent"))
+                .andExpect(status().isForbidden());
+
+        verifyNoInteractions(incidentService);
+    }
+
+    @Test
+    void resoudre_responsableOuTechnicien_renvoieLeDetail() throws Exception {
+        when(incidentService.resoudre(eq(1L), any())).thenReturn(detail());
+
+        for (String token : new String[]{"token-responsable", "token-technicien"}) {
+            mockMvc.perform(post("/api/incidents/1/resolution")
+                            .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.identifiant").value(1));
+        }
+    }
+
+    @Test
+    void resoudre_incidentDejaResolu_renvoie409() throws Exception {
+        when(incidentService.resoudre(1L, TECHNICIEN)).thenThrow(new IncidentDejaResoluException(1L));
+
+        mockMvc.perform(post("/api/incidents/1/resolution")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer token-technicien"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("L'incident n°1 est déjà résolu"));
     }
 
     private static IncidentResponse incident() {
