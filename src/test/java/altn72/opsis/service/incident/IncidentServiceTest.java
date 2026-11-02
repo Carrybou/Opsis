@@ -157,8 +157,9 @@ class IncidentServiceTest {
     }
 
     @Test
-    void affecter_incidentNonAffecte_leRattacheAuPrestataireEtLePasseEnCours() {
+    void affecter_incidentNonAffecte_leRattacheAuPrestataireEtPasseLEquipementEnMaintenance() {
         Incident incident = incident(1L, IncidentStatut.OUVERT);
+        incident.getIdEquipement().setEtatFonctionnement(EquipementEtat.EN_PANNE);
         when(incidentRepository.findById(1L)).thenReturn(Optional.of(incident));
         when(prestataireRepository.findById(2L)).thenReturn(Optional.of(prestataire(2L, "Mobilis Maintenance")));
 
@@ -167,6 +168,20 @@ class IncidentServiceTest {
         assertThat(incident.getStatut()).isEqualTo(IncidentStatut.EN_COURS);
         assertThat(incident.getIdPrestataire().getId()).isEqualTo(2L);
         assertThat(reponse.nomPrestataire()).isEqualTo("Mobilis Maintenance");
+        assertThat(incident.getIdEquipement().getEtatFonctionnement()).isEqualTo(EquipementEtat.EN_MAINTENANCE);
+    }
+
+    @Test
+    void affecter_refus_laisseLEquipementEnPanne() {
+        Incident incident = incident(1L, IncidentStatut.OUVERT);
+        incident.getIdEquipement().setEtatFonctionnement(EquipementEtat.EN_PANNE);
+        when(incidentRepository.findById(1L)).thenReturn(Optional.of(incident));
+        when(prestataireRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> incidentService.affecter(1L, new AffectationRequest(99L), RESPONSABLE))
+                .isInstanceOf(PrestataireIntrouvableException.class);
+
+        assertThat(incident.getIdEquipement().getEtatFonctionnement()).isEqualTo(EquipementEtat.EN_PANNE);
     }
 
     @Test
@@ -253,9 +268,21 @@ class IncidentServiceTest {
     }
 
     @Test
-    void resoudre_autreIncidentEnCours_laisseLEquipementEnPanne() {
-        Incident incident = incident(1L, IncidentStatut.EN_COURS);
+    void resoudre_autreIncidentAffecte_laisseLEquipementEnMaintenance() {
+        Incident incident = incident(1L, IncidentStatut.OUVERT);
         incident.getIdEquipement().setEtatFonctionnement(EquipementEtat.EN_PANNE);
+        when(incidentRepository.findById(1L)).thenReturn(Optional.of(incident));
+        when(incidentRepository.existsByIdEquipement_IdAndStatutAndIdNot(10L, IncidentStatut.EN_COURS, 1L)).thenReturn(true);
+
+        incidentService.resoudre(1L, TECHNICIEN);
+
+        assertThat(incident.getIdEquipement().getEtatFonctionnement()).isEqualTo(EquipementEtat.EN_MAINTENANCE);
+    }
+
+    @Test
+    void resoudre_autreIncidentNonAffecte_repasseLEquipementEnPanne() {
+        Incident incident = incident(1L, IncidentStatut.EN_COURS);
+        incident.getIdEquipement().setEtatFonctionnement(EquipementEtat.EN_MAINTENANCE);
         when(incidentRepository.findById(1L)).thenReturn(Optional.of(incident));
         when(incidentRepository.existsByIdEquipement_IdAndStatutNotAndIdNot(10L, IncidentStatut.RESOLU, 1L)).thenReturn(true);
 

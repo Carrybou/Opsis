@@ -110,7 +110,8 @@ public class IncidentService implements IncidentInterface {
     }
 
     // F7 / RG2 : affecter fait passer l'incident de "non affecté" à "affecté" ; réaffecter remplace le prestataire.
-    // Transactionnel (RG10) : prestataire et statut sont enregistrés ensemble ou pas du tout.
+    // Le prestataire intervient : l'équipement passe en maintenance.
+    // Transactionnel (RG10) : prestataire, statut et état de l'équipement sont enregistrés ensemble ou pas du tout.
     @Override
     @Transactional
     public IncidentResponse affecter(Long idIncident, AffectationRequest request, UtilisateurConnecte utilisateur) {
@@ -133,6 +134,7 @@ public class IncidentService implements IncidentInterface {
 
         incident.setIdPrestataire(prestataire);
         incident.setStatut(IncidentStatut.EN_COURS);
+        incident.getIdEquipement().setEtatFonctionnement(EquipementEtat.EN_MAINTENANCE);
         return IncidentResponse.from(incident);
     }
 
@@ -171,15 +173,21 @@ public class IncidentService implements IncidentInterface {
         incident.setDateHeureResolution(LocalDateTime.now());
 
         Equipement equipement = incident.getIdEquipement();
-        boolean autresIncidentsEnCours = incidentRepository.existsByIdEquipement_IdAndStatutNotAndIdNot(
-                equipement.getId(), IncidentStatut.RESOLU, id);
-
-        if (!autresIncidentsEnCours) {
-            equipement.setEtatFonctionnement(EquipementEtat.FONCTIONNEL);
-        }
+        equipement.setEtatFonctionnement(etatApresResolution(equipement.getId(), id));
 
         Evaluation evaluation = evaluationRepository.findByIdIncident_Id(id).orElse(null);
         return IncidentDetailResponse.from(incident, evaluation);
+    }
+
+    // L'état de l'équipement dépend des incidents qui restent : un prestataire encore à l'œuvre, une panne sans prestataire, ou plus rien.
+    private EquipementEtat etatApresResolution(Long idEquipement, Long idIncidentResolu) {
+        if (incidentRepository.existsByIdEquipement_IdAndStatutAndIdNot(idEquipement, IncidentStatut.EN_COURS, idIncidentResolu)) {
+            return EquipementEtat.EN_MAINTENANCE;
+        }
+        if (incidentRepository.existsByIdEquipement_IdAndStatutNotAndIdNot(idEquipement, IncidentStatut.RESOLU, idIncidentResolu)) {
+            return EquipementEtat.EN_PANNE;
+        }
+        return EquipementEtat.FONCTIONNEL;
     }
 
     private Optional<String> motifRefusModification(Incident incident, UtilisateurConnecte utilisateur) {
