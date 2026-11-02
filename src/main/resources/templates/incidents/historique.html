@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Historique des incidents - Opsis</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div th:replace="~{fragments/entete :: entete('historique')}"></div>
+
+<main class="contenu">
+    <div class="titre-page">
+        <div>
+            <div class="surtitre">Incidents résolus</div>
+            <h1>Historique</h1>
+        </div>
+    </div>
+
+    <section class="indicateurs" aria-label="Synthèse de l'historique">
+        <div class="indicateur">
+            <strong th:text="${#lists.size(incidents)}">0</strong>
+            <span>incidents résolus</span>
+        </div>
+    </section>
+
+    <section class="carte">
+        <div class="carte-entete"><h2>Du plus récent au plus ancien</h2></div>
+
+        <table class="tableau" th:unless="${#lists.isEmpty(incidents)}">
+            <thead>
+            <tr>
+                <th>Résolution</th>
+                <th>Ouverture</th>
+                <th>Équipement</th>
+                <th>Station</th>
+                <th>Description</th>
+                <th>Prestataire</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="incident : ${incidents}">
+                <td th:text="${#temporals.format(incident.dateHeureResolution, 'dd/MM/yyyy HH:mm')}">05/10/2026 15:20</td>
+                <td th:text="${#temporals.format(incident.dateHeureOuverture, 'dd/MM/yyyy HH:mm')}">05/10/2026 07:10</td>
+                <td><a th:href="@{/equipements/{id}(id=${incident.idEquipement})}" th:text="${incident.referenceEquipement}">REF</a></td>
+                <td th:text="${incident.nomStation}">Station</td>
+                <td><a th:href="@{/incidents/{id}(id=${incident.identifiant})}" th:text="${incident.description}">Description</a></td>
+                <td th:text="${incident.nomPrestataire} ?: 'Non affecté'">Prestataire</td>
+            </tr>
+            </tbody>
+        </table>
+
+        <p class="vide" th:if="${#lists.isEmpty(incidents)}">Aucun incident résolu pour le moment.</p>
+    </section>
+</main>
+</body>
+</html>

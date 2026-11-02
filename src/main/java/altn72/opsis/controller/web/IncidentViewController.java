@@ -154,4 +154,10 @@ public class IncidentViewController {
             model.addAttribute("affectationRequest", new AffectationRequest());
         }
     }
+
+    @GetMapping("/incidents/historique")
+    public String historique(Model model) {
+        model.addAttribute("incidents", incidentService.listerHistoriqueResolus());
+        return "incidents/historique";
+    }
 }

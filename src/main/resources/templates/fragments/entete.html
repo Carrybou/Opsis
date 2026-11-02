@@ -4,6 +4,7 @@
 <header th:fragment="entete(pageActive)" class="entete">
     <div class="entete-gauche">
         <a th:href="@{/stations}" class="logo">Opsis</a>
+        <a th:href="@{/incidents/historique}" th:classappend="${pageActive == 'historique'} ? 'actif'">Historique</a>
         <nav class="navigation" th:if="${utilisateurConnecte != null}">
             <a th:href="@{/stations}" th:classappend="${pageActive == 'stations'} ? 'actif'">Stations</a>
         </nav>

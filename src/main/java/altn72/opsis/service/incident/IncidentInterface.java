@@ -7,6 +7,7 @@ import altn72.opsis.dto.incident.IncidentRequest;
 import altn72.opsis.dto.incident.IncidentResponse;
 import altn72.opsis.security.UtilisateurConnecte;
 
+import java.util.List;
 import java.util.Set;
 
 public interface IncidentInterface {
@@ -25,4 +26,6 @@ public interface IncidentInterface {
     boolean estAffectable(Long idIncident, UtilisateurConnecte utilisateur);
 
     IncidentDetailResponse resoudre(Long id, UtilisateurConnecte utilisateur);
+
+    List<IncidentResponse> listerHistoriqueResolus();
 }

@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/incidents")
@@ -69,5 +70,10 @@ public class IncidentRestController {
     public ResponseEntity<IncidentDetailResponse> resoudre(@PathVariable Long id,
                                                            @RequestAttribute(UtilisateurConnecte.ATTRIBUT) UtilisateurConnecte utilisateur) {
         return ResponseEntity.ok(incidentService.resoudre(id, utilisateur));
+    }
+
+    @GetMapping("/historique")
+    public ResponseEntity<List<IncidentResponse>> historique() {
+        return ResponseEntity.ok(incidentService.listerHistoriqueResolus());
     }
 }

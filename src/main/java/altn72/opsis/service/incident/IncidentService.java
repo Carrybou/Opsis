@@ -24,6 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -199,5 +200,14 @@ public class IncidentService implements IncidentInterface {
                     + " est déjà affecté à un prestataire : seul un responsable d'exploitation peut le modifier");
         }
         return Optional.empty();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<IncidentResponse> listerHistoriqueResolus() {
+        return incidentRepository.findByStatutOrderByDateHeureResolutionDesc(IncidentStatut.RESOLU)
+                .stream()
+                .map(IncidentResponse::from)
+                .toList();
     }
 }
