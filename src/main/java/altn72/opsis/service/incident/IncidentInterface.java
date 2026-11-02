@@ -23,4 +23,6 @@ public interface IncidentInterface {
     IncidentResponse affecter(Long idIncident, AffectationRequest request, UtilisateurConnecte utilisateur);
 
     boolean estAffectable(Long idIncident, UtilisateurConnecte utilisateur);
+
+    IncidentDetailResponse resoudre(Long id, UtilisateurConnecte utilisateur);
 }

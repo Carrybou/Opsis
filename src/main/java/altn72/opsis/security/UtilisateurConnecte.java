@@ -31,4 +31,8 @@ public record UtilisateurConnecte(
         }
         return false;
     }
+
+    public boolean peutResoudreIncident() {
+        return aUnProfil(UtilisateurType.ADMIN, UtilisateurType.TECHNICIEN);
+    }
 }

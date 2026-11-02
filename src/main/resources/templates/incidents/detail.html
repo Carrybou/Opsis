@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title th:text="|Incident n°${incident.identifiant} - Opsis|">Incident - Opsis</title>
+    <title th:text="|Incident n ${incident.identifiant} - Opsis|">Incident - Opsis</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
@@ -14,17 +14,26 @@
         <a th:href="@{/stations}">Stations</a>
         <a th:href="@{|/stations#station-${incident.idStation}|}" th:text="${incident.nomStation}">Station</a>
         <a th:href="@{/equipements/{id}(id=${incident.idEquipement})}" th:text="${incident.referenceEquipement}">REF</a>
-        <span th:text="|Incident n°${incident.identifiant}|">Incident</span>
+        <span th:text="|Incident n ${incident.identifiant}|">Incident</span>
     </nav>
 
-    <p class="message succes" th:if="${succes}" th:text="${succes}" role="status"></p>
+    <p class="message succes" th:if="${succes}" th:text="${succes}"></p>
+    <p class="message erreur" th:if="${erreur}" th:text="${erreur}"></p>
 
     <div class="titre-page">
         <div>
             <div class="surtitre" th:text="|Déclaré par ${incident.prenomDeclarant}|">Déclaré par</div>
             <h1 th:text="|Incident n°${incident.identifiant}|">Incident n°1</h1>
         </div>
-        <div th:replace="~{fragments/badges :: statutIncident(${incident.statut})}"></div>
+        <div class="titre-actions">
+            <div th:replace="~{fragments/badges :: statutIncident(${incident.statut})}"></div>
+            <form th:if="${!incident.resolu and utilisateurConnecte != null and utilisateurConnecte.peutResoudreIncident()}"
+                  th:action="@{/incidents/{id}/resolution(id=${incident.identifiant})}"
+                  method="post"
+                  onsubmit="return confirm('Confirmer la résolution de cet incident ?');">
+                <button type="submit" class="bouton">Déclarer comme résolu</button>
+            </form>
+        </div>
     </div>
 
     <section class="indicateurs" aria-label="Synthèse de l'incident">
@@ -46,7 +55,6 @@
     <section class="carte" id="description">
         <div class="carte-entete">
             <h2>Description</h2>
-            <!-- Lien de repli sans JS : le script le transforme en bascule d'édition en place. -->
             <a th:if="${modifiable}" id="bouton-modifier" class="bouton secondaire"
                th:href="@{/incidents/{id}(id=${incident.identifiant}, modifier=true)} + '#description'"
                th:hidden="${enEdition}" aria-controls="formulaire-modification">Modifier</a>

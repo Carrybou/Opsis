@@ -5,12 +5,7 @@ import altn72.opsis.dto.incident.IncidentDetailResponse;
 import altn72.opsis.dto.incident.IncidentModificationRequest;
 import altn72.opsis.dto.incident.IncidentRequest;
 import altn72.opsis.dto.incident.IncidentResponse;
-import altn72.opsis.exception.AffectationIncidentImpossibleException;
-import altn72.opsis.exception.EquipementIntrouvableException;
-import altn72.opsis.exception.IncidentIntrouvableException;
-import altn72.opsis.exception.ModificationIncidentInterditeException;
-import altn72.opsis.exception.PrestataireIntrouvableException;
-import altn72.opsis.exception.UtilisateurIntrouvableException;
+import altn72.opsis.exception.*;
 import altn72.opsis.model.equipement.Equipement;
 import altn72.opsis.model.equipement.EquipementEtat;
 import altn72.opsis.model.evaluation.Evaluation;
@@ -157,8 +152,35 @@ public class IncidentService implements IncidentInterface {
         return incident;
     }
 
-    // F6 : le responsable modifie tout incident non résolu ; l'agent seulement ceux qu'il a déclarés,
-    // tant qu'aucun prestataire ne les a pris en charge. Un incident résolu est figé (RG5).
+    @Override
+    @Transactional
+    public IncidentDetailResponse resoudre(Long id, UtilisateurConnecte utilisateur) {
+        if (!utilisateur.peutResoudreIncident()) {
+            throw new AccesRefuseException("Seul un administrateur ou un technicien peut déclarer un incident comme résolu");
+        }
+
+        Incident incident = incidentRepository.findById(id)
+                .orElseThrow(() -> new IncidentIntrouvableException(id));
+
+        if (incident.estResolu()) {
+            throw new IncidentDejaResoluException(id);
+        }
+
+        incident.setStatut(IncidentStatut.RESOLU);
+        incident.setDateHeureResolution(LocalDateTime.now());
+
+        Equipement equipement = incident.getIdEquipement();
+        boolean autresIncidentsEnCours = incidentRepository.existsByIdEquipement_IdAndStatutNotAndIdNot(
+                equipement.getId(), IncidentStatut.RESOLU, id);
+
+        if (!autresIncidentsEnCours) {
+            equipement.setEtatFonctionnement(EquipementEtat.FONCTIONNEL);
+        }
+
+        Evaluation evaluation = evaluationRepository.findByIdIncident_Id(id).orElse(null);
+        return IncidentDetailResponse.from(incident, evaluation);
+    }
+
     private Optional<String> motifRefusModification(Incident incident, UtilisateurConnecte utilisateur) {
         if (incident.estResolu()) {
             return Optional.of("L'incident n°" + incident.getId() + " est résolu : il ne peut plus être modifié");

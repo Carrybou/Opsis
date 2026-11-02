@@ -63,4 +63,11 @@ public class IncidentRestController {
                                      @RequestAttribute(UtilisateurConnecte.ATTRIBUT) UtilisateurConnecte utilisateur) {
         return incidentService.affecter(id, request, utilisateur);
     }
+
+    @ProfilRequis({UtilisateurType.ADMIN, UtilisateurType.TECHNICIEN})
+    @PostMapping("/{id}/resolution")
+    public ResponseEntity<IncidentDetailResponse> resoudre(@PathVariable Long id,
+                                                           @RequestAttribute(UtilisateurConnecte.ATTRIBUT) UtilisateurConnecte utilisateur) {
+        return ResponseEntity.ok(incidentService.resoudre(id, utilisateur));
+    }
 }

@@ -58,4 +58,16 @@ public class ApiExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(new ApiError(401, e.getMessage(), Map.of(), LocalDateTime.now()));
     }
+
+    @ExceptionHandler(AccesRefuseException.class)
+    public ResponseEntity<ApiError> handleAccesRefuse(AccesRefuseException e) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(new ApiError(403, e.getMessage(), Map.of(), LocalDateTime.now()));
+    }
+
+    @ExceptionHandler(IncidentDejaResoluException.class)
+    public ResponseEntity<ApiError> handleDejaResolu(IncidentDejaResoluException e) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ApiError(409, e.getMessage(), Map.of(), LocalDateTime.now()));
+    }
 }

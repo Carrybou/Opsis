@@ -11,4 +11,6 @@ public interface IncidentRepository extends JpaRepository<Incident, Long> {
 
     @EntityGraph(attributePaths = "idPrestataire")
     List<Incident> findByIdEquipement_IdOrderByDateHeureOuvertureDesc(Long idEquipement);
+
+    boolean existsByIdEquipement_IdAndStatutNotAndIdNot(Long idEquipement, IncidentStatut statut, Long idIncident);
 }

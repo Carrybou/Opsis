@@ -5,6 +5,7 @@ import altn72.opsis.dto.incident.IncidentDetailResponse;
 import altn72.opsis.dto.incident.IncidentModificationRequest;
 import altn72.opsis.dto.incident.IncidentRequest;
 import altn72.opsis.dto.incident.IncidentResponse;
+import altn72.opsis.exception.IncidentDejaResoluException;
 import altn72.opsis.model.utilisateur.UtilisateurType;
 import altn72.opsis.security.ProfilRequis;
 import altn72.opsis.security.UtilisateurConnecte;
@@ -39,7 +40,7 @@ public class IncidentViewController {
     }
 
     @GetMapping("/equipements/{idEquipement}/incidents/nouveau")
-    @ProfilRequis(UtilisateurType.AGENT)
+    @ProfilRequis({UtilisateurType.AGENT, UtilisateurType.ADMIN})
     public String afficherFormulaire(@PathVariable Long idEquipement, Model model) {
         model.addAttribute("equipement", equipementService.trouver(idEquipement));
         model.addAttribute("incidentRequest", new IncidentRequest(idEquipement, ""));
@@ -47,7 +48,7 @@ public class IncidentViewController {
     }
 
     @PostMapping("/incidents")
-    @ProfilRequis(UtilisateurType.AGENT)
+    @ProfilRequis({UtilisateurType.AGENT, UtilisateurType.ADMIN})
     public String declarer(@Valid @ModelAttribute("incidentRequest") IncidentRequest request,
                            BindingResult resultat,
                            @SessionAttribute(UtilisateurConnecte.ATTRIBUT) UtilisateurConnecte utilisateur,
@@ -70,9 +71,6 @@ public class IncidentViewController {
         return "redirect:/equipements/" + incident.idEquipement();
     }
 
-    // F5 + F6 + F7 : la modification de la description et l'affectation d'un prestataire se font directement sur la page détail.
-    // Les paramètres "modifier" et "affecter" ouvrent le formulaire correspondant dès l'affichage
-    // (lien depuis la fiche équipement, navigateur sans JS).
     @GetMapping("/incidents/{id}")
     public String afficherDetail(@PathVariable Long id,
                                  @RequestParam(defaultValue = "false") boolean modifier,
@@ -122,7 +120,19 @@ public class IncidentViewController {
         return "redirect:/incidents/" + incident.identifiant();
     }
 
-    // Les formulaires déjà présents dans le modèle (saisie invalide renvoyée par @ModelAttribute) sont conservés.
+    @PostMapping("/incidents/{id}/resolution")
+    public String resoudre(@PathVariable Long id,
+                           @SessionAttribute(UtilisateurConnecte.ATTRIBUT) UtilisateurConnecte utilisateur,
+                           RedirectAttributes redirectAttributes) {
+        try {
+            incidentService.resoudre(id, utilisateur);
+            redirectAttributes.addFlashAttribute("succes", "L'incident n°" + id + " a été déclaré comme résolu.");
+        } catch (IncidentDejaResoluException e) {
+            redirectAttributes.addFlashAttribute("erreur", e.getMessage());
+        }
+        return "redirect:/incidents/" + id;
+    }
+
     private void preparerDetail(Long id, UtilisateurConnecte utilisateur, boolean enEdition, boolean enAffectation, Model model) {
         IncidentDetailResponse incident = incidentService.consulterDetail(id);
         boolean modifiable = incidentService.estModifiable(id, utilisateur);

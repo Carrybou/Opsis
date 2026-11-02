@@ -57,8 +57,14 @@ public class VueExceptionHandler {
                 utilisateur, response, model);
     }
 
-    // Les méthodes @ModelAttribute ne sont pas appelées pour un @ExceptionHandler :
-    // l'utilisateur connecté est donc remis dans le modèle pour que l'en-tête reste affiché.
+    @ExceptionHandler(AccesRefuseException.class)
+    public String handleAccesRefuse(AccesRefuseException e, HttpServletResponse response, Model model) {
+        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+        model.addAttribute("titre", "Accès refusé");
+        model.addAttribute("message", e.getMessage());
+        return "erreur";
+    }
+
     private String afficherErreur(int statut, String titre, String message, UtilisateurConnecte utilisateur,
                                   HttpServletResponse response, Model model) {
         response.setStatus(statut);
