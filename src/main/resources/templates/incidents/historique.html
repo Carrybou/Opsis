@@ -36,6 +36,7 @@
                 <th>Station</th>
                 <th>Description</th>
                 <th>Prestataire</th>
+                <th>Évaluation</th>
             </tr>
             </thead>
             <tbody>
@@ -45,7 +46,21 @@
                 <td><a th:href="@{/equipements/{id}(id=${incident.idEquipement})}" th:text="${incident.referenceEquipement}">REF</a></td>
                 <td th:text="${incident.nomStation}">Station</td>
                 <td><a th:href="@{/incidents/{id}(id=${incident.identifiant})}" th:text="${incident.description}">Description</a></td>
-                <td th:text="${incident.nomPrestataire} ?: 'Non affecté'">Prestataire</td>
+                <td>
+                    <a th:if="${incident.idPrestataire != null}" th:href="@{/prestataires/{id}(id=${incident.idPrestataire})}"
+                       th:text="${incident.nomPrestataire}">Prestataire</a>
+                    <span th:if="${incident.idPrestataire == null}" class="secondaire">Non affecté</span>
+                </td>
+                <td th:with="note=${notes.get(incident.identifiant)}">
+                    <span th:if="${note != null}" class="note-etoiles-tableau"
+                          th:text="${#strings.repeat('★', note) + #strings.repeat('☆', 5 - note)}"
+                          th:attr="aria-label=|Note : ${note} sur 5|, title=|${note} sur 5|">★★★★☆</span>
+                    <a th:if="${note == null and incident.nomPrestataire != null and utilisateurConnecte.peutEvaluerPrestataire()}"
+                       th:href="@{/incidents/{id}(id=${incident.identifiant}, evaluer=true)} + '#evaluation'">Évaluer</a>
+                    <span th:if="${note == null and incident.nomPrestataire != null and !utilisateurConnecte.peutEvaluerPrestataire()}"
+                          class="secondaire">Non évalué</span>
+                    <span th:if="${incident.nomPrestataire == null}" class="secondaire">—</span>
+                </td>
             </tr>
             </tbody>
         </table>

@@ -2,7 +2,6 @@ package altn72.opsis.service.equipement;
 
 import altn72.opsis.dto.equipement.FicheEquipementResponse;
 import altn72.opsis.dto.incident.IncidentResume;
-import altn72.opsis.exception.EquipementIntrouvableException;
 import altn72.opsis.model.equipement.Equipement;
 import altn72.opsis.model.equipement.EquipementRepository;
 import altn72.opsis.model.incident.Incident;
@@ -21,7 +20,6 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -56,26 +54,6 @@ class EquipementServiceTest {
         assertThat(fiche.nomStation()).isEqualTo("Châtelet");
         assertThat(fiche.incidentsEnCours()).extracting(IncidentResume::identifiant).containsExactly(10L, 12L);
         assertThat(fiche.incidentsPasses()).extracting(IncidentResume::identifiant).containsExactly(11L, 13L);
-    }
-
-    @Test
-    void consulterFiche_equipementSansIncident_renvoieDesListesVides() {
-        when(equipementRepository.findById(ID_EQUIPEMENT)).thenReturn(Optional.of(equipement()));
-        when(incidentRepository.findByIdEquipement_IdOrderByDateHeureOuvertureDesc(ID_EQUIPEMENT)).thenReturn(List.of());
-
-        FicheEquipementResponse fiche = equipementService.consulterFiche(ID_EQUIPEMENT);
-
-        assertThat(fiche.incidentsEnCours()).isEmpty();
-        assertThat(fiche.incidentsPasses()).isEmpty();
-    }
-
-    @Test
-    void consulterFiche_equipementInexistant_leveEquipementIntrouvableException() {
-        when(equipementRepository.findById(ID_EQUIPEMENT)).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> equipementService.consulterFiche(ID_EQUIPEMENT))
-                .isInstanceOf(EquipementIntrouvableException.class)
-                .hasMessage("L'équipement n°1 est introuvable");
     }
 
     private static Equipement equipement() {

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Prestataires - Opsis</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div th:replace="~{fragments/entete :: entete('prestataires')}"></div>
+
+<main class="contenu">
+    <div class="titre-page">
+        <div>
+            <div class="surtitre">Maintenance</div>
+            <h1>Prestataires</h1>
+        </div>
+    </div>
+
+    <section class="carte">
+        <div class="carte-entete"><h2>Par ordre alphabétique</h2></div>
+
+        <table class="tableau" th:unless="${#lists.isEmpty(prestataires)}">
+            <thead>
+            <tr>
+                <th>Prestataire</th>
+                <th>Contact</th>
+                <th>Note moyenne</th>
+                <th>Évaluations</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="p : ${prestataires}">
+                <td><a th:href="@{/prestataires/{id}(id=${p.identifiant})}" th:text="${p.nom}">Prestataire</a></td>
+                <td th:text="${p.contact}">contact</td>
+                <td>
+                    <span th:if="${p.estEvalue()}" class="note-etoiles-tableau"
+                          th:text="|★ ${#numbers.formatDecimal(p.noteMoyenne, 1, 1, 'COMMA')} / 5|">★ 4,0 / 5</span>
+                    <span th:unless="${p.estEvalue()}" class="secondaire">Pas encore évalué</span>
+                </td>
+                <td th:text="${p.nombreEvaluations}">0</td>
+            </tr>
+            </tbody>
+        </table>
+
+        <p class="vide" th:if="${#lists.isEmpty(prestataires)}">Aucun prestataire enregistré.</p>
+    </section>
+</main>
+</body>
+</html>

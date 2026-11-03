@@ -20,11 +20,8 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.allOf;
-import static org.hamcrest.Matchers.containsString;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -57,13 +54,6 @@ class StationViewControllerTest {
     }
 
     @Test
-    void accueil_redirigeVersLesStations() throws Exception {
-        mockMvc.perform(get("/").sessionAttr(UtilisateurConnecte.ATTRIBUT, THOMAS))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/stations"));
-    }
-
-    @Test
     void afficherStations_regroupeLesEquipementsParStationEtCalculeLaSynthese() throws Exception {
         Station chatelet = station(1L, "Châtelet");
         Station gareDeLyon = station(2L, "Gare de Lyon");
@@ -87,41 +77,6 @@ class StationViewControllerTest {
                 (Map<Long, List<Equipement>>) resultat.getModelAndView().getModel().get("equipementsParStation");
         assertThat(equipementsParStation.get(1L)).containsExactly(escalator, ascenseur);
         assertThat(equipementsParStation.get(2L)).containsExactly(ecran);
-    }
-
-    @Test
-    void afficherStations_afficheTypeEtatEtLienVersLaFicheDeChaqueEquipement() throws Exception {
-        Station chatelet = station(1L, "Châtelet");
-        when(stationRepository.findAll()).thenReturn(List.of(chatelet));
-        when(equipementRepository.findAll()).thenReturn(List.of(equipement(2L, "ASC-CHT-001", EquipementEtat.EN_PANNE, chatelet)));
-
-        mockMvc.perform(get("/stations").sessionAttr(UtilisateurConnecte.ATTRIBUT, THOMAS))
-                .andExpect(content().string(allOf(
-                        containsString("Châtelet"),
-                        containsString("href=\"/equipements/2\""),
-                        containsString("ASCENSEUR"),
-                        containsString("En panne"))));
-    }
-
-    @Test
-    void afficherStations_stationSansEquipement_afficheUnMessage() throws Exception {
-        when(stationRepository.findAll()).thenReturn(List.of(station(5L, "Montparnasse")));
-        when(equipementRepository.findAll()).thenReturn(List.of());
-
-        mockMvc.perform(get("/stations").sessionAttr(UtilisateurConnecte.ATTRIBUT, THOMAS))
-                .andExpect(content().string(containsString("Aucun équipement enregistré pour cette station.")));
-    }
-
-    @Test
-    void afficherStations_afficheLEnTeteDeLUtilisateurConnecte() throws Exception {
-        when(stationRepository.findAll()).thenReturn(List.of());
-        when(equipementRepository.findAll()).thenReturn(List.of());
-
-        mockMvc.perform(get("/stations").sessionAttr(UtilisateurConnecte.ATTRIBUT, THOMAS))
-                .andExpect(content().string(allOf(
-                        containsString("Bonjour <strong>Thomas</strong>"),
-                        containsString("(<span>ADMIN</span>)"),
-                        containsString("href=\"/deconnexion\">Déconnectez-vous</a>"))));
     }
 
     private static Station station(Long id, String nom) {

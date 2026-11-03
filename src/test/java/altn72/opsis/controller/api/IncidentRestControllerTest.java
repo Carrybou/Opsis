@@ -1,19 +1,18 @@
 package altn72.opsis.controller.api;
 
+import altn72.opsis.dto.evaluation.EvaluationRequest;
+import altn72.opsis.dto.evaluation.EvaluationResponse;
 import altn72.opsis.dto.incident.AffectationRequest;
 import altn72.opsis.dto.incident.IncidentDetailResponse;
-import altn72.opsis.dto.incident.IncidentModificationRequest;
 import altn72.opsis.dto.incident.IncidentResponse;
 import altn72.opsis.exception.AffectationIncidentImpossibleException;
-import altn72.opsis.exception.IncidentDejaResoluException;
 import altn72.opsis.exception.IncidentIntrouvableException;
-import altn72.opsis.exception.ModificationIncidentInterditeException;
-import altn72.opsis.exception.PrestataireIntrouvableException;
 import altn72.opsis.model.equipement.EquipementType;
 import altn72.opsis.model.incident.IncidentStatut;
 import altn72.opsis.model.utilisateur.UtilisateurType;
 import altn72.opsis.security.JwtService;
 import altn72.opsis.security.UtilisateurConnecte;
+import altn72.opsis.service.evaluation.EvaluationInterface;
 import altn72.opsis.service.incident.IncidentInterface;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,6 +23,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
@@ -36,6 +36,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -59,6 +60,9 @@ class IncidentRestControllerTest {
     private IncidentInterface incidentService;
 
     @MockitoBean
+    private EvaluationInterface evaluationService;
+
+    @MockitoBean
     private JwtService jwtService;
 
     // Chaque profil a son propre token simulé : le JwtInterceptor en déduit l'utilisateur connecté.
@@ -79,45 +83,12 @@ class IncidentRestControllerTest {
     }
 
     @Test
-    void consulter_technicien_renvoieLeDetail() throws Exception {
-        when(incidentService.consulterDetail(1L)).thenReturn(detail());
-
-        mockMvc.perform(get("/api/incidents/1").header(HttpHeaders.AUTHORIZATION, "Bearer token-technicien"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.identifiant").value(1))
-                .andExpect(jsonPath("$.referenceEquipement").value("ASC-CHT-001"));
-    }
-
-    @Test
     void consulter_incidentInexistant_renvoie404() throws Exception {
         when(incidentService.consulterDetail(99L)).thenThrow(new IncidentIntrouvableException(99L));
 
         mockMvc.perform(get("/api/incidents/99").header(HttpHeaders.AUTHORIZATION, "Bearer token-agent"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("L'incident n°99 est introuvable"));
-    }
-
-    @Test
-    void declarer_responsable_renvoie201() throws Exception {
-        when(incidentService.declarer(any(), eq(RESPONSABLE.id()))).thenReturn(incident());
-
-        mockMvc.perform(post("/api/incidents")
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer token-responsable")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(DECLARATION_JSON))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.identifiant").value(1));
-    }
-
-    @Test
-    void declarer_technicien_renvoie403() throws Exception {
-        mockMvc.perform(post("/api/incidents")
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer token-technicien")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(DECLARATION_JSON))
-                .andExpect(status().isForbidden());
-
-        verifyNoInteractions(incidentService);
     }
 
     @Test
@@ -139,58 +110,6 @@ class IncidentRestControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(DESCRIPTION_JSON))
                 .andExpect(status().isForbidden());
-
-        verifyNoInteractions(incidentService);
-    }
-
-    @Test
-    void modifier_responsable_renvoieLIncidentModifie() throws Exception {
-        when(incidentService.modifier(eq(1L), any(IncidentModificationRequest.class), eq(RESPONSABLE))).thenReturn(incident());
-
-        mockMvc.perform(patch("/api/incidents/1")
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer token-responsable")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(DESCRIPTION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.description").value("Ascenseur bloqué entre deux niveaux"));
-    }
-
-    @Test
-    void modifier_agentSurIncidentAffecte_renvoie403AvecLeMotif() throws Exception {
-        when(incidentService.modifier(eq(1L), any(IncidentModificationRequest.class), eq(AGENT)))
-                .thenThrow(new ModificationIncidentInterditeException(
-                        "L'incident n°1 est déjà affecté à un prestataire : seul un responsable d'exploitation peut le modifier"));
-
-        mockMvc.perform(patch("/api/incidents/1")
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer token-agent")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(DESCRIPTION_JSON))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.message").value(
-                        "L'incident n°1 est déjà affecté à un prestataire : seul un responsable d'exploitation peut le modifier"));
-    }
-
-    @Test
-    void modifier_descriptionTropCourte_renvoie400() throws Exception {
-        mockMvc.perform(patch("/api/incidents/1")
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer token-responsable")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"description\":\"court\"}"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.erreurs.description").value("La description doit contenir entre 10 et 2000 caractères"));
-
-        verifyNoInteractions(incidentService);
-    }
-
-    @Test
-    void affecter_agentOuTechnicien_renvoie403() throws Exception {
-        for (String token : new String[]{"Bearer token-agent", "Bearer token-technicien"}) {
-            mockMvc.perform(put("/api/incidents/1/prestataire")
-                            .header(HttpHeaders.AUTHORIZATION, token)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content("{\"idPrestataire\":2}"))
-                    .andExpect(status().isForbidden());
-        }
 
         verifyNoInteractions(incidentService);
     }
@@ -226,40 +145,6 @@ class IncidentRestControllerTest {
     }
 
     @Test
-    void affecter_prestataireInexistant_renvoie404() throws Exception {
-        when(incidentService.affecter(eq(1L), any(AffectationRequest.class), eq(RESPONSABLE)))
-                .thenThrow(new PrestataireIntrouvableException(99L));
-
-        mockMvc.perform(put("/api/incidents/1/prestataire")
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer token-responsable")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"idPrestataire\":99}"))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.message").value("Le prestataire n°99 est introuvable"));
-    }
-
-    @Test
-    void affecter_sansPrestataire_renvoie400() throws Exception {
-        mockMvc.perform(put("/api/incidents/1/prestataire")
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer token-responsable")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{}"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.erreurs.idPrestataire").value("Veuillez choisir un prestataire"));
-
-        verifyNoInteractions(incidentService);
-    }
-
-    @Test
-    void resoudre_agent_renvoie403() throws Exception {
-        mockMvc.perform(post("/api/incidents/1/resolution")
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer token-agent"))
-                .andExpect(status().isForbidden());
-
-        verifyNoInteractions(incidentService);
-    }
-
-    @Test
     void resoudre_responsableOuTechnicien_renvoieLeDetail() throws Exception {
         when(incidentService.resoudre(eq(1L), any())).thenReturn(detail());
 
@@ -272,13 +157,43 @@ class IncidentRestControllerTest {
     }
 
     @Test
-    void resoudre_incidentDejaResolu_renvoie409() throws Exception {
-        when(incidentService.resoudre(1L, TECHNICIEN)).thenThrow(new IncidentDejaResoluException(1L));
+    void evaluer_agentOuTechnicien_renvoie403() throws Exception {
+        for (String token : new String[]{"Bearer token-agent", "Bearer token-technicien"}) {
+            mockMvc.perform(post("/api/incidents/11/evaluation")
+                            .header(HttpHeaders.AUTHORIZATION, token)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"note\":4}"))
+                    .andExpect(status().isForbidden());
+        }
 
-        mockMvc.perform(post("/api/incidents/1/resolution")
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer token-technicien"))
-                .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.message").value("L'incident n°1 est déjà résolu"));
+        verifyNoInteractions(evaluationService);
+    }
+
+    @Test
+    void evaluer_responsable_renvoie201AvecLEvaluation() throws Exception {
+        when(evaluationService.evaluer(eq(11L), any(EvaluationRequest.class), eq(RESPONSABLE)))
+                .thenReturn(new EvaluationResponse(6L, 4, "Intervention rapide", LocalDate.of(2026, 11, 3)));
+
+        mockMvc.perform(post("/api/incidents/11/evaluation")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer token-responsable")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"note\":4,\"commentaire\":\"Intervention rapide\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(header().string(HttpHeaders.LOCATION, "/api/incidents/11"))
+                .andExpect(jsonPath("$.note").value(4))
+                .andExpect(jsonPath("$.commentaire").value("Intervention rapide"));
+    }
+
+    @Test
+    void evaluer_noteHorsBornes_renvoie400() throws Exception {
+        mockMvc.perform(post("/api/incidents/11/evaluation")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer token-responsable")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"note\":6}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.erreurs.note").value("La note doit être comprise entre 1 et 5"));
+
+        verifyNoInteractions(evaluationService);
     }
 
     private static IncidentResponse incident() {

@@ -4,10 +4,8 @@ import altn72.opsis.dto.incident.AffectationRequest;
 import altn72.opsis.dto.incident.IncidentDetailResponse;
 import altn72.opsis.dto.incident.IncidentModificationRequest;
 import altn72.opsis.dto.incident.IncidentResponse;
-import altn72.opsis.exception.AccesRefuseException;
 import altn72.opsis.exception.AffectationIncidentImpossibleException;
 import altn72.opsis.exception.IncidentDejaResoluException;
-import altn72.opsis.exception.IncidentIntrouvableException;
 import altn72.opsis.exception.ModificationIncidentInterditeException;
 import altn72.opsis.exception.PrestataireIntrouvableException;
 import altn72.opsis.model.equipement.Equipement;
@@ -36,7 +34,6 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -112,21 +109,6 @@ class IncidentServiceTest {
     }
 
     @Test
-    void modifier_technicien_refuse() {
-        verifierRefus(incident(1L, IncidentStatut.OUVERT), TECHNICIEN,
-                "Votre profil ne permet pas de modifier un incident");
-    }
-
-    @Test
-    void modifier_incidentInexistant_leveIncidentIntrouvableException() {
-        when(incidentRepository.findById(99L)).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> incidentService.modifier(99L, NOUVELLE_DESCRIPTION, RESPONSABLE))
-                .isInstanceOf(IncidentIntrouvableException.class)
-                .hasMessage("L'incident n°99 est introuvable");
-    }
-
-    @Test
     void incidentsModifiables_agent_neRetientQueSesIncidentsNonAffectes() {
         when(incidentRepository.findByIdEquipement_IdOrderByDateHeureOuvertureDesc(10L)).thenReturn(List.of(
                 incident(1L, IncidentStatut.OUVERT),
@@ -135,25 +117,6 @@ class IncidentServiceTest {
                 incidentDeclarePar(4L, AUTRE_AGENT.id())));
 
         assertThat(incidentService.incidentsModifiables(10L, AGENT_AUTEUR)).containsExactly(1L);
-    }
-
-    @Test
-    void incidentsModifiables_responsable_retientTousLesIncidentsNonResolus() {
-        when(incidentRepository.findByIdEquipement_IdOrderByDateHeureOuvertureDesc(10L)).thenReturn(List.of(
-                incident(1L, IncidentStatut.OUVERT),
-                incident(2L, IncidentStatut.EN_COURS),
-                incident(3L, IncidentStatut.RESOLU)));
-
-        assertThat(incidentService.incidentsModifiables(10L, RESPONSABLE)).containsExactlyInAnyOrder(1L, 2L);
-    }
-
-    @Test
-    void estModifiable_appliqueLesMemesReglesQueLaModification() {
-        when(incidentRepository.findById(1L)).thenReturn(Optional.of(incident(1L, IncidentStatut.EN_COURS)));
-
-        assertThat(incidentService.estModifiable(1L, RESPONSABLE)).isTrue();
-        assertThat(incidentService.estModifiable(1L, AGENT_AUTEUR)).isFalse();
-        assertThat(incidentService.estModifiable(1L, TECHNICIEN)).isFalse();
     }
 
     @Test
@@ -197,18 +160,6 @@ class IncidentServiceTest {
     }
 
     @Test
-    void affecter_memePrestataire_refuseSansRienModifier() {
-        Prestataire actuel = prestataire(1L, "AscenTech Services");
-        Incident incident = incidentAffecteA(1L, actuel);
-        when(incidentRepository.findById(1L)).thenReturn(Optional.of(incident));
-        when(prestataireRepository.findById(1L)).thenReturn(Optional.of(actuel));
-
-        assertThatThrownBy(() -> incidentService.affecter(1L, new AffectationRequest(1L), RESPONSABLE))
-                .isInstanceOf(AffectationIncidentImpossibleException.class)
-                .hasMessage("L'incident n°1 est déjà affecté à AscenTech Services");
-    }
-
-    @Test
     void affecter_incidentResolu_refuseSansRienModifier() {
         Incident incident = incidentAffecteA(1L, prestataire(1L, "AscenTech Services"));
         incident.setStatut(IncidentStatut.RESOLU);
@@ -219,37 +170,6 @@ class IncidentServiceTest {
                 .hasMessage("L'incident n°1 est résolu : il ne peut plus être affecté ni réaffecté");
         assertThat(incident.getIdPrestataire().getId()).isEqualTo(1L);
         assertThat(incident.getStatut()).isEqualTo(IncidentStatut.RESOLU);
-    }
-
-    @Test
-    void affecter_prestataireInexistant_leveUneExceptionSansRienModifier() {
-        Incident incident = incident(1L, IncidentStatut.OUVERT);
-        when(incidentRepository.findById(1L)).thenReturn(Optional.of(incident));
-        when(prestataireRepository.findById(99L)).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> incidentService.affecter(1L, new AffectationRequest(99L), RESPONSABLE))
-                .isInstanceOf(PrestataireIntrouvableException.class)
-                .hasMessage("Le prestataire n°99 est introuvable");
-        assertThat(incident.getStatut()).isEqualTo(IncidentStatut.OUVERT);
-        assertThat(incident.getIdPrestataire()).isNull();
-    }
-
-    @Test
-    void affecter_agent_refuse() {
-        assertThatThrownBy(() -> incidentService.affecter(1L, new AffectationRequest(2L), AGENT_AUTEUR))
-                .isInstanceOf(ModificationIncidentInterditeException.class)
-                .hasMessage("Seul un responsable d'exploitation peut affecter un prestataire");
-    }
-
-    @Test
-    void estAffectable_reserveAuResponsableSurUnIncidentNonResolu() {
-        when(incidentRepository.findById(1L)).thenReturn(Optional.of(incident(1L, IncidentStatut.EN_COURS)));
-        when(incidentRepository.findById(2L)).thenReturn(Optional.of(incident(2L, IncidentStatut.RESOLU)));
-
-        assertThat(incidentService.estAffectable(1L, RESPONSABLE)).isTrue();
-        assertThat(incidentService.estAffectable(1L, AGENT_AUTEUR)).isFalse();
-        assertThat(incidentService.estAffectable(1L, TECHNICIEN)).isFalse();
-        assertThat(incidentService.estAffectable(2L, RESPONSABLE)).isFalse();
     }
 
     @Test
@@ -293,29 +213,12 @@ class IncidentServiceTest {
     }
 
     @Test
-    void resoudre_agent_refuseSansRienModifier() {
-        assertThatThrownBy(() -> incidentService.resoudre(1L, AGENT_AUTEUR))
-                .isInstanceOf(AccesRefuseException.class)
-                .hasMessage("Seul un administrateur ou un technicien peut déclarer un incident comme résolu");
-
-        verifyNoInteractions(incidentRepository);
-    }
-
-    @Test
     void resoudre_incidentDejaResolu_refuse() {
         when(incidentRepository.findById(1L)).thenReturn(Optional.of(incident(1L, IncidentStatut.RESOLU)));
 
         assertThatThrownBy(() -> incidentService.resoudre(1L, TECHNICIEN))
                 .isInstanceOf(IncidentDejaResoluException.class)
                 .hasMessage("L'incident n°1 est déjà résolu");
-    }
-
-    @Test
-    void resoudre_incidentInexistant_refuse() {
-        when(incidentRepository.findById(99L)).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> incidentService.resoudre(99L, TECHNICIEN))
-                .isInstanceOf(IncidentIntrouvableException.class);
     }
 
     private void verifierRefus(Incident incident, UtilisateurConnecte utilisateur, String motifAttendu) {

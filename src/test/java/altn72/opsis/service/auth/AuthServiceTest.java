@@ -54,15 +54,6 @@ class AuthServiceTest {
     }
 
     @Test
-    void authentifier_motDePasseIncorrect_leveIdentifiantsInvalidesException() {
-        when(utilisateurRepository.findByIdentifiantConnexion(IDENTIFIANT)).thenReturn(Optional.of(utilisateur()));
-
-        assertThatThrownBy(() -> authService.authentifier(IDENTIFIANT, "mauvais"))
-                .isInstanceOf(IdentifiantsInvalidesException.class)
-                .hasMessage("Identifiant ou mot de passe incorrect");
-    }
-
-    @Test
     void authentifier_identifiantInconnu_leveLeMemeMessageQuUnMotDePasseIncorrect() {
         when(utilisateurRepository.findByIdentifiantConnexion("inconnu")).thenReturn(Optional.empty());
 

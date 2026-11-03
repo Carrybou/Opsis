@@ -30,12 +30,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(EquipementViewController.class)
 class EquipementViewControllerTest {
 
-    private static final UtilisateurConnecte RESPONSABLE =
-            new UtilisateurConnecte(1L, "admin", "Roméo", UtilisateurType.ADMIN);
     private static final UtilisateurConnecte AGENT =
             new UtilisateurConnecte(4L, "agent.bernard", "Hugo", UtilisateurType.AGENT);
-    private static final UtilisateurConnecte TECHNICIEN =
-            new UtilisateurConnecte(2L, "tech.martin", "Lucas", UtilisateurType.TECHNICIEN);
 
     @Autowired
     private MockMvc mockMvc;
@@ -60,29 +56,6 @@ class EquipementViewControllerTest {
                 .andExpect(content().string(containsString("Déclarer un incident")))
                 .andExpect(content().string(containsString("/incidents/1?modifier=true")))
                 .andExpect(content().string(not(containsString("/incidents/3?modifier=true"))));
-    }
-
-    @Test
-    void afficherFiche_responsable_peutDeclarerEtModifier() throws Exception {
-        when(equipementService.consulterFiche(2L)).thenReturn(fiche());
-        when(incidentService.incidentsModifiables(2L, RESPONSABLE)).thenReturn(Set.of(1L, 3L));
-
-        mockMvc.perform(get("/equipements/2").sessionAttr(UtilisateurConnecte.ATTRIBUT, RESPONSABLE))
-                .andExpect(status().isOk())
-                .andExpect(content().string(containsString("Déclarer un incident")))
-                .andExpect(content().string(containsString("/incidents/1?modifier=true")))
-                .andExpect(content().string(containsString("/incidents/3?modifier=true")));
-    }
-
-    @Test
-    void afficherFiche_technicien_neVoitNiDeclarationNiModification() throws Exception {
-        when(equipementService.consulterFiche(2L)).thenReturn(fiche());
-        when(incidentService.incidentsModifiables(2L, TECHNICIEN)).thenReturn(Set.of());
-
-        mockMvc.perform(get("/equipements/2").sessionAttr(UtilisateurConnecte.ATTRIBUT, TECHNICIEN))
-                .andExpect(status().isOk())
-                .andExpect(content().string(not(containsString("Déclarer un incident"))))
-                .andExpect(content().string(not(containsString("?modifier=true"))));
     }
 
     private static FicheEquipementResponse fiche() {

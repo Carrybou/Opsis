@@ -1,5 +1,7 @@
 package altn72.opsis.controller.api;
 
+import altn72.opsis.dto.evaluation.EvaluationRequest;
+import altn72.opsis.dto.evaluation.EvaluationResponse;
 import altn72.opsis.dto.incident.AffectationRequest;
 import altn72.opsis.dto.incident.IncidentDetailResponse;
 import altn72.opsis.dto.incident.IncidentModificationRequest;
@@ -8,6 +10,7 @@ import altn72.opsis.dto.incident.IncidentResponse;
 import altn72.opsis.model.utilisateur.UtilisateurType;
 import altn72.opsis.security.ProfilRequis;
 import altn72.opsis.security.UtilisateurConnecte;
+import altn72.opsis.service.evaluation.EvaluationInterface;
 import altn72.opsis.service.incident.IncidentInterface;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -29,9 +32,11 @@ import java.util.List;
 public class IncidentRestController {
 
     private final IncidentInterface incidentService;
+    private final EvaluationInterface evaluationService;
 
-    public IncidentRestController(IncidentInterface incidentService) {
+    public IncidentRestController(IncidentInterface incidentService, EvaluationInterface evaluationService) {
         this.incidentService = incidentService;
+        this.evaluationService = evaluationService;
     }
 
     @PostMapping
@@ -75,5 +80,16 @@ public class IncidentRestController {
     @GetMapping("/historique")
     public ResponseEntity<List<IncidentResponse>> historique() {
         return ResponseEntity.ok(incidentService.listerHistoriqueResolus());
+    }
+
+    @PostMapping("/{id}/evaluation")
+    @ProfilRequis(UtilisateurType.ADMIN)
+    public ResponseEntity<EvaluationResponse> evaluer(@PathVariable Long id,
+                                                      @Valid @RequestBody EvaluationRequest request,
+                                                      @RequestAttribute(UtilisateurConnecte.ATTRIBUT) UtilisateurConnecte utilisateur) {
+        EvaluationResponse evaluation = evaluationService.evaluer(id, request, utilisateur);
+        return ResponseEntity
+                .created(URI.create("/api/incidents/" + id))
+                .body(evaluation);
     }
 }

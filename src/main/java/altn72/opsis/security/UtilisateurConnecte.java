@@ -32,11 +32,24 @@ public record UtilisateurConnecte(
         return false;
     }
 
+    // Libellé affiché dans l'en-tête, plutôt que le nom technique du profil.
+    public String libelleProfil() {
+        return switch (profil) {
+            case ADMIN -> "Responsable d'exploitation";
+            case AGENT -> "Agent";
+            case TECHNICIEN -> "Technicien";
+        };
+    }
+
     public boolean peutDeclarerIncident() {
         return aUnProfil(UtilisateurType.ADMIN, UtilisateurType.AGENT);
     }
 
     public boolean peutResoudreIncident() {
         return aUnProfil(UtilisateurType.ADMIN, UtilisateurType.TECHNICIEN);
+    }
+
+    public boolean peutEvaluerPrestataire() {
+        return aUnProfil(UtilisateurType.ADMIN);
     }
 }

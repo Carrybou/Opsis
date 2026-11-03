@@ -18,4 +18,6 @@ public interface IncidentRepository extends JpaRepository<Incident, Long> {
 
     @EntityGraph(attributePaths = {"idEquipement", "idEquipement.idStation", "idPrestataire", "idUtilisateur"})
     List<Incident> findByStatutOrderByDateHeureResolutionDesc(IncidentStatut statut);
+
+    List<Incident> findByIdPrestataire_IdOrderByDateHeureOuvertureDesc(Long idPrestataire);
 }

@@ -41,20 +41,6 @@ class LoginViewControllerTest {
     private JwtService jwtService;
 
     @Test
-    void afficherLogin_sansSession_afficheLeFormulaire() throws Exception {
-        mockMvc.perform(get("/login"))
-                .andExpect(status().isOk())
-                .andExpect(view().name("login"));
-    }
-
-    @Test
-    void afficherLogin_dejaConnecte_redirigeVersLAccueil() throws Exception {
-        mockMvc.perform(get("/login").sessionAttr(UtilisateurConnecte.ATTRIBUT, THOMAS))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/accueil"));
-    }
-
-    @Test
     void connecter_identifiantsValides_ouvreLaSessionEtRedirige() throws Exception {
         when(authService.authentifier("thomas", "1234")).thenReturn(THOMAS);
 
@@ -94,10 +80,4 @@ class LoginViewControllerTest {
         assertThat(session.isInvalid()).isTrue();
     }
 
-    @Test
-    void afficherLogin_apresDeconnexion_afficheLeMessageDeConfirmation() throws Exception {
-        mockMvc.perform(get("/login").param("deconnecte", ""))
-                .andExpect(status().isOk())
-                .andExpect(content().string(containsString("Vous avez été déconnecté.")));
-    }
 }

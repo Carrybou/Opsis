@@ -4,16 +4,45 @@
 <header th:fragment="entete(pageActive)" class="entete">
     <div class="entete-gauche">
         <a th:href="@{/stations}" class="logo">Opsis</a>
-        <a th:href="@{/incidents/historique}" th:classappend="${pageActive == 'historique'} ? 'actif'">Historique</a>
-        <nav class="navigation" th:if="${utilisateurConnecte != null}">
+        <nav class="navigation" th:if="${utilisateurConnecte != null}" aria-label="Navigation principale">
             <a th:href="@{/stations}" th:classappend="${pageActive == 'stations'} ? 'actif'">Stations</a>
         </nav>
     </div>
-    <div class="utilisateur" th:if="${utilisateurConnecte != null}">
-        Bonjour <strong th:text="${utilisateurConnecte.prenom}">Prénom</strong>
-        (<span th:text="${utilisateurConnecte.profil}">PROFIL</span>)
-        | <a th:href="@{/deconnexion}">Déconnectez-vous</a>
-    </div>
+
+    <!-- Menu du profil : pages secondaires et déconnexion. <details> fonctionne sans JS ; le script le referme au clic extérieur et sur Échap. -->
+    <details class="menu-profil" th:if="${utilisateurConnecte != null}"
+             th:classappend="${pageActive == 'historique' or pageActive == 'prestataires'} ? 'actif'">
+        <summary th:attr="aria-label=|Menu de ${utilisateurConnecte.prenom}|">
+            <span class="avatar" aria-hidden="true" th:text="${#strings.toUpperCase(#strings.substring(utilisateurConnecte.prenom, 0, 1))}">T</span>
+            <span class="identite">
+                <strong th:text="${utilisateurConnecte.prenom}">Prénom</strong>
+                <span th:text="${utilisateurConnecte.libelleProfil()}">Profil</span>
+            </span>
+            <span class="chevron" aria-hidden="true">▾</span>
+        </summary>
+        <div class="menu-profil-panneau">
+            <a th:href="@{/incidents/historique}" th:classappend="${pageActive == 'historique'} ? 'actif'">Historique des incidents</a>
+            <a th:href="@{/prestataires}" th:classappend="${pageActive == 'prestataires'} ? 'actif'">Prestataires</a>
+            <hr>
+            <a th:href="@{/deconnexion}" class="deconnexion">Se déconnecter</a>
+        </div>
+        <script>
+            (function () {
+                const menu = document.currentScript.closest('details');
+                document.addEventListener('click', function (e) {
+                    if (menu.open && !menu.contains(e.target)) {
+                        menu.open = false;
+                    }
+                });
+                document.addEventListener('keydown', function (e) {
+                    if (e.key === 'Escape' && menu.open) {
+                        menu.open = false;
+                        menu.querySelector('summary').focus();
+                    }
+                });
+            })();
+        </script>
+    </details>
 </header>
 </body>
 </html>

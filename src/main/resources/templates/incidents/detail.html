@@ -113,9 +113,15 @@
             <div id="prestataire-lecture" th:hidden="${enAffectation}">
                 <dl class="details" th:if="${incident.nomPrestataire != null}">
                     <dt>Nom</dt>
-                    <dd th:text="${incident.nomPrestataire}">Prestataire</dd>
+                    <dd><a th:href="@{/prestataires/{id}(id=${incident.idPrestataire})}" th:text="${incident.nomPrestataire}">Prestataire</a></dd>
                     <dt>Contact</dt>
                     <dd th:text="${incident.contactPrestataire}">contact</dd>
+                    <th:block th:if="${prestataireActuel != null}">
+                        <dt>Note moyenne</dt>
+                        <dd th:if="${prestataireActuel.estEvalue()}"
+                            th:text="|★ ${#numbers.formatDecimal(prestataireActuel.noteMoyenne, 1, 1, 'COMMA')} sur 5 (${prestataireActuel.nombreEvaluations} évaluation${prestataireActuel.nombreEvaluations > 1 ? 's' : ''})|">★ 4,0 sur 5</dd>
+                        <dd th:unless="${prestataireActuel.estEvalue()}" class="secondaire">Pas encore évalué</dd>
+                    </th:block>
                 </dl>
                 <p class="vide" th:if="${incident.nomPrestataire == null}">Aucun prestataire affecté pour le moment.</p>
             </div>
@@ -132,7 +138,7 @@
                     <option th:each="p : ${prestataires}" th:value="${p.identifiant}"
                             th:selected="${p.identifiant == affectationRequest.idPrestataire}"
                             th:disabled="${p.identifiant == incident.idPrestataire}"
-                            th:text="${p.identifiant == incident.idPrestataire} ? |${p.nom} (actuel)| : |${p.nom} — ${p.contact}|">Prestataire</option>
+                            th:text="|${p.nom}${p.identifiant == incident.idPrestataire ? ' (actuel)' : ''} — ${p.estEvalue() ? '★ ' + #numbers.formatDecimal(p.noteMoyenne, 1, 1, 'COMMA') + ' / 5 (' + p.nombreEvaluations + ')' : 'pas encore évalué'}|">Prestataire</option>
                 </select>
                 <p class="erreur-champ" th:if="${#fields.hasErrors('idPrestataire')}" th:errors="*{idPrestataire}"></p>
 
@@ -146,18 +152,60 @@
         </div>
     </section>
 
-    <section class="carte">
-        <div class="carte-entete"><h2>Évaluation</h2></div>
+    <section class="carte" id="evaluation">
+        <div class="carte-entete">
+            <h2>Évaluation</h2>
+            <!-- Lien de repli sans JS : le script le transforme en bascule d'évaluation en place. -->
+            <a th:if="${evaluable}" id="bouton-evaluer" class="bouton secondaire"
+               th:href="@{/incidents/{id}(id=${incident.identifiant}, evaluer=true)} + '#evaluation'"
+               th:hidden="${enEvaluation}" aria-controls="formulaire-evaluation">Évaluer</a>
+        </div>
         <div class="carte-corps">
-            <th:block th:if="${incident.evaluation != null}">
-                <p class="note-etoiles"
-                   th:text="${#strings.repeat('★', incident.evaluation.note) + #strings.repeat('☆', 5 - incident.evaluation.note)}"
-                   th:attr="aria-label=|Note : ${incident.evaluation.note} sur 5|">★★★★☆</p>
-                <p th:text="${incident.evaluation.commentaire} ?: 'Aucun commentaire.'">Commentaire</p>
-                <p class="date-evaluation" th:text="|Évalué le ${#temporals.format(incident.evaluation.date, 'dd/MM/yyyy')}|">Évalué le</p>
-            </th:block>
-            <p class="vide" th:if="${incident.evaluation == null and incident.resolu}">Cet incident n'a pas encore été évalué.</p>
-            <p class="vide" th:if="${incident.evaluation == null and !incident.resolu}">L'évaluation sera possible une fois l'incident résolu.</p>
+            <div id="evaluation-lecture" th:hidden="${enEvaluation}">
+                <th:block th:if="${incident.evaluation != null}">
+                    <p class="note-etoiles"
+                       th:text="${#strings.repeat('★', incident.evaluation.note) + #strings.repeat('☆', 5 - incident.evaluation.note)}"
+                       th:attr="aria-label=|Note : ${incident.evaluation.note} sur 5|">★★★★☆</p>
+                    <p class="description-incident" th:text="${incident.evaluation.commentaire} ?: 'Aucun commentaire.'">Commentaire</p>
+                    <p class="date-evaluation" th:text="|Évalué le ${#temporals.format(incident.evaluation.date, 'dd/MM/yyyy')}|">Évalué le</p>
+                </th:block>
+                <p class="vide" th:if="${incident.evaluation == null and incident.resolu and incident.idPrestataire != null}">Cette intervention n'a pas encore été évaluée.</p>
+                <p class="vide" th:if="${incident.evaluation == null and incident.resolu and incident.idPrestataire == null}">Aucun prestataire n'est intervenu : il n'y a rien à évaluer.</p>
+                <p class="vide" th:if="${incident.evaluation == null and !incident.resolu}">L'évaluation sera possible une fois l'incident résolu.</p>
+            </div>
+
+            <form th:if="${evaluable}" id="formulaire-evaluation" class="formulaire edition-incident"
+                  th:action="@{/incidents/{id}/evaluation(id=${incident.identifiant})}" method="post"
+                  th:object="${evaluationRequest}" th:hidden="${!enEvaluation}" novalidate>
+
+                <fieldset class="choix-note">
+                    <legend th:text="|Note de l'intervention de ${incident.nomPrestataire}|">Note de l'intervention</legend>
+                    <!-- Ordre inversé (5 → 1) : avec flex row-reverse, le sélecteur ~ colore l'étoile choisie et celles d'avant. -->
+                    <div class="etoiles" th:classappend="${#fields.hasErrors('note')} ? 'champ-invalide'">
+                        <th:block th:each="n : ${#numbers.sequence(5, 1, -1)}">
+                            <input type="radio" class="sr-only" name="note" th:id="|note-${n}|" th:value="${n}"
+                                   th:checked="${evaluationRequest.note == n}">
+                            <label th:for="|note-${n}|" th:title="|${n} sur 5|">★<span class="sr-only" th:text="|${n} sur 5|">n sur 5</span></label>
+                        </th:block>
+                    </div>
+                    <span id="note-libelle" class="note-libelle" aria-live="polite"
+                          th:text="${evaluationRequest.note != null} ? |${evaluationRequest.note} sur 5| : 'Aucune note choisie'">Aucune note choisie</span>
+                </fieldset>
+                <p class="erreur-champ" th:if="${#fields.hasErrors('note')}" th:errors="*{note}"></p>
+
+                <label for="commentaire-saisie">Commentaire <span class="secondaire">(facultatif)</span></label>
+                <textarea id="commentaire-saisie" name="commentaire" rows="4" maxlength="1000"
+                          th:text="*{commentaire}" aria-describedby="compteur-commentaire"
+                          th:classappend="${#fields.hasErrors('commentaire')} ? 'champ-invalide'"></textarea>
+                <p class="erreur-champ" th:if="${#fields.hasErrors('commentaire')}" th:errors="*{commentaire}"></p>
+                <p class="compteur-caracteres" id="compteur-commentaire" aria-live="polite"></p>
+
+                <div class="actions">
+                    <a id="bouton-annuler-evaluation" class="bouton secondaire"
+                       th:href="@{/incidents/{id}(id=${incident.identifiant})}">Annuler</a>
+                    <button type="submit" class="bouton">Enregistrer l'évaluation</button>
+                </div>
+            </form>
         </div>
     </section>
 </main>
@@ -253,6 +301,77 @@
         if (!formulaire.hidden) {
             choix.focus();
         }
+    })();
+</script>
+
+<script th:if="${evaluable}">
+    (function () {
+        const bouton = document.getElementById('bouton-evaluer');
+        const annuler = document.getElementById('bouton-annuler-evaluation');
+        const lecture = document.getElementById('evaluation-lecture');
+        const formulaire = document.getElementById('formulaire-evaluation');
+        const notes = formulaire.querySelectorAll('input[name="note"]');
+        const libelle = document.getElementById('note-libelle');
+        const commentaire = document.getElementById('commentaire-saisie');
+        const compteur = document.getElementById('compteur-commentaire');
+
+        function majLibelle() {
+            const choisie = formulaire.querySelector('input[name="note"]:checked');
+            libelle.textContent = choisie ? choisie.value + ' sur 5' : 'Aucune note choisie';
+        }
+
+        function majCompteur() {
+            compteur.textContent = commentaire.value.length + ' / 1000 caractères';
+        }
+
+        function basculer(evaluation) {
+            lecture.hidden = evaluation;
+            bouton.hidden = evaluation;
+            formulaire.hidden = !evaluation;
+            if (evaluation) {
+                notes[notes.length - 1].focus();
+            } else {
+                notes.forEach(function (n) { n.checked = false; });
+                commentaire.value = '';
+                formulaire.querySelectorAll('.champ-invalide').forEach(function (e) { e.classList.remove('champ-invalide'); });
+                formulaire.querySelectorAll('.erreur-champ').forEach(function (e) { e.remove(); });
+                bouton.focus();
+            }
+            majLibelle();
+            majCompteur();
+        }
+
+        bouton.addEventListener('click', function (e) {
+            e.preventDefault();
+            basculer(true);
+        });
+        annuler.addEventListener('click', function (e) {
+            e.preventDefault();
+            basculer(false);
+        });
+        notes.forEach(function (n) {
+            n.addEventListener('change', function () {
+                // Une note est choisie : l'erreur « note obligatoire » n'a plus lieu d'être.
+                const etoiles = formulaire.querySelector('.etoiles');
+                if (etoiles.classList.contains('champ-invalide')) {
+                    etoiles.classList.remove('champ-invalide');
+                    const erreur = formulaire.querySelector('.choix-note + .erreur-champ');
+                    if (erreur) {
+                        erreur.remove();
+                    }
+                }
+                majLibelle();
+            });
+        });
+        commentaire.addEventListener('input', majCompteur);
+        formulaire.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                basculer(false);
+            }
+        });
+
+        majLibelle();
+        majCompteur();
     })();
 </script>
 </body>

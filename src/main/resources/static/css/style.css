@@ -74,8 +74,111 @@ a {
     border-bottom-color: var(--accent);
 }
 
-.entete .utilisateur a {
-    color: #9fe3ea;
+/* Menu du profil (en-tête) */
+
+.menu-profil {
+    position: relative;
+}
+
+.menu-profil summary {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 4px 8px 4px 4px;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    cursor: pointer;
+    list-style: none;
+}
+
+.menu-profil summary::-webkit-details-marker {
+    display: none;
+}
+
+.menu-profil summary:hover,
+.menu-profil[open] summary,
+.menu-profil.actif summary {
+    border-color: #3a4753;
+    background: #222e39;
+}
+
+.menu-profil summary:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+.avatar {
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    font-weight: 700;
+}
+
+.menu-profil .identite {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.15;
+}
+
+.menu-profil .identite span {
+    color: #c7d0d6;
+    font-size: .8rem;
+}
+
+.menu-profil .chevron {
+    color: #c7d0d6;
+    font-size: .8rem;
+    transition: transform .15s;
+}
+
+.menu-profil[open] .chevron {
+    transform: rotate(180deg);
+}
+
+.menu-profil-panneau {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 8px);
+    z-index: 10;
+    min-width: 230px;
+    padding: 6px;
+    border: 1px solid var(--trait);
+    border-radius: 8px;
+    background: var(--carte);
+    box-shadow: 0 10px 30px rgba(23, 33, 43, .18);
+}
+
+.menu-profil-panneau a {
+    display: block;
+    padding: 9px 12px;
+    border-radius: 6px;
+    color: var(--encre);
+    text-decoration: none;
+}
+
+.menu-profil-panneau a:hover,
+.menu-profil-panneau a:focus-visible {
+    background: var(--fond);
+    outline: none;
+}
+
+.menu-profil-panneau a.actif {
+    color: var(--accent);
+    font-weight: 600;
+}
+
+.menu-profil-panneau a.deconnexion {
+    color: var(--danger);
+}
+
+.menu-profil-panneau hr {
+    margin: 6px 0;
+    border: none;
+    border-top: 1px solid var(--trait-leger);
 }
 
 /* Mise en page */
@@ -336,6 +439,7 @@ h2 {
 @media (max-width: 760px) {
     .contenu { padding: 24px 16px 40px; }
     .entete, .entete-gauche, .titre-page, .carte-entete { align-items: flex-start; flex-direction: column; }
+    .menu-profil-panneau { left: 0; right: auto; }
     .indicateurs { grid-template-columns: repeat(2, 1fr); }
     .tableau { min-width: 640px; }
 }
@@ -508,4 +612,65 @@ h2 {
 /* .vide porte déjà son propre espacement quand il est posé directement dans une carte */
 .carte-corps .vide {
     padding: 0;
+}
+
+/* F10 : choix de la note par étoiles (boutons radio), affichage de la note dans l'historique */
+
+.choix-note {
+    margin: 0;
+    padding: 0;
+    border: none;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 16px;
+}
+
+.choix-note legend {
+    width: 100%;
+    margin-bottom: 4px;
+    padding: 0;
+}
+
+.etoiles {
+    display: inline-flex;
+    flex-direction: row-reverse;
+    border-radius: 6px;
+}
+
+.etoiles label {
+    padding: 0 3px;
+    font-size: 2rem;
+    line-height: 1;
+    color: #d1d5db;
+    cursor: pointer;
+    transition: color 0.1s;
+}
+
+.etoiles input:checked ~ label,
+.etoiles label:hover,
+.etoiles label:hover ~ label {
+    color: #f59e0b;
+}
+
+.etoiles input:focus-visible + label {
+    outline: 2px solid #2563eb;
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+.etoiles.champ-invalide {
+    outline: 1px solid #e02424;
+    background: #fdf6f6;
+}
+
+.note-libelle {
+    color: #6b7280;
+    font-size: 0.95rem;
+}
+
+.note-etoiles-tableau {
+    color: #f59e0b;
+    letter-spacing: 1px;
+    white-space: nowrap;
 }

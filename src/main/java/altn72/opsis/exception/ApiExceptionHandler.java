@@ -65,6 +65,12 @@ public class ApiExceptionHandler {
                 .body(new ApiError(403, e.getMessage(), Map.of(), LocalDateTime.now()));
     }
 
+    @ExceptionHandler(EvaluationImpossibleException.class)
+    public ResponseEntity<ApiError> handleEvaluationImpossible(EvaluationImpossibleException e) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ApiError(409, e.getMessage(), Map.of(), LocalDateTime.now()));
+    }
+
     @ExceptionHandler(IncidentDejaResoluException.class)
     public ResponseEntity<ApiError> handleDejaResolu(IncidentDejaResoluException e) {
         return ResponseEntity.status(HttpStatus.CONFLICT)

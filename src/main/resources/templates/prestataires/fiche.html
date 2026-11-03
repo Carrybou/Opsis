@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="|${fiche.prestataire.nom} - Opsis|">Prestataire - Opsis</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div th:replace="~{fragments/entete :: entete('prestataires')}"></div>
+
+<main class="contenu" th:with="p=${fiche.prestataire}">
+    <nav class="fil-ariane" aria-label="Fil d'Ariane">
+        <a th:href="@{/prestataires}">Prestataires</a>
+        <span th:text="${p.nom}">Prestataire</span>
+    </nav>
+
+    <div class="titre-page">
+        <div>
+            <div class="surtitre">Prestataire</div>
+            <h1 th:text="${p.nom}">Prestataire</h1>
+        </div>
+    </div>
+
+    <section class="indicateurs" aria-label="Synthèse du prestataire">
+        <div class="indicateur">
+            <strong th:text="${p.estEvalue()} ? |★ ${#numbers.formatDecimal(p.noteMoyenne, 1, 1, 'COMMA')}| : '—'">★ 4,0</strong>
+            <span>note moyenne sur 5</span>
+        </div>
+        <div class="indicateur"><strong th:text="${p.nombreEvaluations}">0</strong><span>évaluations</span></div>
+        <div class="indicateur"><strong th:text="${#lists.size(fiche.interventionsEnCours)}">0</strong><span>interventions en cours</span></div>
+        <div class="indicateur"><strong th:text="${#lists.size(fiche.interventionsTerminees)}">0</strong><span>interventions terminées</span></div>
+    </section>
+
+    <section class="carte">
+        <div class="carte-corps">
+            <dl class="details">
+                <dt>Contact</dt>
+                <dd th:text="${p.contact}">contact</dd>
+            </dl>
+        </div>
+    </section>
+
+    <section class="carte">
+        <div class="carte-entete"><h2>Interventions en cours</h2></div>
+        <table class="tableau" th:unless="${#lists.isEmpty(fiche.interventionsEnCours)}">
+            <thead>
+            <tr>
+                <th>Ouverture</th>
+                <th>Équipement</th>
+                <th>Station</th>
+                <th>Description</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="i : ${fiche.interventionsEnCours}">
+                <td th:text="${#temporals.format(i.dateHeureOuverture, 'dd/MM/yyyy HH:mm')}">01/01/2026 08:00</td>
+                <td><a th:href="@{/equipements/{id}(id=${i.idEquipement})}" th:text="${i.referenceEquipement}">REF</a></td>
+                <td th:text="${i.nomStation}">Station</td>
+                <td><a th:href="@{/incidents/{id}(id=${i.identifiant})}" th:text="${i.description}">Description</a></td>
+            </tr>
+            </tbody>
+        </table>
+        <p class="vide" th:if="${#lists.isEmpty(fiche.interventionsEnCours)}">Aucune intervention en cours.</p>
+    </section>
+
+    <section class="carte">
+        <div class="carte-entete"><h2>Interventions terminées</h2></div>
+        <table class="tableau" th:unless="${#lists.isEmpty(fiche.interventionsTerminees)}">
+            <thead>
+            <tr>
+                <th>Résolution</th>
+                <th>Équipement</th>
+                <th>Station</th>
+                <th>Description</th>
+                <th>Évaluation</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="i : ${fiche.interventionsTerminees}">
+                <td th:text="${i.dateHeureResolution != null} ? ${#temporals.format(i.dateHeureResolution, 'dd/MM/yyyy HH:mm')} : '—'">01/01/2026 08:00</td>
+                <td><a th:href="@{/equipements/{id}(id=${i.idEquipement})}" th:text="${i.referenceEquipement}">REF</a></td>
+                <td th:text="${i.nomStation}">Station</td>
+                <td><a th:href="@{/incidents/{id}(id=${i.identifiant})}" th:text="${i.description}">Description</a></td>
+                <td>
+                    <span th:if="${i.note != null}" class="note-etoiles-tableau"
+                          th:text="${#strings.repeat('★', i.note) + #strings.repeat('☆', 5 - i.note)}"
+                          th:attr="aria-label=|Note : ${i.note} sur 5|, title=|${i.note} sur 5|">★★★★☆</span>
+                    <a th:if="${i.note == null and utilisateurConnecte.peutEvaluerPrestataire()}"
+                       th:href="@{/incidents/{id}(id=${i.identifiant}, evaluer=true)} + '#evaluation'">Évaluer</a>
+                    <span th:if="${i.note == null and !utilisateurConnecte.peutEvaluerPrestataire()}" class="secondaire">Non évalué</span>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+        <p class="vide" th:if="${#lists.isEmpty(fiche.interventionsTerminees)}">Aucune intervention terminée.</p>
+    </section>
+</main>
+</body>
+</html>
