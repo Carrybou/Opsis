@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Carte du réseau - Opsis</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <!-- Sans JS, les fiches restent toutes affichées sous la liste : les liens de la liste y mènent par ancre. -->
+    <noscript><style>.carto-fiche[hidden] { display: block !important; }</style></noscript>
+</head>
+<body>
+<div th:replace="~{fragments/entete :: entete('carte')}"></div>
+
+<main class="contenu">
+    <div class="titre-page">
+        <div>
+            <div class="surtitre">Opsis / supervision</div>
+            <h1>Carte du réseau</h1>
+        </div>
+        <p class="intro">La situation de chaque station d'un coup d'œil. Cliquez sur une station pour voir ses équipements et leur état.</p>
+    </div>
+
+    <section class="carte carto" aria-label="Carte des stations">
+        <!-- La légende donne aussi le nombre de stations par situation : la couleur des marqueurs n'est jamais la seule information. -->
+        <ul class="carto-legende">
+            <li class="situation-EN_PANNE"><span class="carto-pastille" aria-hidden="true"></span>En panne <strong th:text="${carte.nombreEnPanne}">0</strong></li>
+            <li class="situation-EN_MAINTENANCE"><span class="carto-pastille" aria-hidden="true"></span>En maintenance <strong th:text="${carte.nombreEnMaintenance}">0</strong></li>
+            <li class="situation-FONCTIONNEL"><span class="carto-pastille" aria-hidden="true"></span>Fonctionnelle <strong th:text="${carte.nombreFonctionnelles}">0</strong></li>
+            <li class="situation-AUCUNE"><span class="carto-pastille" aria-hidden="true"></span>Sans équipement <strong th:text="${carte.nombreSansEquipement}">0</strong></li>
+        </ul>
+
+        <div class="carto-grille">
+            <div id="plan-reseau" class="carto-plan">
+                <p class="vide" id="plan-message">La carte nécessite JavaScript. Toutes les stations restent accessibles dans la liste.</p>
+            </div>
+
+            <div class="carto-panneau" id="carto-panneau">
+                <nav id="carto-liste" aria-label="Stations">
+                    <h2>Stations</h2>
+                    <ul th:unless="${#lists.isEmpty(carte.stations)}">
+                        <li th:each="station : ${carte.stations}">
+                            <a class="carto-station" th:href="|#panneau-station-${station.identifiant}|"
+                               th:attr="data-station=${station.identifiant},data-nom=${station.nom},data-situation=${station.situation} ?: 'AUCUNE',data-lat=${station.estLocalisee()} ? ${station.latitude},data-lng=${station.estLocalisee()} ? ${station.longitude}">
+                                <span>
+                                    <strong th:text="${station.nom}">Station</strong>
+                                    <small class="secondaire" th:unless="${station.estLocalisee()}">Non localisée</small>
+                                </span>
+                                <th:block th:replace="~{fragments/badges :: situationStation(${station.situation})}"></th:block>
+                            </a>
+                        </li>
+                    </ul>
+                    <p class="vide" th:if="${#lists.isEmpty(carte.stations)}">Aucune station enregistrée.</p>
+                </nav>
+
+                <section th:each="station : ${carte.stations}" class="carto-fiche" hidden
+                         th:id="|panneau-station-${station.identifiant}|" th:attr="data-panneau=${station.identifiant}">
+                    <a class="carto-retour" th:href="@{/carte}">← Toutes les stations</a>
+                    <div class="carto-fiche-titre">
+                        <h2 tabindex="-1" th:text="${station.nom}">Station</h2>
+                        <th:block th:replace="~{fragments/badges :: situationStation(${station.situation})}"></th:block>
+                    </div>
+                    <p class="secondaire" th:unless="${#lists.isEmpty(station.equipements)}"
+                       th:text="|${#lists.size(station.equipements)} équipement(s) · ${station.nombreEnPanne} en panne · ${station.nombreEnMaintenance} en maintenance|">3 équipements</p>
+                    <p class="secondaire" th:unless="${station.estLocalisee()}">Coordonnées non renseignées : cette station n'apparaît pas sur la carte.</p>
+
+                    <ul class="carto-equipements" th:unless="${#lists.isEmpty(station.equipements)}">
+                        <li th:each="equipement : ${station.equipements}">
+                            <a class="carto-equipement" th:href="@{/equipements/{id}(id=${equipement.identifiant})}">
+                                <span class="carto-equipement-ligne">
+                                    <span class="reference" th:text="${equipement.reference}">ASC-CHT-001</span>
+                                    <th:block th:replace="~{fragments/badges :: etatEquipement(${equipement.etat})}"></th:block>
+                                </span>
+                                <span class="secondaire" th:text="|${equipement.libelle} · ${equipement.type}|">Ascenseur · ASCENSEUR</span>
+                            </a>
+                            <ul class="carto-incidents" th:unless="${#lists.isEmpty(equipement.incidentsActifs)}">
+                                <li th:each="incident : ${equipement.incidentsActifs}">
+                                    <a th:href="@{/incidents/{id}(id=${incident.identifiant})}" th:text="${incident.description}">Description</a>
+                                    <th:block th:replace="~{fragments/badges :: statutIncident(${incident.statut})}"></th:block>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                    <p class="vide" th:if="${#lists.isEmpty(station.equipements)}">Aucun équipement enregistré pour cette station.</p>
+                </section>
+            </div>
+        </div>
+    </section>
+</main>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script th:src="@{/js/carte.js}"></script>
+</body>
+</html>

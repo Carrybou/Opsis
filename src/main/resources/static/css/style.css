@@ -1288,3 +1288,215 @@ h2 {
     .tdb-incident-action { grid-row: 2; grid-column: 2; }
     .tdb-aide-panneau { left: auto; right: 0; transform: none; }
 }
+
+/* Lot alpha : carte du réseau.
+   Le préfixe carto- évite toute confusion avec .carte, la carte d'interface utilisée sur tout le site. */
+
+.carto {
+    overflow: hidden;
+}
+
+.carto-legende {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 24px;
+    margin: 0;
+    padding: 14px 24px;
+    border-bottom: 1px solid var(--trait);
+    font-size: .88rem;
+    list-style: none;
+}
+
+.carto-legende li {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.carto-pastille {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--situation);
+}
+
+.situation-EN_PANNE { --situation: var(--danger); }
+.situation-EN_MAINTENANCE { --situation: var(--alerte); }
+.situation-FONCTIONNEL { --situation: var(--accent); }
+.situation-AUCUNE { --situation: var(--discret); }
+
+.carto-grille {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 380px;
+    height: min(640px, 75vh);
+}
+
+/* isolation : les couches de Leaflet (z-index élevés) restent sous le menu du profil. */
+.carto-plan {
+    position: relative;
+    isolation: isolate;
+    min-height: 0;
+    background: var(--trait-leger);
+    font: inherit;
+}
+
+.carto-panneau {
+    min-height: 0;
+    padding: 20px 24px;
+    border-left: 1px solid var(--trait);
+    overflow-y: auto;
+}
+
+.carto-panneau ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+#carto-liste h2 {
+    margin-bottom: 8px;
+}
+
+.carto-panneau .vide {
+    padding: 8px 0;
+}
+
+.carto-station {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin: 0 -10px;
+    padding: 12px 10px;
+    border-bottom: 1px solid var(--trait-leger);
+    border-radius: 6px;
+    color: var(--encre);
+    text-decoration: none;
+}
+
+.carto-station small {
+    display: block;
+}
+
+.carto-station:hover,
+.carto-equipement:hover {
+    background: var(--trait-leger);
+}
+
+.carto-retour {
+    display: inline-block;
+    margin-bottom: 14px;
+    font-size: .88rem;
+    text-decoration: none;
+}
+
+.carto-fiche-titre {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px 12px;
+}
+
+.carto-fiche-titre h2:focus {
+    outline: none;
+}
+
+.carto-fiche > p.secondaire {
+    margin: 8px 0 0;
+}
+
+.carto-equipements {
+    margin-top: 16px !important;
+    border-top: 1px solid var(--trait-leger);
+}
+
+.carto-equipements > li {
+    padding: 8px 0;
+    border-bottom: 1px solid var(--trait-leger);
+}
+
+.carto-equipement {
+    display: grid;
+    gap: 4px;
+    margin: 0 -10px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    color: var(--encre);
+    text-decoration: none;
+}
+
+.carto-equipement-ligne {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 6px 10px;
+}
+
+.carto-incidents {
+    display: grid;
+    gap: 8px;
+    margin: 4px 0 8px 10px !important;
+    padding-left: 12px !important;
+    border-left: 2px solid var(--trait);
+    font-size: .88rem;
+}
+
+.carto-incidents li {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    gap: 10px;
+}
+
+.carto-incidents a {
+    overflow-wrap: anywhere;
+}
+
+/* Fond de carte atténué : seules les situations des stations restent en couleur. */
+.carto-plan .leaflet-tile-pane {
+    filter: saturate(.3) brightness(1.04);
+}
+
+/* Marqueurs : Leaflet pose les couleurs en attributs SVG, le CSS les remplace par celles de la situation. */
+.carto-marqueur {
+    fill: var(--situation);
+    fill-opacity: .9;
+    stroke: #fff;
+    stroke-width: 2.5;
+}
+
+.carto-marqueur.selectionne {
+    stroke: var(--encre);
+    stroke-width: 3;
+}
+
+.carto-etiquette {
+    padding: 2px 7px;
+    border: 0;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(23, 33, 43, .3);
+    color: var(--encre);
+    font-weight: 600;
+}
+
+.carto-etiquette::before {
+    display: none;
+}
+
+@media (max-width: 760px) {
+    .carto-grille {
+        grid-template-columns: minmax(0, 1fr);
+        height: auto;
+    }
+
+    .carto-plan {
+        height: 360px;
+    }
+
+    .carto-panneau {
+        border-top: 1px solid var(--trait);
+        border-left: 0;
+    }
+}

@@ -20,4 +20,6 @@ public interface IncidentRepository extends JpaRepository<Incident, Long> {
     List<Incident> findByStatutOrderByDateHeureResolutionDesc(IncidentStatut statut);
 
     List<Incident> findByIdPrestataire_IdOrderByDateHeureOuvertureDesc(Long idPrestataire);
+
+    List<Incident> findByStatutNotOrderByDateHeureOuvertureDesc(IncidentStatut statut);
 }

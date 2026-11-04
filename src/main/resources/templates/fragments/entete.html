@@ -8,6 +8,7 @@
             <a th:if="${utilisateurConnecte.peutConsulterTableauDeBord()}" th:href="@{/tableau-de-bord}"
                th:classappend="${pageActive == 'tableau-de-bord'} ? 'actif'">Tableau de bord</a>
             <a th:href="@{/stations}" th:classappend="${pageActive == 'stations'} ? 'actif'">Stations</a>
+            <a th:href="@{/carte}" th:classappend="${pageActive == 'carte'} ? 'actif'">Carte</a>
         </nav>
     </div>
 

@@ -81,7 +81,7 @@ En cas de problème :
   - Contrôleurs : `@WebMvcTest` + MockMvc. Seule la couche web est chargée (contrôleurs, advices, intercepteurs de session et JWT), les services sont des `@MockitoBean`. Les templates Thymeleaf sont réellement rendus.
   - Un test `@SpringBootTest` vérifie que le contexte complet démarre (base réelle).
 - Commande : `DB_PORT=3307 mvn test` (base démarrée et `.env` chargé, pour `OpsisApplicationTests`).
-- Couvert (60 tests, tous verts) :
+- Couvert (66 tests, tous verts) :
 
   | Domaine | Tests | Ce qui est vérifié |
   |:--|:--|:--|
@@ -93,6 +93,7 @@ En cas de problème :
   | F8 résolution | `IncidentServiceTest`, `IncidentViewControllerTest` | clôture et état de l'équipement selon les incidents restants (fonctionnel, en maintenance, en panne) ; déjà résolu ; 403 agent |
   | F10 évaluation | `EvaluationServiceTest`, `PrestataireServiceTest`, `IncidentViewControllerTest`, `PrestataireViewControllerTest` | RG8 : évaluation enregistrée, refus si non résolu, sans prestataire ou déjà évalué ; note hors de 1 à 5 refusée ; moyenne de la requête native rattachée au bon prestataire ; fiche prestataire ; 403 agent / technicien |
   | F11 tableau de bord | `NiveauAttentionTest`, `TableauDeBordServiceTest`, `TableauDeBordViewControllerTest` | RG3 aux bornes exactes (47 h vert, 48 h pile orange, 72 h pile rouge) ; RG4 : affecté jamais vert / orange / rouge ; groupes par urgence, échéance avant le seuil suivant (« orange dans 4 h ») ; filtres appliqués aux indicateurs et à la liste, compteurs des puces sur le périmètre ; RG6 (résolu exclu) ; 403 agent ; filtres de l'URL (niveaux multiples, recherche, tri) transmis au service |
+  | Lot alpha, cartographie | `CarteServiceTest`, `CarteViewControllerTest` | situation d'une station selon son équipement le plus grave, tri par gravité ; station sans équipement ni coordonnées conservée ; incidents actifs rattachés à leur équipement ; redirection vers `/login` sans session ; coordonnées et liens vers équipements et incidents dans la page |
   | F12 API | `IncidentRestControllerTest` | 401 sans token, 403 profil, 404 incident inexistant, 400 donnée invalide, 409 état incompatible, 200 / 201 sur chaque opération |
 
 - Non couvert : repositories (`@DataJpaTest`), prévus dans le lot alpha « Qualité renforcée » ; documentation Swagger de l'API (F12) non encore réalisée.
@@ -171,11 +172,23 @@ En cas de problème :
 - `IncidentService.affecter` : le prestataire, le statut `EN_COURS` et l'état de l'équipement sont enregistrés ensemble ; si une vérification échoue (incident résolu, prestataire inexistant), rien n'est modifié.
 - `IncidentService.resoudre` : le statut `RESOLU`, la date de résolution et le nouvel état de l'équipement sont enregistrés ensemble.
 - `EvaluationService.evaluer` : la vérification « pas encore évalué » et l'insertion se font dans la même transaction.
-- Les lectures (`consulterDetail`, `estModifiable`, `estAffectable`, `estEvaluable`, `incidentsModifiables`, historique, prestataires avec leur note, tableau de bord) sont en `readOnly = true`.
+- Les lectures (`consulterDetail`, `estModifiable`, `estAffectable`, `estEvaluable`, `incidentsModifiables`, historique, prestataires avec leur note, tableau de bord, carte du réseau) sont en `readOnly = true`.
 
 ## LOT ALPHA
 ### Fonctionnalité transverse 1 : Cartographie du réseau
-- Besoin · périmètre envisagé · choix et essais · ce qui fonctionne · difficultés · reste à faire
+- Besoin : voir d'un coup d'œil la situation du réseau et ouvrir, depuis la carte, les équipements et les incidents d'une station.
+- Périmètre : page `/carte`, ouverte à tous les profils connectés. Un marqueur par station (coordonnées déjà en base), coloré selon sa situation, c'est-à-dire l'état le plus grave de ses équipements. Le clic ouvre un panneau latéral : équipements triés du plus grave au moins grave, avec leur état et leurs incidents actifs, chacun menant à sa page. Les données ne contiennent pas le tracé des lignes de métro : la carte montre les stations, pas les lignes.
+- Choix :
+  - Leaflet 1.9.4 (chargé depuis unpkg avec contrôle d'intégrité) et fond OpenStreetMap : bibliothèque légère, sans clé d'API. Le fond est désaturé pour que seules les situations restent en couleur.
+  - La page est rendue par Thymeleaf : la liste des stations porte les coordonnées en attributs `data-*`, et `carte.js` crée les marqueurs à partir de cette liste. Pas de route JSON à ajouter (l'API exige un token, les pages une session), et Thymeleaf échappe les noms.
+  - Sans JS ou sans Leaflet, la liste et les fiches restent utilisables (ancres, message à la place de la carte). Une station sans coordonnées reste dans la liste, signalée « Non localisée ».
+  - L'ancre garde la station choisie : le bouton « Précédent » depuis un équipement revient sur sa fiche.
+- Ce qui fonctionne : carte, légende avec le nombre de stations par situation, panneau, navigation clavier par la liste (Échap referme la fiche), affichage mobile. Vérifié dans un navigateur avec des données fictives, et par `CarteServiceTest` et `CarteViewControllerTest`.
+- Difficultés :
+  - Une carte créée alors que son cadre n'a pas encore de taille se cadre mal (tous les marqueurs au même point) : un `ResizeObserver` la recadre dès que le cadre a des dimensions.
+  - Les étiquettes se recouvraient quand les stations sont proches : celles qui gêneraient sont masquées jusqu'à ce qu'on zoome.
+  - Le nom `.carte` était déjà pris par la carte d'interface : les classes de cette page utilisent le préfixe `carto-`.
+- Reste à faire : le fond de carte et Leaflet exigent un accès à Internet ; héberger Leaflet dans le projet le rendrait indépendant d'unpkg. Tracé des lignes si le modèle de données l'intègre un jour.
 ### Fonctionnalité transverse 2 : Qualité renforcée
 
 ## BILAN
