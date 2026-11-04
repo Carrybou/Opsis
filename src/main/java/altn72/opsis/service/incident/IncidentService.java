@@ -5,6 +5,7 @@ import altn72.opsis.dto.incident.IncidentDetailResponse;
 import altn72.opsis.dto.incident.IncidentModificationRequest;
 import altn72.opsis.dto.incident.IncidentRequest;
 import altn72.opsis.dto.incident.IncidentResponse;
+import altn72.opsis.dto.tableaudebord.IncidentActifResponse;
 import altn72.opsis.exception.acces.AccesRefuseException;
 import altn72.opsis.exception.acces.ModificationIncidentInterditeException;
 import altn72.opsis.exception.conflit.AffectationIncidentImpossibleException;
@@ -78,7 +79,7 @@ public class IncidentService implements IncidentInterface {
         incident.setEquipement(equipement);
         incident.setPrestataire(null);
         incident.setDeclarant(utilisateur);
-        equipement.setEtatFonctionnement(EquipementEtat.EN_PANNE);
+        equipement.setEtatFonctionnement(etatApresDeclaration(equipement.getId()));
 
         return IncidentResponse.from(incidentRepository.save(incident));
     }
@@ -86,12 +87,11 @@ public class IncidentService implements IncidentInterface {
     @Override
     @Transactional(readOnly = true)
     public IncidentDetailResponse consulterDetail(Long id) {
-        Incident incident = incidentRepository.findById(id)
-                .orElseThrow(() -> new IncidentIntrouvableException(id));
+        Incident incident = charger(id);
 
         Evaluation evaluation = evaluationRepository.findByIncident_Id(id).orElse(null);
 
-        return IncidentDetailResponse.from(incident, evaluation);
+        return IncidentDetailResponse.from(incident, evaluation, LocalDateTime.now(horloge));
     }
 
     // Transactionnel pour que la modification de l'entité chargée soit enregistrée en fin de méthode.
@@ -106,8 +106,7 @@ public class IncidentService implements IncidentInterface {
     @Override
     @Transactional(readOnly = true)
     public boolean estModifiable(Long idIncident, UtilisateurConnecte utilisateur) {
-        Incident incident = incidentRepository.findById(idIncident)
-                .orElseThrow(() -> new IncidentIntrouvableException(idIncident));
+        Incident incident = charger(idIncident);
         return motifRefusModification(incident, utilisateur).isEmpty();
     }
 
@@ -129,8 +128,7 @@ public class IncidentService implements IncidentInterface {
         if (!utilisateur.aUnProfil(UtilisateurType.ADMIN)) {
             throw new ModificationIncidentInterditeException("Seul un responsable d'exploitation peut affecter un prestataire");
         }
-        Incident incident = incidentRepository.findById(idIncident)
-                .orElseThrow(() -> new IncidentIntrouvableException(idIncident));
+        Incident incident = charger(idIncident);
         // RG5 : un incident résolu ne peut plus être affecté ni réaffecté.
         if (incident.estResolu()) {
             throw new AffectationIncidentImpossibleException("L'incident n°" + idIncident
@@ -152,14 +150,17 @@ public class IncidentService implements IncidentInterface {
     @Override
     @Transactional(readOnly = true)
     public boolean estAffectable(Long idIncident, UtilisateurConnecte utilisateur) {
-        Incident incident = incidentRepository.findById(idIncident)
-                .orElseThrow(() -> new IncidentIntrouvableException(idIncident));
+        Incident incident = charger(idIncident);
         return utilisateur.aUnProfil(UtilisateurType.ADMIN) && !incident.estResolu();
     }
 
-    private Incident chargerModifiable(Long idIncident, UtilisateurConnecte utilisateur) {
-        Incident incident = incidentRepository.findById(idIncident)
+    private Incident charger(Long idIncident) {
+        return incidentRepository.findById(idIncident)
                 .orElseThrow(() -> new IncidentIntrouvableException(idIncident));
+    }
+
+    private Incident chargerModifiable(Long idIncident, UtilisateurConnecte utilisateur) {
+        Incident incident = charger(idIncident);
         motifRefusModification(incident, utilisateur).ifPresent(motif -> {
             throw new ModificationIncidentInterditeException(motif);
         });
@@ -170,24 +171,31 @@ public class IncidentService implements IncidentInterface {
     @Transactional
     public IncidentDetailResponse resoudre(Long id, UtilisateurConnecte utilisateur) {
         if (!utilisateur.peutResoudreIncident()) {
-            throw new AccesRefuseException("Seul un administrateur ou un technicien peut déclarer un incident comme résolu");
+            throw new AccesRefuseException("Seul un responsable d'exploitation ou un technicien peut déclarer un incident comme résolu");
         }
 
-        Incident incident = incidentRepository.findById(id)
-                .orElseThrow(() -> new IncidentIntrouvableException(id));
+        Incident incident = charger(id);
 
         if (incident.estResolu()) {
             throw new IncidentDejaResoluException(id);
         }
 
+        LocalDateTime maintenant = LocalDateTime.now(horloge);
         incident.setStatut(IncidentStatut.RESOLU);
-        incident.setDateHeureResolution(LocalDateTime.now(horloge));
+        incident.setDateHeureResolution(maintenant);
 
         Equipement equipement = incident.getEquipement();
         equipement.setEtatFonctionnement(etatApresResolution(equipement.getId(), id));
 
         Evaluation evaluation = evaluationRepository.findByIncident_Id(id).orElse(null);
-        return IncidentDetailResponse.from(incident, evaluation);
+        return IncidentDetailResponse.from(incident, evaluation, maintenant);
+    }
+
+    // Un prestataire déjà à l'œuvre sur un autre incident garde l'équipement en maintenance, comme à la résolution.
+    private EquipementEtat etatApresDeclaration(Long idEquipement) {
+        return incidentRepository.existsByEquipement_IdAndStatut(idEquipement, IncidentStatut.EN_COURS)
+                ? EquipementEtat.EN_MAINTENANCE
+                : EquipementEtat.EN_PANNE;
     }
 
     // L'état de l'équipement dépend des incidents qui restent : un prestataire encore à l'œuvre, une panne sans prestataire, ou plus rien.
@@ -219,6 +227,16 @@ public class IncidentService implements IncidentInterface {
                     + " est déjà affecté à un prestataire : seul un responsable d'exploitation peut le modifier");
         }
         return Optional.empty();
+    }
+
+    // RG6 : seuls les incidents non résolus sont actifs ; RG3 : leur niveau est calculé à l'heure courante.
+    @Override
+    @Transactional(readOnly = true)
+    public List<IncidentActifResponse> listerActifs() {
+        LocalDateTime maintenant = LocalDateTime.now(horloge);
+        return incidentRepository.findByStatutNotOrderByDateHeureOuvertureDesc(IncidentStatut.RESOLU).stream()
+                .map(incident -> IncidentActifResponse.from(incident, maintenant))
+                .toList();
     }
 
     @Override

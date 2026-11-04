@@ -67,11 +67,8 @@ public record CarteReseauResponse(
             Long identifiant,
             String description,
             IncidentStatut statut,
-            LocalDateTime dateHeureOuverture
+            LocalDateTime dateHeureOuverture,
+            NiveauAttention niveauAttention
     ) {
-        // RG3 : recalculé à chaque affichage, comme sur le tableau de bord.
-        public NiveauAttention niveauAttention() {
-            return NiveauAttention.calculer(statut, dateHeureOuverture, LocalDateTime.now());
-        }
     }
 }

@@ -7,6 +7,7 @@ import altn72.opsis.dto.incident.IncidentDetailResponse;
 import altn72.opsis.dto.incident.IncidentModificationRequest;
 import altn72.opsis.dto.incident.IncidentRequest;
 import altn72.opsis.dto.incident.IncidentResponse;
+import altn72.opsis.dto.tableaudebord.IncidentActifResponse;
 import altn72.opsis.model.utilisateur.UtilisateurType;
 import altn72.opsis.security.ProfilRequis;
 import altn72.opsis.security.UtilisateurConnecte;
@@ -57,6 +58,14 @@ public class IncidentRestController {
         return ResponseEntity
                 .created(URI.create("/api/incidents/" + incident.identifiant()))
                 .body(incident);
+    }
+
+    @Operation(summary = "Lister les incidents actifs",
+            description = "Incidents non résolus, du plus récent au plus ancien, avec leur niveau d'attention calculé à l'heure courante.")
+    @ApiResponse(responseCode = "200", description = "Incidents actifs")
+    @GetMapping
+    public List<IncidentActifResponse> listerActifs() {
+        return incidentService.listerActifs();
     }
 
     @Operation(summary = "Consulter le détail d'un incident")

@@ -12,6 +12,8 @@ public interface IncidentRepository extends JpaRepository<Incident, Long> {
     @EntityGraph(attributePaths = "prestataire")
     List<Incident> findByEquipement_IdOrderByDateHeureOuvertureDesc(Long idEquipement);
 
+    boolean existsByEquipement_IdAndStatut(Long idEquipement, IncidentStatut statut);
+
     boolean existsByEquipement_IdAndStatutNotAndIdNot(Long idEquipement, IncidentStatut statut, Long idIncident);
 
     boolean existsByEquipement_IdAndStatutAndIdNot(Long idEquipement, IncidentStatut statut, Long idIncident);
@@ -21,6 +23,7 @@ public interface IncidentRepository extends JpaRepository<Incident, Long> {
 
     List<Incident> findByPrestataire_IdOrderByDateHeureOuvertureDesc(Long idPrestataire);
 
+    @EntityGraph(attributePaths = {"equipement", "equipement.station", "prestataire"})
     List<Incident> findByStatutNotOrderByDateHeureOuvertureDesc(IncidentStatut statut);
 
     @Query("""

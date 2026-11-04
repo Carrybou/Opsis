@@ -10,6 +10,7 @@ import altn72.opsis.dto.prestataire.PrestataireResponse;
 import altn72.opsis.exception.acces.ModificationIncidentInterditeException;
 import altn72.opsis.model.equipement.EquipementType;
 import altn72.opsis.model.incident.IncidentStatut;
+import altn72.opsis.model.incident.NiveauAttention;
 import altn72.opsis.model.utilisateur.UtilisateurType;
 import altn72.opsis.security.JwtService;
 import altn72.opsis.security.UtilisateurConnecte;
@@ -251,7 +252,7 @@ class IncidentViewControllerTest {
         return new IncidentDetailResponse(1L, "Ascenseur bloqué entre deux niveaux", IncidentStatut.OUVERT,
                 LocalDateTime.of(2026, 10, 10, 8, 15), null, false, "2 h 0 min",
                 2L, "ASC-CHT-001", "Ascenseur accès quai ligne 1", EquipementType.ASCENSEUR,
-                3L, "Châtelet", null, null, null, "Hugo", null);
+                3L, "Châtelet", null, null, null, "Hugo", null, NiveauAttention.VERT);
     }
 
     private static List<PrestataireResponse> prestataires() {
@@ -263,7 +264,7 @@ class IncidentViewControllerTest {
         return new IncidentDetailResponse(6L, "Marche cassée en bas de l'escalator", IncidentStatut.RESOLU,
                 LocalDateTime.of(2026, 9, 2, 7, 30), LocalDateTime.of(2026, 9, 3, 14, 0), true, "1 j 6 h",
                 1L, "ESC-CHT-001", "Escalator sortie nord", EquipementType.ESCALATOR,
-                3L, "Châtelet", 2L, "Mobilis Maintenance", "01 45 67 89 10", "Hugo", null);
+                3L, "Châtelet", 2L, "Mobilis Maintenance", "01 45 67 89 10", "Hugo", null, NiveauAttention.VERT);
     }
 
     private static IncidentResponse incidentAffecte() {

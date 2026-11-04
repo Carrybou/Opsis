@@ -147,11 +147,11 @@
                     <div class="tdb-colonne-zone">
                         <span class="tdb-colonne-valeur" th:if="${t.total() > 0}" th:text="${t.total()}">3</span>
                         <span class="tdb-segment niveau-AFFECTE" th:if="${t.prisEnCharge > 0}" tabindex="0"
-                              th:style="|height: ${t.hauteurPrisEnCharge}%|"
+                              th:style="|height: ${t.hauteurPrisEnCharge()}%|"
                               th:attr="data-infobulle-valeur=${t.prisEnCharge},data-infobulle-libelle=|pris en charge · ${t.libelle}|"></span>
                         <span class="tdb-segment" th:if="${t.sansPrestataire > 0}" tabindex="0"
                               th:classappend="|niveau-${t.niveauSansPrestataire}|"
-                              th:style="|height: ${t.hauteurSansPrestataire}%|"
+                              th:style="|height: ${t.hauteurSansPrestataire()}%|"
                               th:attr="data-infobulle-valeur=${t.sansPrestataire},data-infobulle-libelle=|sans prestataire · ${t.libelle}|"></span>
                     </div>
                     <span class="tdb-colonne-libelle" th:text="${t.libelle}">&lt; 24 h</span>
@@ -190,9 +190,9 @@
                        th:classappend="${s.idStation == filtres.idStation} ? 'actif'">
                         <span class="tdb-barre-nom" th:text="${s.nomStation}">Châtelet</span>
                         <span class="tdb-barre-piste">
-                            <span class="tdb-barre" th:style="|width: ${s.largeurTotale}%|">
+                            <span class="tdb-barre" th:style="|width: ${s.largeurTotale()}%|">
                                 <span th:each="seg : ${s.segments}" class="tdb-segment" th:classappend="|niveau-${seg.niveau}|"
-                                      th:style="|width: ${seg.largeur}%|"
+                                      th:style="|width: ${seg.largeur()}%|"
                                       th:attr="data-infobulle-valeur=${seg.nombre},data-infobulle-libelle=|${seg.niveau.libelle} · ${s.nomStation}|"></span>
                             </span>
                             <span class="tdb-barre-valeur" th:text="${s.total}">2</span>
@@ -231,8 +231,8 @@
                         <span th:text="${g.valeur}">0</span>
                     </span>
                     <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-                        <path th:attr="d=${c.cheminAire}" class="tdb-courbe-aire"></path>
-                        <path th:attr="d=${c.chemin}" class="tdb-courbe-ligne"></path>
+                        <path th:attr="d=${c.cheminAire()}" class="tdb-courbe-aire"></path>
+                        <path th:attr="d=${c.chemin()}" class="tdb-courbe-ligne"></path>
                     </svg>
                     <span class="tdb-courbe-fin" th:style="|left: ${c.dernier().x}%; top: ${c.dernier().y}%|"></span>
                     <span class="tdb-courbe-fin-valeur" th:style="|top: ${c.dernier().y}%|" th:text="${c.dernier().valeur}">6</span>

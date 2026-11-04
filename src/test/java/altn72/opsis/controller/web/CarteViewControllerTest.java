@@ -7,6 +7,7 @@ import altn72.opsis.dto.carte.CarteReseauResponse.StationCarte;
 import altn72.opsis.model.equipement.EquipementEtat;
 import altn72.opsis.model.equipement.EquipementType;
 import altn72.opsis.model.incident.IncidentStatut;
+import altn72.opsis.model.incident.NiveauAttention;
 import altn72.opsis.model.utilisateur.UtilisateurType;
 import altn72.opsis.security.JwtService;
 import altn72.opsis.security.UtilisateurConnecte;
@@ -59,7 +60,7 @@ class CarteViewControllerTest {
         StationCarte chatelet = new StationCarte(1L, "Châtelet", new BigDecimal("48.85837200"), new BigDecimal("2.34706100"),
                 EquipementEtat.EN_PANNE,
                 List.of(new EquipementCarte(2L, "ASC-CHT-001", "Ascenseur accès quai", EquipementType.ASCENSEUR, EquipementEtat.EN_PANNE,
-                        List.of(new IncidentCarte(7L, "Ascenseur bloqué", IncidentStatut.OUVERT, LocalDateTime.of(2026, 10, 10, 8, 15))))),
+                        List.of(new IncidentCarte(7L, "Ascenseur bloqué", IncidentStatut.OUVERT, LocalDateTime.of(2026, 10, 10, 8, 15), NiveauAttention.ROUGE)))),
                 1, 0);
         StationCarte sansCoordonnees = new StationCarte(9L, "Nouvelle station", null, null, null, List.of(), 0, 0);
         when(carteService.consulter()).thenReturn(new CarteReseauResponse(List.of(chatelet, sansCoordonnees), 1, 0, 0, 1));

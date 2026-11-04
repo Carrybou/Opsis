@@ -38,8 +38,7 @@ public class EvaluationService implements EvaluationInterface {
         if (!utilisateur.peutEvaluerPrestataire()) {
             throw new AccesRefuseException("Seul un responsable d'exploitation peut évaluer un prestataire");
         }
-        Incident incident = incidentRepository.findById(idIncident)
-                .orElseThrow(() -> new IncidentIntrouvableException(idIncident));
+        Incident incident = charger(idIncident);
         motifRefusEvaluation(incident).ifPresent(motif -> {
             throw new EvaluationImpossibleException(motif);
         });
@@ -55,8 +54,7 @@ public class EvaluationService implements EvaluationInterface {
     @Override
     @Transactional(readOnly = true)
     public boolean estEvaluable(Long idIncident, UtilisateurConnecte utilisateur) {
-        Incident incident = incidentRepository.findById(idIncident)
-                .orElseThrow(() -> new IncidentIntrouvableException(idIncident));
+        Incident incident = charger(idIncident);
         return utilisateur.peutEvaluerPrestataire() && motifRefusEvaluation(incident).isEmpty();
     }
 
@@ -65,6 +63,11 @@ public class EvaluationService implements EvaluationInterface {
     public Map<Long, Integer> notesParIncident() {
         return evaluationRepository.findAll().stream()
                 .collect(Collectors.toMap(evaluation -> evaluation.getIncident().getId(), Evaluation::getNote));
+    }
+
+    private Incident charger(Long idIncident) {
+        return incidentRepository.findById(idIncident)
+                .orElseThrow(() -> new IncidentIntrouvableException(idIncident));
     }
 
     // RG8 : une évaluation concerne un incident résolu et affecté à un prestataire, et il n'y en a qu'une par incident.

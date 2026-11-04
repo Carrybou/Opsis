@@ -5,15 +5,14 @@ import altn72.opsis.dto.tableaudebord.IncidentActifResponse;
 import altn72.opsis.dto.tableaudebord.TableauDeBordResponse;
 import altn72.opsis.dto.tableaudebord.TableauDeBordResponse.ChargeStation;
 import altn72.opsis.dto.tableaudebord.TableauDeBordResponse.Courbe;
-import altn72.opsis.dto.tableaudebord.TableauDeBordResponse.Graduation;
 import altn72.opsis.dto.tableaudebord.TableauDeBordResponse.GroupeIncidents;
 import altn72.opsis.dto.tableaudebord.TableauDeBordResponse.Indicateurs;
-import altn72.opsis.dto.tableaudebord.TableauDeBordResponse.Point;
 import altn72.opsis.dto.tableaudebord.TableauDeBordResponse.Segment;
 import altn72.opsis.dto.tableaudebord.TableauDeBordResponse.TrancheAge;
 import altn72.opsis.model.equipement.Equipement;
 import altn72.opsis.model.equipement.EquipementEtat;
 import altn72.opsis.model.equipement.EquipementRepository;
+import altn72.opsis.model.equipement.EquipementType;
 import altn72.opsis.model.incident.Incident;
 import altn72.opsis.model.incident.IncidentRepository;
 import altn72.opsis.model.incident.NiveauAttention;
@@ -25,12 +24,14 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -103,8 +104,12 @@ public class TableauDeBordService implements TableauDeBordInterface {
     }
 
     private static Predicate<Equipement> perimetreParc(FiltresTableauDeBord filtres) {
-        return e -> (filtres.idStation() == null || filtres.idStation().equals(e.getStation().getId()))
-                && (filtres.type() == null || filtres.type() == e.getType());
+        return e -> dansLeFiltre(filtres, e.getStation().getId(), e.getType());
+    }
+
+    private static boolean dansLeFiltre(FiltresTableauDeBord filtres, Long idStation, EquipementType type) {
+        return (filtres.idStation() == null || filtres.idStation().equals(idStation))
+                && (filtres.type() == null || filtres.type() == type);
     }
 
     private static Map<Long, String> nomsDesStations(List<Equipement> equipements) {
@@ -113,16 +118,14 @@ public class TableauDeBordService implements TableauDeBordInterface {
     }
 
     private static Predicate<IncidentActifResponse> perimetreActif(FiltresTableauDeBord filtres) {
-        return i -> (filtres.idStation() == null || filtres.idStation().equals(i.idStation()))
-                && (filtres.type() == null || filtres.type() == i.typeEquipement())
+        return i -> dansLeFiltre(filtres, i.idStation(), i.typeEquipement())
                 && correspond(filtres.recherche(), i.referenceEquipement(), i.description(), i.nomStation());
     }
 
     private static Predicate<Incident> perimetreHistorique(FiltresTableauDeBord filtres) {
         return incident -> {
             Equipement equipement = incident.getEquipement();
-            return (filtres.idStation() == null || filtres.idStation().equals(equipement.getStation().getId()))
-                    && (filtres.type() == null || filtres.type() == equipement.getType())
+            return dansLeFiltre(filtres, equipement.getStation().getId(), equipement.getType())
                     && correspond(filtres.recherche(), equipement.getReferenceUnique(), incident.getDescription(),
                     equipement.getStation().getNom());
         };
@@ -183,22 +186,21 @@ public class TableauDeBordService implements TableauDeBordInterface {
     }
 
     private static List<TrancheAge> tranchesAge(List<IncidentActifResponse> selection, LocalDateTime maintenant) {
-        List<long[]> comptes = TRANCHES.stream().map(tranche -> {
-            List<IncidentActifResponse> dedans = selection.stream()
-                    .filter(i -> tranche.contient(Duration.between(i.dateHeureOuverture(), maintenant)))
-                    .toList();
-            long sansPrestataire = dedans.stream().filter(IncidentActifResponse::estSansPrestataire).count();
-            return new long[]{sansPrestataire, dedans.size() - sansPrestataire};
-        }).toList();
-        long maximum = Math.max(1, comptes.stream().mapToLong(c -> c[0] + c[1]).max().orElse(1));
+        List<List<IncidentActifResponse>> parTranche = TRANCHES.stream()
+                .map(tranche -> selection.stream()
+                        .filter(i -> tranche.contient(Duration.between(i.dateHeureOuverture(), maintenant)))
+                        .toList())
+                .toList();
+        long totalMaximal = parTranche.stream().mapToLong(List::size).max().orElse(0);
 
         List<TrancheAge> tranches = new ArrayList<>();
-        for (int k = 0; k < TRANCHES.size(); k++) {
-            Tranche tranche = TRANCHES.get(k);
-            long[] c = comptes.get(k);
+        for (int indice = 0; indice < TRANCHES.size(); indice++) {
+            Tranche tranche = TRANCHES.get(indice);
+            List<IncidentActifResponse> dedans = parTranche.get(indice);
+            long sansPrestataire = dedans.stream().filter(IncidentActifResponse::estSansPrestataire).count();
             tranches.add(new TrancheAge(tranche.libelle(),
                     NiveauAttention.selonAnciennete(Duration.ofHours(tranche.debutHeures())),
-                    c[0], c[1], c[0] * 100.0 / maximum, c[1] * 100.0 / maximum));
+                    sansPrestataire, dedans.size() - sansPrestataire, totalMaximal));
         }
         return tranches;
     }
@@ -207,63 +209,37 @@ public class TableauDeBordService implements TableauDeBordInterface {
     private static List<ChargeStation> chargeParStation(List<IncidentActifResponse> selection) {
         Map<Long, List<IncidentActifResponse>> parStation = selection.stream()
                 .collect(Collectors.groupingBy(IncidentActifResponse::idStation));
-        long maximum = Math.max(1, parStation.values().stream().mapToLong(List::size).max().orElse(1));
+        long totalMaximal = parStation.values().stream().mapToLong(List::size).max().orElse(0);
 
         return parStation.values().stream()
                 .sorted(Comparator.<List<IncidentActifResponse>>comparingInt(List::size).reversed()
                         .thenComparing(liste -> liste.get(0).nomStation()))
-                .map(liste -> {
-                    List<Segment> segments = new ArrayList<>();
-                    for (NiveauAttention niveau : NiveauAttention.values()) {
-                        long nombre = liste.stream().filter(i -> i.niveau() == niveau).count();
-                        if (nombre > 0) {
-                            segments.add(new Segment(niveau, nombre, nombre * 100.0 / liste.size()));
-                        }
-                    }
-                    return new ChargeStation(liste.get(0).idStation(), liste.get(0).nomStation(), liste.size(),
-                            segments, liste.size() * 100.0 / maximum);
-                })
+                .map(liste -> new ChargeStation(liste.get(0).idStation(), liste.get(0).nomStation(), liste.size(),
+                        segments(liste), totalMaximal))
                 .toList();
+    }
+
+    private static List<Segment> segments(List<IncidentActifResponse> incidentsStation) {
+        List<Segment> segments = new ArrayList<>();
+        for (NiveauAttention niveau : NiveauAttention.values()) {
+            long nombre = incidentsStation.stream().filter(i -> i.niveau() == niveau).count();
+            if (nombre > 0) {
+                segments.add(new Segment(niveau, nombre, incidentsStation.size()));
+            }
+        }
+        return segments;
     }
 
     // Nombre d'incidents actifs à la fin de chacun des 30 derniers jours (aujourd'hui : à l'instant présent).
     private static Courbe courbeActifs(List<Incident> historique, LocalDateTime maintenant) {
         LocalDate aujourdhui = maintenant.toLocalDate();
-        List<long[]> valeurs = new ArrayList<>();
-        for (int k = JOURS_COURBE - 1; k >= 0; k--) {
-            LocalDate jour = aujourdhui.minusDays(k);
-            LocalDateTime instant = k == 0 ? maintenant : jour.atTime(23, 59, 59);
-            valeurs.add(new long[]{jour.toEpochDay(), historique.stream().filter(i -> etaitActif(i, instant)).count()});
+        SortedMap<LocalDate, Long> actifsParJour = new TreeMap<>();
+        for (int joursEnArriere = JOURS_COURBE - 1; joursEnArriere >= 0; joursEnArriere--) {
+            LocalDate jour = aujourdhui.minusDays(joursEnArriere);
+            LocalDateTime instant = joursEnArriere == 0 ? maintenant : jour.atTime(LocalTime.MAX);
+            actifsParJour.put(jour, historique.stream().filter(i -> etaitActif(i, instant)).count());
         }
-        long pic = valeurs.stream().mapToLong(v -> v[1]).max().orElse(0);
-        long pas = pasDeGraduation(pic);
-        long maximum = Math.max(pas, (pic + pas - 1) / pas * pas);
-
-        List<Point> points = new ArrayList<>();
-        for (int k = 0; k < valeurs.size(); k++) {
-            long valeur = valeurs.get(k)[1];
-            points.add(new Point(LocalDate.ofEpochDay(valeurs.get(k)[0]), valeur,
-                    k * 100.0 / (valeurs.size() - 1), 100 - valeur * 100.0 / maximum));
-        }
-        List<Graduation> graduations = new ArrayList<>();
-        for (long g = 0; g <= maximum; g += pas) {
-            graduations.add(new Graduation(g, 100 - g * 100.0 / maximum));
-        }
-        String chemin = points.stream()
-                .map(p -> String.format(Locale.ROOT, "%.2f,%.2f", p.x(), p.y()))
-                .collect(Collectors.joining(" L", "M", ""));
-        return new Courbe(points, maximum, graduations, chemin, chemin + " L100,100 L0,100 Z");
-    }
-
-    // Pas « rond » (1, 2, 5, 10, 20…) pour avoir au plus 4 intervalles sur l'axe.
-    private static long pasDeGraduation(long pic) {
-        long[] candidats = {1, 2, 5, 10, 20, 50, 100};
-        for (long candidat : candidats) {
-            if (pic <= candidat * 4) {
-                return candidat;
-            }
-        }
-        return 200;
+        return Courbe.de(actifsParJour);
     }
 
     private static List<GroupeIncidents> grouper(List<IncidentActifResponse> selection, String tri) {

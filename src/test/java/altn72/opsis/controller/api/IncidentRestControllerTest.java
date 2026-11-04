@@ -5,10 +5,12 @@ import altn72.opsis.dto.evaluation.EvaluationResponse;
 import altn72.opsis.dto.incident.AffectationRequest;
 import altn72.opsis.dto.incident.IncidentDetailResponse;
 import altn72.opsis.dto.incident.IncidentResponse;
+import altn72.opsis.dto.tableaudebord.IncidentActifResponse;
 import altn72.opsis.exception.conflit.AffectationIncidentImpossibleException;
 import altn72.opsis.exception.introuvable.IncidentIntrouvableException;
 import altn72.opsis.model.equipement.EquipementType;
 import altn72.opsis.model.incident.IncidentStatut;
+import altn72.opsis.model.incident.NiveauAttention;
 import altn72.opsis.model.utilisateur.UtilisateurType;
 import altn72.opsis.security.JwtService;
 import altn72.opsis.security.UtilisateurConnecte;
@@ -26,6 +28,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -81,6 +84,18 @@ class IncidentRestControllerTest {
                 .andExpect(status().isUnauthorized());
 
         verifyNoInteractions(incidentService);
+    }
+
+    @Test
+    void listerActifs_renvoieLesIncidentsAvecLeurNiveau() throws Exception {
+        when(incidentService.listerActifs()).thenReturn(List.of(new IncidentActifResponse(1L, "Ascenseur bloqué entre deux niveaux",
+                NiveauAttention.ORANGE, LocalDateTime.of(2026, 10, 10, 8, 15), "2 j 0 h", "rouge dans 1 j 0 h", 0,
+                2L, "ASC-CHT-001", EquipementType.ASCENSEUR, 3L, "Châtelet", null, null)));
+
+        mockMvc.perform(get("/api/incidents").header(HttpHeaders.AUTHORIZATION, "Bearer token-technicien"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].identifiant").value(1))
+                .andExpect(jsonPath("$[0].niveau").value("ORANGE"));
     }
 
     @Test
@@ -258,6 +273,6 @@ class IncidentRestControllerTest {
         return new IncidentDetailResponse(1L, "Ascenseur bloqué entre deux niveaux", IncidentStatut.OUVERT,
                 LocalDateTime.of(2026, 10, 10, 8, 15), null, false, "2 h 0 min",
                 2L, "ASC-CHT-001", "Ascenseur accès quai ligne 1", EquipementType.ASCENSEUR,
-                3L, "Châtelet", null, null, null, "Hugo", null);
+                3L, "Châtelet", null, null, null, "Hugo", null, NiveauAttention.VERT);
     }
 }

@@ -10,11 +10,14 @@ import altn72.opsis.model.equipement.EquipementRepository;
 import altn72.opsis.model.incident.Incident;
 import altn72.opsis.model.incident.IncidentRepository;
 import altn72.opsis.model.incident.IncidentStatut;
+import altn72.opsis.model.incident.NiveauAttention;
 import altn72.opsis.model.station.Station;
 import altn72.opsis.model.station.StationRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
+import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -26,18 +29,21 @@ public class CarteService implements CarteInterface {
     private final StationRepository stationRepository;
     private final EquipementRepository equipementRepository;
     private final IncidentRepository incidentRepository;
+    private final Clock horloge;
 
     public CarteService(StationRepository stationRepository, EquipementRepository equipementRepository,
-                        IncidentRepository incidentRepository) {
+                        IncidentRepository incidentRepository, Clock horloge) {
         this.stationRepository = stationRepository;
         this.equipementRepository = equipementRepository;
         this.incidentRepository = incidentRepository;
+        this.horloge = horloge;
     }
 
     // Une station sans coordonnées reste dans la réponse : elle n'a pas de marqueur, mais son panneau reste accessible depuis la liste.
     @Override
     @Transactional(readOnly = true)
     public CarteReseauResponse consulter() {
+        LocalDateTime maintenant = LocalDateTime.now(horloge);
         Map<Long, List<Equipement>> equipementsParStation = equipementRepository.findAllByOrderByReferenceUniqueAsc().stream()
                 .collect(Collectors.groupingBy(equipement -> equipement.getStation().getId()));
         Map<Long, List<Incident>> incidentsParEquipement = incidentRepository
@@ -45,7 +51,7 @@ public class CarteService implements CarteInterface {
                 .collect(Collectors.groupingBy(incident -> incident.getEquipement().getId()));
 
         List<StationCarte> stations = stationRepository.findAllByOrderByNomAsc().stream()
-                .map(station -> versStation(station, equipementsParStation.getOrDefault(station.getId(), List.of()), incidentsParEquipement))
+                .map(station -> versStation(station, equipementsParStation.getOrDefault(station.getId(), List.of()), incidentsParEquipement, maintenant))
                 .toList();
 
         return new CarteReseauResponse(stations,
@@ -55,11 +61,12 @@ public class CarteService implements CarteInterface {
                 compterStations(stations, null));
     }
 
-    private StationCarte versStation(Station station, List<Equipement> equipements, Map<Long, List<Incident>> incidentsParEquipement) {
+    private StationCarte versStation(Station station, List<Equipement> equipements, Map<Long, List<Incident>> incidentsParEquipement,
+                                     LocalDateTime maintenant) {
         List<EquipementCarte> equipementsCarte = equipements.stream()
                 .sorted(Comparator.comparingInt((Equipement equipement) -> gravite(equipement.getEtatFonctionnement())).reversed()
                         .thenComparing(Equipement::getReferenceUnique))
-                .map(equipement -> versEquipement(equipement, incidentsParEquipement.getOrDefault(equipement.getId(), List.of())))
+                .map(equipement -> versEquipement(equipement, incidentsParEquipement.getOrDefault(equipement.getId(), List.of()), maintenant))
                 .toList();
 
         // Les équipements sont triés du plus grave au moins grave : le premier donne la situation de la station.
@@ -70,11 +77,12 @@ public class CarteService implements CarteInterface {
                 compterEquipements(equipements, EquipementEtat.EN_MAINTENANCE));
     }
 
-    private EquipementCarte versEquipement(Equipement equipement, List<Incident> incidents) {
+    private EquipementCarte versEquipement(Equipement equipement, List<Incident> incidents, LocalDateTime maintenant) {
         return new EquipementCarte(equipement.getId(), equipement.getReferenceUnique(), equipement.getLibelleDescription(),
                 equipement.getType(), equipement.getEtatFonctionnement(),
                 incidents.stream()
-                        .map(incident -> new IncidentCarte(incident.getId(), incident.getDescription(), incident.getStatut(), incident.getDateHeureOuverture()))
+                        .map(incident -> new IncidentCarte(incident.getId(), incident.getDescription(), incident.getStatut(), incident.getDateHeureOuverture(),
+                                NiveauAttention.calculer(incident, maintenant)))
                         .toList());
     }
 

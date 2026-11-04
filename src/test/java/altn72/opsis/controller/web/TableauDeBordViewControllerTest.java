@@ -74,6 +74,6 @@ class TableauDeBordViewControllerTest {
         return new TableauDeBordResponse(LocalDateTime.of(2026, 11, 4, 12, 0),
                 new Indicateurs(0, 0L, 0, 0, 0, 0, 0, 0, 0),
                 Map.of(NiveauAttention.ROUGE, 0L, NiveauAttention.ORANGE, 0L, NiveauAttention.VERT, 0L, NiveauAttention.AFFECTE, 0L),
-                List.of(), List.of(), new Courbe(trente, 1, List.of(), "M0,100", "M0,100 Z"), List.of(), 0, Map.of());
+                List.of(), List.of(), new Courbe(trente, 1, List.of()), List.of(), 0, Map.of());
     }
 }

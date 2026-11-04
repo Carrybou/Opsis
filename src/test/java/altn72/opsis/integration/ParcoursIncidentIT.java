@@ -14,6 +14,7 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -54,6 +55,12 @@ class ParcoursIncidentIT extends AvecBaseMysql {
         int id = JsonPath.read(reponse, "$.identifiant");
         verifierEtatEquipement(EquipementEtat.EN_PANNE);
 
+        // F12 : l'incident déclaré est dans la liste des actifs, avec son niveau.
+        mockMvc.perform(get("/api/incidents").header(HttpHeaders.AUTHORIZATION, "Bearer " + agent))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].identifiant").value(id))
+                .andExpect(jsonPath("$[0].niveau").value("VERT"));
+
         // RG8 : pas d'évaluation avant la résolution.
         envoyer(post("/api/incidents/" + id + "/evaluation"), responsable, "{\"note\":4}").andExpect(status().isConflict());
 
@@ -74,6 +81,11 @@ class ParcoursIncidentIT extends AvecBaseMysql {
         envoyer(post("/api/incidents/" + id + "/resolution"), technicien, "").andExpect(status().isConflict());
         envoyer(put("/api/incidents/" + id + "/prestataire"), responsable, "{\"idPrestataire\":1}").andExpect(status().isConflict());
         envoyer(patch("/api/incidents/" + id), responsable, "{\"description\":\"Tentative après la résolution\"}").andExpect(status().isForbidden());
+
+        // RG6 : résolu, il sort de la liste des actifs.
+        mockMvc.perform(get("/api/incidents").header(HttpHeaders.AUTHORIZATION, "Bearer " + agent))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].identifiant").value(not(id)));
 
         // RG7 : le dernier incident résolu arrive en tête de l'historique.
         mockMvc.perform(get("/api/incidents/historique").header(HttpHeaders.AUTHORIZATION, "Bearer " + agent))

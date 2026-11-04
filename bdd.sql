@@ -1,4 +1,7 @@
 SET NAMES utf8mb4;
+-- NOW() doit donner la même heure que l'application (Europe/Paris), quel que soit le fuseau du serveur MySQL,
+-- sinon l'ancienneté des incidents de démonstration serait décalée et les seuils de RG3 faussés.
+SET time_zone = 'Europe/Paris';
 
 CREATE DATABASE IF NOT EXISTS Base_ALTN72
     DEFAULT CHARACTER SET utf8mb4
@@ -28,7 +31,7 @@ CREATE TABLE station (
                          longitude DECIMAL(11, 8)
 );
 
--- Table altn72.opsis.model.utilisateur.Utilisateur
+-- Table Utilisateur
 CREATE TABLE utilisateur (
                              identifiant BIGINT AUTO_INCREMENT PRIMARY KEY,
                              identifiant_connexion VARCHAR(100) NOT NULL UNIQUE,
@@ -128,6 +131,7 @@ INSERT INTO equipement (identifiant, reference_unique, libelle_description, type
 
 -- Dates relatives à l'instant du chargement (NOW()) : les niveaux d'attention du tableau de bord (RG3) restent parlants
 -- quel que soit le jour de la démonstration. Incidents actifs : 2 rouges, 2 oranges, 2 verts, 4 pris en charge.
+-- Les cas limites de RG3 sont couverts au chargement : 47 h (vert), 48 h (orange), 72 h (rouge), et 72 h affecté (RG4).
 INSERT INTO incident (identifiant, description, date_heure_ouverture, statut, date_heure_resolution, id_equipement, id_prestataire, id_utilisateur) VALUES
     -- Actifs, pris en charge par un prestataire
     (1, 'Ascenseur bloqué entre deux niveaux, aucun usager à l''intérieur', NOW() - INTERVAL 6 DAY, 'EN_COURS', NULL, 2, 1, 4),
@@ -136,10 +140,10 @@ INSERT INTO incident (identifiant, description, date_heure_ouverture, statut, da
     (5, 'Écran tactile du distributeur ne répond plus', NOW() - INTERVAL 30 HOUR, 'EN_COURS', NULL, 13, 3, 5),
     -- Actifs, sans prestataire : rouges (72 h et plus), oranges (48 h à 72 h), verts (moins de 48 h)
     (16, 'Porte de l''ascenseur PMR bloquée en position fermée', NOW() - INTERVAL 9 DAY, 'OUVERT', NULL, 7, NULL, 6),
-    (13, 'Écran du distributeur figé sur la page d''accueil', NOW() - INTERVAL 4 DAY, 'OUVERT', NULL, 3, NULL, 3),
+    (13, 'Écran du distributeur figé sur la page d''accueil', NOW() - INTERVAL 72 HOUR, 'OUVERT', NULL, 3, NULL, 3),
     (17, 'Valideur bloqué en position fermée, file d''attente au portique', NOW() - INTERVAL 60 HOUR, 'OUVERT', NULL, 14, NULL, 5),
-    (2, 'Écran éteint, aucun affichage des prochains départs', NOW() - INTERVAL 52 HOUR, 'OUVERT', NULL, 6, NULL, 5),
-    (14, 'Le valideur affiche « carte non reconnue » une fois sur deux', NOW() - INTERVAL 44 HOUR, 'OUVERT', NULL, 5, NULL, 4),
+    (2, 'Écran éteint, aucun affichage des prochains départs', NOW() - INTERVAL 48 HOUR, 'OUVERT', NULL, 6, NULL, 5),
+    (14, 'Le valideur affiche « carte non reconnue » une fois sur deux', NOW() - INTERVAL 47 HOUR, 'OUVERT', NULL, 5, NULL, 4),
     (15, 'Écran de quai qui clignote par intermittence', NOW() - INTERVAL 6 HOUR, 'OUVERT', NULL, 11, NULL, 6),
     -- Résolus au cours des 30 derniers jours (historique F9, courbe du tableau de bord)
     (6, 'Marche cassée en bas de l''escalator', NOW() - INTERVAL 29 DAY, 'RESOLU', NOW() - INTERVAL 24 DAY, 1, 2, 4),

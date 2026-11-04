@@ -5,6 +5,7 @@ import altn72.opsis.dto.incident.IncidentResume;
 import altn72.opsis.model.equipement.EquipementEtat;
 import altn72.opsis.model.equipement.EquipementType;
 import altn72.opsis.model.incident.IncidentStatut;
+import altn72.opsis.model.incident.NiveauAttention;
 import altn72.opsis.model.utilisateur.UtilisateurType;
 import altn72.opsis.security.JwtService;
 import altn72.opsis.security.UtilisateurConnecte;
@@ -64,10 +65,10 @@ class EquipementViewControllerTest {
         LocalDateTime maintenant = LocalDateTime.now();
         when(equipementService.consulterFiche(2L)).thenReturn(new FicheEquipementResponse(2L, "ASC-CHT-001", "Ascenseur accès quai ligne 1",
                 EquipementType.ASCENSEUR, EquipementEtat.FONCTIONNEL, 3L, "Châtelet",
-                List.of(new IncidentResume(1L, "Récent", IncidentStatut.OUVERT, maintenant.minusHours(47), null, null),
-                        new IncidentResume(2L, "Ancien", IncidentStatut.OUVERT, maintenant.minusHours(48), null, null),
-                        new IncidentResume(3L, "Très ancien", IncidentStatut.OUVERT, maintenant.minusHours(72), null, null),
-                        new IncidentResume(4L, "Pris en charge", IncidentStatut.EN_COURS, maintenant.minusHours(200), null, "AscenTech Services")),
+                List.of(new IncidentResume(1L, "Récent", IncidentStatut.OUVERT, maintenant.minusHours(47), null, null, NiveauAttention.VERT),
+                        new IncidentResume(2L, "Ancien", IncidentStatut.OUVERT, maintenant.minusHours(48), null, null, NiveauAttention.ORANGE),
+                        new IncidentResume(3L, "Très ancien", IncidentStatut.OUVERT, maintenant.minusHours(72), null, null, NiveauAttention.ROUGE),
+                        new IncidentResume(4L, "Pris en charge", IncidentStatut.EN_COURS, maintenant.minusHours(200), null, "AscenTech Services", NiveauAttention.AFFECTE)),
                 List.of()));
         when(incidentService.incidentsModifiables(2L, AGENT)).thenReturn(Set.of());
 
@@ -83,9 +84,9 @@ class EquipementViewControllerTest {
         return new FicheEquipementResponse(2L, "ASC-CHT-001", "Ascenseur accès quai ligne 1",
                 EquipementType.ASCENSEUR, EquipementEtat.EN_PANNE, 3L, "Châtelet",
                 List.of(new IncidentResume(1L, "Ascenseur bloqué entre deux niveaux", IncidentStatut.OUVERT,
-                                LocalDateTime.of(2026, 10, 10, 8, 15), null, null),
+                                LocalDateTime.of(2026, 10, 10, 8, 15), null, null, NiveauAttention.VERT),
                         new IncidentResume(3L, "Portes qui se rouvrent en permanence", IncidentStatut.EN_COURS,
-                                LocalDateTime.of(2026, 10, 9, 7, 0), null, "AscenTech Services")),
+                                LocalDateTime.of(2026, 10, 9, 7, 0), null, "AscenTech Services", NiveauAttention.AFFECTE)),
                 List.of());
     }
 }

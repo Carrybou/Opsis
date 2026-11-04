@@ -13,9 +13,11 @@ public record IncidentResume(
         IncidentStatut statut,
         LocalDateTime dateHeureOuverture,
         LocalDateTime dateHeureResolution,
-        String nomPrestataire
+        String nomPrestataire,
+        NiveauAttention niveauAttention
 ) {
-    public static IncidentResume from(Incident incident) {
+    // RG3 : le niveau est recalculé à chaque consultation, jamais stocké.
+    public static IncidentResume from(Incident incident, LocalDateTime maintenant) {
         Prestataire prestataire = incident.getPrestataire();
         return new IncidentResume(
                 incident.getId(),
@@ -23,12 +25,8 @@ public record IncidentResume(
                 incident.getStatut(),
                 incident.getDateHeureOuverture(),
                 incident.getDateHeureResolution(),
-                prestataire == null ? null : prestataire.getNom()
+                prestataire == null ? null : prestataire.getNom(),
+                NiveauAttention.calculer(incident, maintenant)
         );
-    }
-
-    // RG3 : recalculé à chaque affichage, comme sur le tableau de bord.
-    public NiveauAttention niveauAttention() {
-        return NiveauAttention.calculer(statut, dateHeureOuverture, LocalDateTime.now());
     }
 }

@@ -16,6 +16,7 @@ import altn72.opsis.model.evaluation.EvaluationRepository;
 import altn72.opsis.model.incident.Incident;
 import altn72.opsis.model.incident.IncidentRepository;
 import altn72.opsis.model.incident.IncidentStatut;
+import altn72.opsis.model.incident.NiveauAttention;
 import altn72.opsis.model.prestataire.Prestataire;
 import altn72.opsis.model.prestataire.PrestataireRepository;
 import altn72.opsis.model.station.Station;
@@ -97,6 +98,34 @@ class IncidentServiceTest {
         assertThat(reponse.dateHeureResolution()).isNull();
         assertThat(reponse.nomPrestataire()).isNull();
         assertThat(equipement.getEtatFonctionnement()).isEqualTo(EquipementEtat.EN_PANNE);
+    }
+
+    // Un prestataire déjà à l'œuvre sur un autre incident : même priorité qu'à la résolution.
+    @Test
+    void declarer_equipementDejaPrisEnCharge_resteEnMaintenance() {
+        Equipement equipement = incident(1L, IncidentStatut.OUVERT).getEquipement();
+        when(equipementRepository.findById(10L)).thenReturn(Optional.of(equipement));
+        when(utilisateurRepository.findById(ID_AGENT_AUTEUR)).thenReturn(Optional.of(incident(1L, IncidentStatut.OUVERT).getDeclarant()));
+        when(incidentRepository.existsByEquipement_IdAndStatut(equipement.getId(), IncidentStatut.EN_COURS)).thenReturn(true);
+        when(incidentRepository.save(any(Incident.class))).then(AdditionalAnswers.returnsFirstArg());
+
+        incidentService.declarer(new IncidentRequest(10L, "Second incident sur le même ascenseur"), ID_AGENT_AUTEUR);
+
+        assertThat(equipement.getEtatFonctionnement()).isEqualTo(EquipementEtat.EN_MAINTENANCE);
+    }
+
+    // RG6 : un incident résolu n'est jamais listé ; RG3 : le niveau suit l'horloge.
+    @Test
+    void listerActifs_excluLesResolusEtCalculeLeNiveau() {
+        Incident ouvert = incident(1L, IncidentStatut.OUVERT);
+        ouvert.setDateHeureOuverture(LocalDateTime.now(horloge).minusHours(48));
+        when(incidentRepository.findByStatutNotOrderByDateHeureOuvertureDesc(IncidentStatut.RESOLU)).thenReturn(List.of(ouvert));
+
+        assertThat(incidentService.listerActifs()).singleElement()
+                .satisfies(actif -> {
+                    assertThat(actif.identifiant()).isEqualTo(1L);
+                    assertThat(actif.niveau()).isEqualTo(NiveauAttention.ORANGE);
+                });
     }
 
     @Test

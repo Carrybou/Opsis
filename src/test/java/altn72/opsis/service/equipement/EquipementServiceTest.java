@@ -7,14 +7,19 @@ import altn72.opsis.model.equipement.EquipementRepository;
 import altn72.opsis.model.incident.Incident;
 import altn72.opsis.model.incident.IncidentRepository;
 import altn72.opsis.model.incident.IncidentStatut;
+import altn72.opsis.model.incident.NiveauAttention;
 import altn72.opsis.model.station.Station;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
@@ -33,12 +38,15 @@ class EquipementServiceTest {
     @Mock
     private IncidentRepository incidentRepository;
 
+    @Spy
+    private Clock horloge = Clock.fixed(Instant.parse("2026-11-04T11:00:00Z"), ZoneId.of("Europe/Paris"));
+
     @InjectMocks
     private EquipementService equipementService;
 
     @Test
     void consulterFiche_separeIncidentsEnCoursEtPassesEnConservantLOrdre() {
-        LocalDateTime maintenant = LocalDateTime.now();
+        LocalDateTime maintenant = LocalDateTime.now(horloge);
         Incident enCoursRecent = incident(10L, IncidentStatut.OUVERT, maintenant.minus(1, ChronoUnit.HOURS));
         Incident resoluRecent = incident(11L, IncidentStatut.RESOLU, maintenant.minus(2, ChronoUnit.DAYS));
         Incident enCoursAncien = incident(12L, IncidentStatut.EN_COURS, maintenant.minus(3, ChronoUnit.DAYS));
@@ -52,6 +60,8 @@ class EquipementServiceTest {
 
         assertThat(fiche.referenceUnique()).isEqualTo("ESC-CHT-001");
         assertThat(fiche.nomStation()).isEqualTo("Châtelet");
+        assertThat(fiche.incidentsEnCours()).extracting(IncidentResume::niveauAttention)
+                .containsExactly(NiveauAttention.VERT, NiveauAttention.AFFECTE);
         assertThat(fiche.incidentsEnCours()).extracting(IncidentResume::identifiant).containsExactly(10L, 12L);
         assertThat(fiche.incidentsPasses()).extracting(IncidentResume::identifiant).containsExactly(11L, 13L);
     }

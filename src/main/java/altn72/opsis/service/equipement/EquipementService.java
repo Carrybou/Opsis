@@ -11,6 +11,8 @@ import altn72.opsis.model.incident.IncidentRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -20,10 +22,12 @@ public class EquipementService implements EquipementInterface {
 
     private final EquipementRepository equipementRepository;
     private final IncidentRepository incidentRepository;
+    private final Clock horloge;
 
-    public EquipementService(EquipementRepository equipementRepository, IncidentRepository incidentRepository) {
+    public EquipementService(EquipementRepository equipementRepository, IncidentRepository incidentRepository, Clock horloge) {
         this.equipementRepository = equipementRepository;
         this.incidentRepository = incidentRepository;
+        this.horloge = horloge;
     }
 
     @Override
@@ -31,11 +35,13 @@ public class EquipementService implements EquipementInterface {
         Equipement equipement = equipementRepository.findById(idEquipement)
                 .orElseThrow(() -> new EquipementIntrouvableException(idEquipement));
 
+        LocalDateTime maintenant = LocalDateTime.now(horloge);
+
         // RG7 : le repository trie par date d'ouverture, partitioningBy conserve cet ordre dans chaque liste.
         Map<Boolean, List<IncidentResume>> incidentsParResolution = incidentRepository
                 .findByEquipement_IdOrderByDateHeureOuvertureDesc(idEquipement).stream()
                 .collect(Collectors.partitioningBy(Incident::estResolu,
-                        Collectors.mapping(IncidentResume::from, Collectors.toList())));
+                        Collectors.mapping(incident -> IncidentResume.from(incident, maintenant), Collectors.toList())));
 
         return FicheEquipementResponse.from(equipement,
                 incidentsParResolution.get(false),

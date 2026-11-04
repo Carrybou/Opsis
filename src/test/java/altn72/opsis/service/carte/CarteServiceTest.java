@@ -8,14 +8,20 @@ import altn72.opsis.model.equipement.EquipementRepository;
 import altn72.opsis.model.incident.Incident;
 import altn72.opsis.model.incident.IncidentRepository;
 import altn72.opsis.model.incident.IncidentStatut;
+import altn72.opsis.model.incident.NiveauAttention;
 import altn72.opsis.model.station.Station;
 import altn72.opsis.model.station.StationRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -33,6 +39,9 @@ class CarteServiceTest {
 
     @Mock
     private IncidentRepository incidentRepository;
+
+    @Spy
+    private Clock horloge = Clock.fixed(Instant.parse("2026-11-04T11:00:00Z"), ZoneId.of("Europe/Paris"));
 
     @InjectMocks
     private CarteService carteService;
@@ -85,6 +94,7 @@ class CarteServiceTest {
         actif.setId(7L);
         actif.setDescription("Ascenseur bloqué");
         actif.setStatut(IncidentStatut.OUVERT);
+        actif.setDateHeureOuverture(LocalDateTime.now(horloge).minusHours(72));
         actif.setEquipement(ascenseur);
         when(stationRepository.findAllByOrderByNomAsc()).thenReturn(List.of(chatelet));
         when(equipementRepository.findAllByOrderByReferenceUniqueAsc()).thenReturn(List.of(ascenseur, escalator));
@@ -93,6 +103,7 @@ class CarteServiceTest {
         StationCarte station = carteService.consulter().stations().getFirst();
 
         assertThat(station.equipements().getFirst().incidentsActifs()).extracting("identifiant").containsExactly(7L);
+        assertThat(station.equipements().getFirst().incidentsActifs().getFirst().niveauAttention()).isEqualTo(NiveauAttention.ROUGE);
         assertThat(station.equipements().get(1).incidentsActifs()).isEmpty();
     }
 
