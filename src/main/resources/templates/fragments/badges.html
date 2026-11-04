@@ -10,5 +10,9 @@
       th:classappend="${statut.name() == 'OUVERT'} ? 'badge-danger' : (${statut.name() == 'EN_COURS'} ? 'badge-info' : 'badge-neutre')"
       th:text="${statut.name() == 'OUVERT'} ? 'Non affecté' : (${statut.name() == 'EN_COURS'} ? 'Affecté' : 'Résolu')">Non affecté</span>
 
+<span th:fragment="profil(profil)" class="badge"
+      th:classappend="${profil.name() == 'ADMIN'} ? 'badge-ok' : (${profil.name() == 'AGENT'} ? 'badge-info' : 'badge-alerte')"
+      th:text="${profil.libelle}">Agent</span>
+
 </body>
 </html>

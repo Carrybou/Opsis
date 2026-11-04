@@ -3,7 +3,9 @@ package altn72.opsis.model.incident;
 import altn72.opsis.model.evaluation.Evaluation;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -20,4 +22,14 @@ public interface IncidentRepository extends JpaRepository<Incident, Long> {
     List<Incident> findByStatutOrderByDateHeureResolutionDesc(IncidentStatut statut);
 
     List<Incident> findByIdPrestataire_IdOrderByDateHeureOuvertureDesc(Long idPrestataire);
+
+    @Query("""
+            select i.idUtilisateur.id as idUtilisateur, count(i) as declares,
+                   sum(case when i.statut <> altn72.opsis.model.incident.IncidentStatut.RESOLU then 1 else 0 end) as actifs,
+                   max(i.dateHeureOuverture) as derniereDeclaration
+            from Incident i
+            group by i.idUtilisateur.id""")
+    List<DeclarationsUtilisateur> compterDeclarationsParUtilisateur();
+
+    long countByDateHeureOuvertureGreaterThanEqual(LocalDateTime depuis);
 }

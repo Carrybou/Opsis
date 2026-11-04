@@ -23,6 +23,10 @@ public class Utilisateur {
     @Column(name = "profil", nullable = false, length = 50)
     private UtilisateurType profil;
 
+    // Supprimer un compte le désactive : ses incidents déclarés restent dans l'historique (la clé étrangère est en cascade).
+    @Column(name = "actif", nullable = false)
+    private boolean actif = true;
+
     public Long getId() {
         return id;
     }
@@ -61,6 +65,14 @@ public class Utilisateur {
 
     public void setProfil(UtilisateurType profil) {
         this.profil = profil;
+    }
+
+    public boolean isActif() {
+        return actif;
+    }
+
+    public void setActif(boolean actif) {
+        this.actif = actif;
     }
 
 }

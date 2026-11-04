@@ -62,6 +62,16 @@ class AuthServiceTest {
                 .hasMessage("Identifiant ou mot de passe incorrect");
     }
 
+    @Test
+    void authentifier_compteSupprime_estRefuseMemeAvecLeBonMotDePasse() {
+        Utilisateur supprime = utilisateur();
+        supprime.setActif(false);
+        when(utilisateurRepository.findByIdentifiantConnexion(IDENTIFIANT)).thenReturn(Optional.of(supprime));
+
+        assertThatThrownBy(() -> authService.authentifier(IDENTIFIANT, MOT_DE_PASSE))
+                .isInstanceOf(IdentifiantsInvalidesException.class);
+    }
+
     private Utilisateur utilisateur() {
         Utilisateur utilisateur = new Utilisateur();
         utilisateur.setId(7L);
