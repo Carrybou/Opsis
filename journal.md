@@ -44,6 +44,19 @@ En cas de problème :
   - `bdd.sql` (schéma + données de démonstration) n'est joué qu'à la première création du volume. Pour repartir d'une base propre : `docker compose down -v && docker compose up -d`.
 - Lancer : voir « Lancer l'application en 3 commandes » en haut du journal. L'application est alors disponible sur http://localhost:8080.
 - Application déployée : https://...
+- Déploiement sur Railway (l'API et les pages sont une seule application, construite par le `Dockerfile`) :
+  1. Créer un projet relié au dépôt GitHub, puis lui ajouter une base MySQL.
+  2. Renseigner les variables de l'application : `DB_HOST`, `DB_PORT` et `MYSQL_PASSWORD` d'après la base, `MYSQL_USER=root`, `MYSQL_DATABASE=Base_ALTN72`, et un nouveau secret pour `JWT_SECRET` (`openssl rand -base64 32`). Ne pas réutiliser les valeurs de `.env.example` ni celles présentes dans l'historique Git.
+  3. Activer l'accès public à la base, puis charger les données **une seule fois**, car `bdd.sql` efface les tables à chaque exécution :
+     ```bash
+     docker run --rm -i mysql:8.0 mysql -h HOTE -P PORT -u root -pMOT_DE_PASSE --init-command="SET time_zone='+01:00'" < bdd.sql
+     ```
+     Le fuseau indiqué garde l'ancienneté des incidents de démonstration exacte en heure d'hiver, car MySQL tourne en UTC.
+  4. Désactiver le compte `admin`, dont le mot de passe est public, en gardant les comptes `*.test` pour l'évaluation :
+     ```sql
+     UPDATE Base_ALTN72.utilisateur SET actif = FALSE WHERE identifiant_connexion = 'admin';
+     ```
+  5. Générer l'URL publique de l'application et la reporter ci-dessus.
 - Comptes de test (créés par `bdd.sql`) :
 
   | Identifiant | Profil | Mot de passe |

@@ -1,0 +1,12 @@
+# Les secrets et les fichiers inutiles au build ne doivent pas entrer dans l'image.
+.env
+.env.*
+.git
+.github
+.idea
+.mvn/timing.properties
+target
+docs
+*.md
+*.pdf
+*.http
