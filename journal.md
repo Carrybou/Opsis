@@ -3,12 +3,12 @@
 **Groupe :** Thomas GUIBERT, Roméo FROGER
 
 ## LANCER L'APPLICATION EN 3 COMMANDES
-Prérequis : Java 25, Docker Desktop démarré, et un fichier `.env` à la racine (voir le tableau du README ci-dessous).
+Prérequis : Java 25 et Docker Desktop démarré.
 
 ```bash
-docker compose up -d                      # 1. base MySQL (port 3307) + Adminer (http://localhost:8081)
-set -a; source .env; set +a               # 2. charge les variables (JWT_SECRET, identifiants MySQL)
-DB_PORT=3307 sh mvnw spring-boot:run      # 3. lance l'application sur le MySQL Docker
+cp .env.example .env                      # 1. une seule fois : crée la configuration locale (non versionnée)
+docker compose up -d                      # 2. base MySQL (port 3307) + Adminer (http://localhost:8081)
+sh mvnw spring-boot:run                   # 3. lance l'application, qui lit seule le fichier .env
 ```
 
 Ouvrir ensuite http://localhost:8080 et se connecter avec un des comptes de test, mot de passe **`1234`** :
@@ -22,13 +22,14 @@ Ouvrir ensuite http://localhost:8080 et se connecter avec un des comptes de test
 En cas de problème :
 - **`Port 8080 was already in use`** : une ancienne instance tourne encore. `lsof -ti:8080` donne son PID, puis `kill <PID>`.
 - **`Unable to determine Dialect without JDBC metadata`** : l'application ne joint pas MySQL. Vérifier que le conteneur tourne (`docker ps`) et que `DB_PORT=3307` est bien passé : sans cette variable, l'application cherche un MySQL local sur le port 3306.
-- **Erreur sur `jwt.secret`** : le `.env` n'a pas été chargé (étape 2), ou VS Code / IntelliJ lance l'application sans lui. Il faut alors ajouter le `.env` dans la configuration de lancement de l'IDE.
+- **`Could not resolve placeholder` (`MYSQL_USER`, `JWT_SECRET`…)** : le fichier `.env` n'existe pas, ou l'application n'est pas lancée depuis la racine du projet. Dans l'IDE, régler le répertoire de travail sur la racine.
+- **`Access denied for user`** : le `.env` ne correspond plus aux identifiants de la base déjà créée. Revenir aux anciennes valeurs, ou repartir d'une base propre (commande ci-dessous).
 - **Repartir d'une base propre** : `docker compose down -v && docker compose up -d`.
 - **`Unknown column` au chargement d'une page** : la base a été créée avec une ancienne version de `bdd.sql` (colonnes `actif` ou `version` absentes). Il faut la recréer avec la commande ci-dessus.
 
 ## README
 - Prérequis : Java 25, Maven 3.9+, Docker (Docker Desktop ou Docker Engine + Compose).
-- Configuration : créer un fichier `.env` à la racine (non versionné) contenant :
+- Configuration : `cp .env.example .env`, puis adapter si besoin. Le fichier `.env` n'est pas versionné ; l'application et docker-compose le lisent tous les deux :
 
   | Variable              | Rôle                                                        |
   |:----------------------|:------------------------------------------------------------|
@@ -39,9 +40,9 @@ En cas de problème :
   | `JWT_SECRET`          | Clé de signature des JWT de l'API (32 caractères minimum)   |
 
 - Initialiser la base : `docker compose up -d`
-  - MySQL 8 est exposé sur le port **3307**, Adminer sur http://localhost:8081. L'application se connecte par défaut au port 3306 (MySQL local) ; pour le MySQL Docker, lancer avec `DB_PORT=3307`.
+  - MySQL 8 est exposé sur le port **3307**, Adminer sur http://localhost:8081. L'application se connecte par défaut au port 3307 ; la variable `DB_PORT` permet d'en changer (par exemple `DB_PORT=3306` pour un MySQL installé sur la machine).
   - `bdd.sql` (schéma + données de démonstration) n'est joué qu'à la première création du volume. Pour repartir d'une base propre : `docker compose down -v && docker compose up -d`.
-- Lancer : voir « Lancer l'application en 3 commandes » en haut du journal (`.env` chargé, `DB_PORT=3307`). L'application est alors disponible sur http://localhost:8080 (redirection vers `/login` si non connecté).
+- Lancer : voir « Lancer l'application en 3 commandes » en haut du journal. L'application est alors disponible sur http://localhost:8080.
 - Application déployée : https://...
 - Comptes de test (créés par `bdd.sql`) :
 
@@ -58,7 +59,7 @@ En cas de problème :
 - Limites connues :
   - Les dates des données de démonstration sont relatives au moment où la base est créée (`NOW() - INTERVAL …` dans `bdd.sql`). Elles « vieillissent » ensuite : recréer la base (`docker compose down -v && docker compose up -d`) pour retrouver un tableau de bord avec les trois couleurs.
   - Un compte supprimé ou modifié garde sa session (30 min) ou son JWT en cours jusqu'à leur expiration : le profil n'est relu qu'à la connexion.
-  - Les identifiants de la base sont encore écrits dans `application.properties` au lieu d'être lus depuis les variables d'environnement (§7.7).
+  - Secrets (§7.7) : plus aucun secret n'est versionné, mais l'ancien `.env` et l'ancien mot de passe de `application.properties` restent lisibles dans l'historique Git. Ils ne servent qu'à la base locale de démonstration ; il faut en utiliser d'autres pour tout déploiement.
 
 ## ARCHITECTURE
 - Dépôt : https://github.com/Carrybou/Opsis
