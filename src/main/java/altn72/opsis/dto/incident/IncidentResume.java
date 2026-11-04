@@ -16,7 +16,7 @@ public record IncidentResume(
         String nomPrestataire
 ) {
     public static IncidentResume from(Incident incident) {
-        Prestataire prestataire = incident.getIdPrestataire();
+        Prestataire prestataire = incident.getPrestataire();
         return new IncidentResume(
                 incident.getId(),
                 incident.getDescription(),

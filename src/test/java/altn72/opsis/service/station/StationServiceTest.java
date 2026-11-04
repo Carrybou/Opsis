@@ -73,7 +73,7 @@ class StationServiceTest {
         equipement.setId(id);
         equipement.setReferenceUnique(reference);
         equipement.setEtatFonctionnement(etat);
-        equipement.setIdStation(station);
+        equipement.setStation(station);
         return equipement;
     }
 }

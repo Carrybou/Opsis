@@ -22,7 +22,7 @@ public record FicheEquipementResponse(
     public static FicheEquipementResponse from(Equipement equipement,
                                                List<IncidentResume> incidentsEnCours,
                                                List<IncidentResume> incidentsPasses) {
-        Station station = equipement.getIdStation();
+        Station station = equipement.getStation();
         return new FicheEquipementResponse(
                 equipement.getId(),
                 equipement.getReferenceUnique(),

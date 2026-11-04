@@ -28,7 +28,7 @@ public class Evaluation {
     @OneToOne(fetch = FetchType.LAZY, optional = false)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @JoinColumn(name = "id_incident", nullable = false)
-    private Incident idIncident;
+    private Incident incident;
 
     public Long getId() {
         return id;
@@ -62,12 +62,12 @@ public class Evaluation {
         this.date = date;
     }
 
-    public Incident getIdIncident() {
-        return idIncident;
+    public Incident getIncident() {
+        return incident;
     }
 
-    public void setIdIncident(Incident idIncident) {
-        this.idIncident = idIncident;
+    public void setIncident(Incident incident) {
+        this.incident = incident;
     }
 
 }

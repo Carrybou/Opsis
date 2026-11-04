@@ -68,9 +68,9 @@ public class IncidentService implements IncidentInterface {
         incident.setDateHeureOuverture(LocalDateTime.now(horloge));
         incident.setStatut(IncidentStatut.OUVERT);
         incident.setDateHeureResolution(null);
-        incident.setIdEquipement(equipement);
-        incident.setIdPrestataire(null);
-        incident.setIdUtilisateur(utilisateur);
+        incident.setEquipement(equipement);
+        incident.setPrestataire(null);
+        incident.setDeclarant(utilisateur);
         equipement.setEtatFonctionnement(EquipementEtat.EN_PANNE);
 
         return IncidentResponse.from(incidentRepository.save(incident));
@@ -82,7 +82,7 @@ public class IncidentService implements IncidentInterface {
         Incident incident = incidentRepository.findById(id)
                 .orElseThrow(() -> new IncidentIntrouvableException(id));
 
-        Evaluation evaluation = evaluationRepository.findByIdIncident_Id(id).orElse(null);
+        Evaluation evaluation = evaluationRepository.findByIncident_Id(id).orElse(null);
 
         return IncidentDetailResponse.from(incident, evaluation);
     }
@@ -107,7 +107,7 @@ public class IncidentService implements IncidentInterface {
     @Override
     @Transactional(readOnly = true)
     public Set<Long> incidentsModifiables(Long idEquipement, UtilisateurConnecte utilisateur) {
-        return incidentRepository.findByIdEquipement_IdOrderByDateHeureOuvertureDesc(idEquipement).stream()
+        return incidentRepository.findByEquipement_IdOrderByDateHeureOuvertureDesc(idEquipement).stream()
                 .filter(incident -> motifRefusModification(incident, utilisateur).isEmpty())
                 .map(Incident::getId)
                 .collect(Collectors.toSet());
@@ -136,9 +136,9 @@ public class IncidentService implements IncidentInterface {
                     + " est déjà affecté à " + prestataire.getNom());
         }
 
-        incident.setIdPrestataire(prestataire);
+        incident.setPrestataire(prestataire);
         incident.setStatut(IncidentStatut.EN_COURS);
-        incident.getIdEquipement().setEtatFonctionnement(EquipementEtat.EN_MAINTENANCE);
+        incident.getEquipement().setEtatFonctionnement(EquipementEtat.EN_MAINTENANCE);
         return IncidentResponse.from(incident);
     }
 
@@ -176,19 +176,19 @@ public class IncidentService implements IncidentInterface {
         incident.setStatut(IncidentStatut.RESOLU);
         incident.setDateHeureResolution(LocalDateTime.now(horloge));
 
-        Equipement equipement = incident.getIdEquipement();
+        Equipement equipement = incident.getEquipement();
         equipement.setEtatFonctionnement(etatApresResolution(equipement.getId(), id));
 
-        Evaluation evaluation = evaluationRepository.findByIdIncident_Id(id).orElse(null);
+        Evaluation evaluation = evaluationRepository.findByIncident_Id(id).orElse(null);
         return IncidentDetailResponse.from(incident, evaluation);
     }
 
     // L'état de l'équipement dépend des incidents qui restent : un prestataire encore à l'œuvre, une panne sans prestataire, ou plus rien.
     private EquipementEtat etatApresResolution(Long idEquipement, Long idIncidentResolu) {
-        if (incidentRepository.existsByIdEquipement_IdAndStatutAndIdNot(idEquipement, IncidentStatut.EN_COURS, idIncidentResolu)) {
+        if (incidentRepository.existsByEquipement_IdAndStatutAndIdNot(idEquipement, IncidentStatut.EN_COURS, idIncidentResolu)) {
             return EquipementEtat.EN_MAINTENANCE;
         }
-        if (incidentRepository.existsByIdEquipement_IdAndStatutNotAndIdNot(idEquipement, IncidentStatut.RESOLU, idIncidentResolu)) {
+        if (incidentRepository.existsByEquipement_IdAndStatutNotAndIdNot(idEquipement, IncidentStatut.RESOLU, idIncidentResolu)) {
             return EquipementEtat.EN_PANNE;
         }
         return EquipementEtat.FONCTIONNEL;

@@ -30,7 +30,7 @@ public class Equipement {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @JoinColumn(name = "id_station", nullable = false)
-    private Station idStation;
+    private Station station;
 
     public Long getId() {
         return id;
@@ -72,12 +72,12 @@ public class Equipement {
         this.etatFonctionnement = etatFonctionnement;
     }
 
-    public Station getIdStation() {
-        return idStation;
+    public Station getStation() {
+        return station;
     }
 
-    public void setIdStation(Station idStation) {
-        this.idStation = idStation;
+    public void setStation(Station station) {
+        this.station = station;
     }
 
 }

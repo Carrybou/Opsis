@@ -33,7 +33,7 @@ public class EquipementService implements EquipementInterface {
 
         // RG7 : le repository trie par date d'ouverture, partitioningBy conserve cet ordre dans chaque liste.
         Map<Boolean, List<IncidentResume>> incidentsParResolution = incidentRepository
-                .findByIdEquipement_IdOrderByDateHeureOuvertureDesc(idEquipement).stream()
+                .findByEquipement_IdOrderByDateHeureOuvertureDesc(idEquipement).stream()
                 .collect(Collectors.partitioningBy(Incident::estResolu,
                         Collectors.mapping(IncidentResume::from, Collectors.toList())));
 

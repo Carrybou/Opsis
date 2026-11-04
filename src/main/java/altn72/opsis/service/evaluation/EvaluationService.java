@@ -48,7 +48,7 @@ public class EvaluationService implements EvaluationInterface {
         evaluation.setNote(request.getNote());
         evaluation.setCommentaire(commentaireNettoye(request.getCommentaire()));
         evaluation.setDate(LocalDate.now(horloge));
-        evaluation.setIdIncident(incident);
+        evaluation.setIncident(incident);
         return EvaluationResponse.from(evaluationRepository.save(evaluation));
     }
 
@@ -64,7 +64,7 @@ public class EvaluationService implements EvaluationInterface {
     @Transactional(readOnly = true)
     public Map<Long, Integer> notesParIncident() {
         return evaluationRepository.findAll().stream()
-                .collect(Collectors.toMap(evaluation -> evaluation.getIdIncident().getId(), Evaluation::getNote));
+                .collect(Collectors.toMap(evaluation -> evaluation.getIncident().getId(), Evaluation::getNote));
     }
 
     // RG8 : une évaluation concerne un incident résolu et affecté à un prestataire, et il n'y en a qu'une par incident.
@@ -72,10 +72,10 @@ public class EvaluationService implements EvaluationInterface {
         if (!incident.estResolu()) {
             return Optional.of("L'incident n°" + incident.getId() + " n'est pas encore résolu : il ne peut pas être évalué");
         }
-        if (incident.getIdPrestataire() == null) {
+        if (incident.getPrestataire() == null) {
             return Optional.of("L'incident n°" + incident.getId() + " n'a été affecté à aucun prestataire : il n'y a pas d'intervention à évaluer");
         }
-        if (evaluationRepository.existsByIdIncident_Id(incident.getId())) {
+        if (evaluationRepository.existsByIncident_Id(incident.getId())) {
             return Optional.of("L'incident n°" + incident.getId() + " a déjà été évalué");
         }
         return Optional.empty();

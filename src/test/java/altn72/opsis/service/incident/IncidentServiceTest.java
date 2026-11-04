@@ -82,8 +82,8 @@ class IncidentServiceTest {
     // RG1 : rattaché à un équipement, daté à l'instant de la déclaration, sans prestataire.
     @Test
     void declarer_rattacheLIncidentALEquipementEtDemarreSansPrestataire() {
-        Equipement equipement = incident(1L, IncidentStatut.OUVERT).getIdEquipement();
-        Utilisateur declarant = incident(1L, IncidentStatut.OUVERT).getIdUtilisateur();
+        Equipement equipement = incident(1L, IncidentStatut.OUVERT).getEquipement();
+        Utilisateur declarant = incident(1L, IncidentStatut.OUVERT).getDeclarant();
         when(equipementRepository.findById(10L)).thenReturn(Optional.of(equipement));
         when(utilisateurRepository.findById(ID_AGENT_AUTEUR)).thenReturn(Optional.of(declarant));
         when(incidentRepository.save(any(Incident.class))).then(AdditionalAnswers.returnsFirstArg());
@@ -140,7 +140,7 @@ class IncidentServiceTest {
 
     @Test
     void incidentsModifiables_agent_neRetientQueSesIncidentsNonAffectes() {
-        when(incidentRepository.findByIdEquipement_IdOrderByDateHeureOuvertureDesc(10L)).thenReturn(List.of(
+        when(incidentRepository.findByEquipement_IdOrderByDateHeureOuvertureDesc(10L)).thenReturn(List.of(
                 incident(1L, IncidentStatut.OUVERT),
                 incident(2L, IncidentStatut.EN_COURS),
                 incident(3L, IncidentStatut.RESOLU),
@@ -152,29 +152,29 @@ class IncidentServiceTest {
     @Test
     void affecter_incidentNonAffecte_leRattacheAuPrestataireEtPasseLEquipementEnMaintenance() {
         Incident incident = incident(1L, IncidentStatut.OUVERT);
-        incident.getIdEquipement().setEtatFonctionnement(EquipementEtat.EN_PANNE);
+        incident.getEquipement().setEtatFonctionnement(EquipementEtat.EN_PANNE);
         when(incidentRepository.findById(1L)).thenReturn(Optional.of(incident));
         when(prestataireRepository.findById(2L)).thenReturn(Optional.of(prestataire(2L, "Mobilis Maintenance")));
 
         IncidentResponse reponse = incidentService.affecter(1L, new AffectationRequest(2L), RESPONSABLE);
 
         assertThat(incident.getStatut()).isEqualTo(IncidentStatut.EN_COURS);
-        assertThat(incident.getIdPrestataire().getId()).isEqualTo(2L);
+        assertThat(incident.getPrestataire().getId()).isEqualTo(2L);
         assertThat(reponse.nomPrestataire()).isEqualTo("Mobilis Maintenance");
-        assertThat(incident.getIdEquipement().getEtatFonctionnement()).isEqualTo(EquipementEtat.EN_MAINTENANCE);
+        assertThat(incident.getEquipement().getEtatFonctionnement()).isEqualTo(EquipementEtat.EN_MAINTENANCE);
     }
 
     @Test
     void affecter_refus_laisseLEquipementEnPanne() {
         Incident incident = incident(1L, IncidentStatut.OUVERT);
-        incident.getIdEquipement().setEtatFonctionnement(EquipementEtat.EN_PANNE);
+        incident.getEquipement().setEtatFonctionnement(EquipementEtat.EN_PANNE);
         when(incidentRepository.findById(1L)).thenReturn(Optional.of(incident));
         when(prestataireRepository.findById(99L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> incidentService.affecter(1L, new AffectationRequest(99L), RESPONSABLE))
                 .isInstanceOf(PrestataireIntrouvableException.class);
 
-        assertThat(incident.getIdEquipement().getEtatFonctionnement()).isEqualTo(EquipementEtat.EN_PANNE);
+        assertThat(incident.getEquipement().getEtatFonctionnement()).isEqualTo(EquipementEtat.EN_PANNE);
     }
 
     @Test
@@ -185,7 +185,7 @@ class IncidentServiceTest {
 
         incidentService.affecter(1L, new AffectationRequest(2L), RESPONSABLE);
 
-        assertThat(incident.getIdPrestataire().getId()).isEqualTo(2L);
+        assertThat(incident.getPrestataire().getId()).isEqualTo(2L);
         assertThat(incident.getStatut()).isEqualTo(IncidentStatut.EN_COURS);
     }
 
@@ -198,7 +198,7 @@ class IncidentServiceTest {
         assertThatThrownBy(() -> incidentService.affecter(1L, new AffectationRequest(2L), RESPONSABLE))
                 .isInstanceOf(AffectationIncidentImpossibleException.class)
                 .hasMessage("L'incident n°1 est résolu : il ne peut plus être affecté ni réaffecté");
-        assertThat(incident.getIdPrestataire().getId()).isEqualTo(1L);
+        assertThat(incident.getPrestataire().getId()).isEqualTo(1L);
         assertThat(incident.getStatut()).isEqualTo(IncidentStatut.RESOLU);
     }
 
@@ -206,40 +206,40 @@ class IncidentServiceTest {
     void resoudre_responsableOuTechnicien_cloturePuisRemetLEquipementEnService() {
         for (UtilisateurConnecte autorise : List.of(RESPONSABLE, TECHNICIEN)) {
             Incident incident = incident(1L, IncidentStatut.EN_COURS);
-            incident.getIdEquipement().setEtatFonctionnement(EquipementEtat.EN_PANNE);
+            incident.getEquipement().setEtatFonctionnement(EquipementEtat.EN_PANNE);
             when(incidentRepository.findById(1L)).thenReturn(Optional.of(incident));
 
             IncidentDetailResponse reponse = incidentService.resoudre(1L, autorise);
 
             assertThat(reponse.statut()).isEqualTo(IncidentStatut.RESOLU);
             assertThat(incident.getDateHeureResolution()).isEqualTo(LocalDateTime.now(horloge));
-            assertThat(incident.getIdEquipement().getEtatFonctionnement()).isEqualTo(EquipementEtat.FONCTIONNEL);
+            assertThat(incident.getEquipement().getEtatFonctionnement()).isEqualTo(EquipementEtat.FONCTIONNEL);
         }
     }
 
     @Test
     void resoudre_autreIncidentAffecte_laisseLEquipementEnMaintenance() {
         Incident incident = incident(1L, IncidentStatut.OUVERT);
-        incident.getIdEquipement().setEtatFonctionnement(EquipementEtat.EN_PANNE);
+        incident.getEquipement().setEtatFonctionnement(EquipementEtat.EN_PANNE);
         when(incidentRepository.findById(1L)).thenReturn(Optional.of(incident));
-        when(incidentRepository.existsByIdEquipement_IdAndStatutAndIdNot(10L, IncidentStatut.EN_COURS, 1L)).thenReturn(true);
+        when(incidentRepository.existsByEquipement_IdAndStatutAndIdNot(10L, IncidentStatut.EN_COURS, 1L)).thenReturn(true);
 
         incidentService.resoudre(1L, TECHNICIEN);
 
-        assertThat(incident.getIdEquipement().getEtatFonctionnement()).isEqualTo(EquipementEtat.EN_MAINTENANCE);
+        assertThat(incident.getEquipement().getEtatFonctionnement()).isEqualTo(EquipementEtat.EN_MAINTENANCE);
     }
 
     @Test
     void resoudre_autreIncidentNonAffecte_repasseLEquipementEnPanne() {
         Incident incident = incident(1L, IncidentStatut.EN_COURS);
-        incident.getIdEquipement().setEtatFonctionnement(EquipementEtat.EN_MAINTENANCE);
+        incident.getEquipement().setEtatFonctionnement(EquipementEtat.EN_MAINTENANCE);
         when(incidentRepository.findById(1L)).thenReturn(Optional.of(incident));
-        when(incidentRepository.existsByIdEquipement_IdAndStatutNotAndIdNot(10L, IncidentStatut.RESOLU, 1L)).thenReturn(true);
+        when(incidentRepository.existsByEquipement_IdAndStatutNotAndIdNot(10L, IncidentStatut.RESOLU, 1L)).thenReturn(true);
 
         incidentService.resoudre(1L, TECHNICIEN);
 
         assertThat(incident.getStatut()).isEqualTo(IncidentStatut.RESOLU);
-        assertThat(incident.getIdEquipement().getEtatFonctionnement()).isEqualTo(EquipementEtat.EN_PANNE);
+        assertThat(incident.getEquipement().getEtatFonctionnement()).isEqualTo(EquipementEtat.EN_PANNE);
     }
 
     @Test
@@ -273,7 +273,7 @@ class IncidentServiceTest {
         Equipement equipement = new Equipement();
         equipement.setId(10L);
         equipement.setReferenceUnique("ASC-CHT-001");
-        equipement.setIdStation(station);
+        equipement.setStation(station);
         Utilisateur auteur = new Utilisateur();
         auteur.setId(idUtilisateur);
 
@@ -282,14 +282,14 @@ class IncidentServiceTest {
         incident.setDescription("Ascenseur bloqué");
         incident.setStatut(IncidentStatut.OUVERT);
         incident.setDateHeureOuverture(LocalDateTime.now().minusHours(3));
-        incident.setIdEquipement(equipement);
-        incident.setIdUtilisateur(auteur);
+        incident.setEquipement(equipement);
+        incident.setDeclarant(auteur);
         return incident;
     }
 
     private static Incident incidentAffecteA(Long id, Prestataire prestataire) {
         Incident incident = incident(id, IncidentStatut.EN_COURS);
-        incident.setIdPrestataire(prestataire);
+        incident.setPrestataire(prestataire);
         return incident;
     }
 

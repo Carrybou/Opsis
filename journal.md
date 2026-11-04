@@ -99,7 +99,7 @@ En cas de problème :
 - Commandes :
   - `sh mvnw test` : tests unitaires et de contrôleurs, sans base, sans Docker et sans `.env`.
   - `sh mvnw verify` : tous les tests et le rapport de couverture. Docker doit être démarré ; ni `.env` ni base locale ne sont nécessaires.
-- Couvert (92 tests, tous verts : 78 sans base, 14 sur vrai MySQL ; 86 % des lignes et 70 % des branches couvertes) :
+- Couvert (102 tests, tous verts : 84 sans base, 18 sur vrai MySQL ; 88 % des lignes et 70 % des branches couvertes) :
 
   | Domaine | Tests | Ce qui est vérifié |
   |:--|:--|:--|
@@ -119,6 +119,8 @@ En cas de problème :
   | Vraie base : requêtes et contraintes | `RepositoriesIT` | RG6, RG7 : requêtes et tris réels ; RG8 : une seule évaluation par incident, note hors de 1 à 5 refusée par la base ; RG9 : référence unique ; requête native des notes |
   | Vraie base : vie d'un incident | `ParcoursIncidentIT` | déclaration, affectation, résolution, évaluation avec de vrais comptes et tokens : RG1, RG2, RG5, RG7, RG8, RG11 et état de l'équipement à chaque étape |
   | Vraie base : écritures simultanées | `EcrituresSimultaneesIT` | RG10 : l'écriture périmée échoue entièrement, ni l'incident ni l'équipement ne changent |
+  | Erreurs HTTP (§7.4) | `IncidentRestControllerTest`, `UtilisateurRestControllerTest`, `ErreursHttpIT` | identifiant mal formé, format refusé, erreur inattendue, identifiant déjà pris : code correct et message en français, sans détail technique ; adresse inconnue et méthode non prise en charge sur un vrai serveur |
+  | Stations | `StationServiceTest`, `StationViewControllerTest` | regroupement par station et synthèse ; station inexistante ; liens vers les équipements |
   | F12 API | `IncidentRestControllerTest` | 401 sans token, 403 profil, 404 incident inexistant, 400 donnée invalide, 409 état incompatible, 200 / 201 sur chaque opération |
 
 - Non couvert : le code JavaScript (carte, tableau de bord), vérifié à la main ; une grande partie de la gestion des comptes côté service (`UtilisateurService` : 46 % des lignes) ; documentation Swagger de l'API (F12) non encore réalisée.
@@ -185,11 +187,14 @@ En cas de problème :
   | 400 | donnée invalide (description, note hors de 1 à 5 ou non entière, prestataire manquant, compte invalide) | validation `@Valid` |
   | 401 | API sans token ou token invalide | intercepteur JWT |
   | 403 | profil non autorisé, ou règle F6 non respectée (avec le motif) | `@ProfilRequis`, `AccesRefuseException`, `ModificationIncidentInterditeException` |
-  | 404 | incident, équipement ou prestataire inexistant | `RessourceIntrouvableException` et ses filles |
+  | 404 | incident, équipement, station ou prestataire inexistant | `RessourceIntrouvableException` et ses filles |
   | 409 | l'état de l'incident empêche l'opération : déjà résolu, affectation impossible (résolu, même prestataire), évaluation impossible (non résolu, sans prestataire, déjà évalué), modification simultanée | `IncidentDejaResoluException`, `AffectationIncidentImpossibleException`, `EvaluationImpossibleException` |
 
 - Pourquoi pas `ResponseStatusException` : elle obligerait chaque contrôleur ou service à choisir le code HTTP lui-même et lierait la couche métier au web. Avec un advice, le service lève une exception métier, et la traduction HTTP est faite à un seul endroit, différemment pour l'API et pour les pages.
-- `ResponseEntity` est utilisé dans l'advice de l'API pour fixer à la fois le code HTTP et le corps `ApiError`.
+- `ResponseEntity` n'est utilisé que là où il apporte quelque chose : dans l'advice de l'API pour fixer le code HTTP et le corps `ApiError`, et pour les créations (201 avec l'en-tête `Location`). Partout ailleurs, le contrôleur renvoie directement l'objet.
+- Aucune trace technique à l'écran :
+  - Côté API, un dernier cas de `ApiExceptionHandler` prend toute exception non prévue : il garde son code HTTP (415, 406…), remplace son message par un texte en français (`MessageErreurHttp`) et journalise les erreurs 500.
+  - Les erreurs nées avant les contrôleurs (adresse inconnue, méthode non prise en charge) ne passent pas par les advices. `AttributsErreurHttp` leur donne le même format JSON, et la page `error/4xx.html` remplace la page brute de Spring.
 - L'unicité d'une évaluation par incident (RG8) est vérifiée par le service avant l'insertion, avec un message clair ; la contrainte `UNIQUE` de la base reste une sécurité.
 
 ### SOLID
@@ -235,7 +240,7 @@ En cas de problème :
   - Un seul conteneur partagé entre les tests d'intégration, pour ne pas recréer la base à chaque classe. Les tests qui écrivent réellement utilisent des données réservées (équipement 9, prestataire 5, incident 16).
   - Pas de seuil de couverture bloquant : le chiffre sert à repérer ce qui n'est pas testé, pas à écrire des tests sans valeur (accesseurs, DTO).
   - Horloge injectée dans `IncidentService` et `EvaluationService`, comme le conseille le sujet : les dates de RG1 et RG5 sont vérifiées exactement dans les tests.
-- Ce qui fonctionne : 14 tests sur vrai MySQL, couverture de 86 % des lignes et 70 % des branches, workflow GitHub Actions.
+- Ce qui fonctionne : 18 tests sur vrai MySQL, couverture de 88 % des lignes et 70 % des branches, workflow GitHub Actions.
 - Difficultés :
   - Premier test d'écritures simultanées bloqué 50 secondes : `resoudre` écrit dans la base dès sa requête de vérification (flush automatique), donc la seconde transaction attendait le verrou de ligne de la première. Le scénario a été réécrit dans le bon ordre : le premier lit, le second écrit, puis le premier tente d'écrire.
   - Les tests sur l'historique et l'état de l'équipement dépendent des données de `bdd.sql` : modifier ces données peut les casser.

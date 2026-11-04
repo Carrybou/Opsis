@@ -85,7 +85,7 @@ class CarteServiceTest {
         actif.setId(7L);
         actif.setDescription("Ascenseur bloqué");
         actif.setStatut(IncidentStatut.OUVERT);
-        actif.setIdEquipement(ascenseur);
+        actif.setEquipement(ascenseur);
         when(stationRepository.findAllByOrderByNomAsc()).thenReturn(List.of(chatelet));
         when(equipementRepository.findAllByOrderByReferenceUniqueAsc()).thenReturn(List.of(ascenseur, escalator));
         when(incidentRepository.findByStatutNotOrderByDateHeureOuvertureDesc(IncidentStatut.RESOLU)).thenReturn(List.of(actif));
@@ -110,7 +110,7 @@ class CarteServiceTest {
         equipement.setId(id);
         equipement.setReferenceUnique(reference);
         equipement.setEtatFonctionnement(etat);
-        equipement.setIdStation(station);
+        equipement.setStation(station);
         return equipement;
     }
 }

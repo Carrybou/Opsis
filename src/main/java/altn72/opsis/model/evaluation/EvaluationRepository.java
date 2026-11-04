@@ -7,11 +7,11 @@ import java.util.List;
 import java.util.Optional;
 
 public interface EvaluationRepository extends JpaRepository<Evaluation, Long> {
-    Optional<Evaluation> findByIdIncident_Id(Long idIncident);
+    Optional<Evaluation> findByIncident_Id(Long idIncident);
 
-    boolean existsByIdIncident_Id(Long idIncident);
+    boolean existsByIncident_Id(Long idIncident);
 
-    List<Evaluation> findByIdIncident_IdPrestataire_Id(Long idPrestataire);
+    List<Evaluation> findByIncident_Prestataire_Id(Long idPrestataire);
 
     // Requête SQL native : moyenne et nombre d'évaluations par prestataire, calculés par la base en une seule requête
     // (jointure evaluation -> incident, regroupement par prestataire) plutôt qu'en chargeant toutes les évaluations en Java.

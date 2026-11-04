@@ -34,9 +34,9 @@ public record IncidentDetailResponse(
         EvaluationResponse evaluation
 ) {
     public static IncidentDetailResponse from(Incident incident, Evaluation evaluation) {
-        Equipement equipement = incident.getIdEquipement();
-        Station station = equipement.getIdStation();
-        Prestataire prestataire = incident.getIdPrestataire();
+        Equipement equipement = incident.getEquipement();
+        Station station = equipement.getStation();
+        Prestataire prestataire = incident.getPrestataire();
 
         LocalDateTime fin = incident.estResolu() && incident.getDateHeureResolution() != null
                 ? incident.getDateHeureResolution()
@@ -59,7 +59,7 @@ public record IncidentDetailResponse(
                 prestataire != null ? prestataire.getId() : null,
                 prestataire != null ? prestataire.getNom() : null,
                 prestataire != null ? prestataire.getContact() : null,
-                incident.getIdUtilisateur().getPrenom(),
+                incident.getDeclarant().getPrenom(),
                 evaluation != null ? EvaluationResponse.from(evaluation) : null
         );
     }

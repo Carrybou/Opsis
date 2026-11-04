@@ -19,7 +19,7 @@ public record EquipementResponse(
                 equipement.getLibelleDescription(),
                 equipement.getType(),
                 equipement.getEtatFonctionnement(),
-                equipement.getIdStation().getNom()
+                equipement.getStation().getNom()
         );
     }
 }

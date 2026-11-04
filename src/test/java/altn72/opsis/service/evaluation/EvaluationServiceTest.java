@@ -55,7 +55,7 @@ class EvaluationServiceTest {
     void evaluer_incidentResoluEtAffecte_enregistreLEvaluationDuJour() {
         Incident incident = incident(11L, IncidentStatut.RESOLU, true);
         when(incidentRepository.findById(11L)).thenReturn(Optional.of(incident));
-        when(evaluationRepository.existsByIdIncident_Id(11L)).thenReturn(false);
+        when(evaluationRepository.existsByIncident_Id(11L)).thenReturn(false);
         when(evaluationRepository.save(any(Evaluation.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         EvaluationResponse reponse = evaluationService.evaluer(11L,
@@ -63,7 +63,7 @@ class EvaluationServiceTest {
 
         ArgumentCaptor<Evaluation> captee = ArgumentCaptor.forClass(Evaluation.class);
         verify(evaluationRepository).save(captee.capture());
-        assertThat(captee.getValue().getIdIncident()).isSameAs(incident);
+        assertThat(captee.getValue().getIncident()).isSameAs(incident);
         assertThat(captee.getValue().getDate()).isEqualTo(LocalDate.of(2026, 11, 4));
         assertThat(reponse.note()).isEqualTo(4);
         assertThat(reponse.commentaire()).isEqualTo("Intervention rapide");
@@ -92,7 +92,7 @@ class EvaluationServiceTest {
     @Test
     void evaluer_incidentDejaEvalue_refuseSansRienEnregistrer() {
         when(incidentRepository.findById(6L)).thenReturn(Optional.of(incident(6L, IncidentStatut.RESOLU, true)));
-        when(evaluationRepository.existsByIdIncident_Id(6L)).thenReturn(true);
+        when(evaluationRepository.existsByIncident_Id(6L)).thenReturn(true);
 
         assertThatThrownBy(() -> evaluationService.evaluer(6L, new EvaluationRequest(2, null), RESPONSABLE))
                 .isInstanceOf(EvaluationImpossibleException.class)
@@ -109,7 +109,7 @@ class EvaluationServiceTest {
             Prestataire prestataire = new Prestataire();
             prestataire.setId(2L);
             prestataire.setNom("Mobilis Maintenance");
-            incident.setIdPrestataire(prestataire);
+            incident.setPrestataire(prestataire);
         }
         return incident;
     }

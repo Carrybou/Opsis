@@ -47,7 +47,7 @@ public class StationService implements StationInterface {
     public ReseauStationsResponse consulterReseau() {
         List<Equipement> equipements = equipementRepository.findAllByOrderByReferenceUniqueAsc();
         Map<Long, List<EquipementResponse>> equipementsParStation = equipements.stream()
-                .collect(Collectors.groupingBy(equipement -> equipement.getIdStation().getId(),
+                .collect(Collectors.groupingBy(equipement -> equipement.getStation().getId(),
                         Collectors.mapping(EquipementResponse::from, Collectors.toList())));
 
         return new ReseauStationsResponse(lister(), equipementsParStation, equipements.size(),

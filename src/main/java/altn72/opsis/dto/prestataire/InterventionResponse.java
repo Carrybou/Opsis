@@ -19,7 +19,7 @@ public record InterventionResponse(
         Integer note
 ) {
     public static InterventionResponse from(Incident incident, Integer note) {
-        Equipement equipement = incident.getIdEquipement();
+        Equipement equipement = incident.getEquipement();
         return new InterventionResponse(
                 incident.getId(),
                 incident.getDescription(),
@@ -28,7 +28,7 @@ public record InterventionResponse(
                 incident.getDateHeureResolution(),
                 equipement.getId(),
                 equipement.getReferenceUnique(),
-                equipement.getIdStation().getNom(),
+                equipement.getStation().getNom(),
                 note
         );
     }

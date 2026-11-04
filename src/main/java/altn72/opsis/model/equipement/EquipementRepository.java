@@ -8,6 +8,6 @@ import java.util.List;
 public interface EquipementRepository extends JpaRepository<Equipement, Long> {
 
     // La station est chargée avec l'équipement : pas de requête supplémentaire par équipement à l'affichage.
-    @EntityGraph(attributePaths = "idStation")
+    @EntityGraph(attributePaths = "station")
     List<Equipement> findAllByOrderByReferenceUniqueAsc();
 }

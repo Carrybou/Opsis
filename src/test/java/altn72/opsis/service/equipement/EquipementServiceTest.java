@@ -45,7 +45,7 @@ class EquipementServiceTest {
         Incident resoluAncien = incident(13L, IncidentStatut.RESOLU, maintenant.minus(10, ChronoUnit.DAYS));
 
         when(equipementRepository.findById(ID_EQUIPEMENT)).thenReturn(Optional.of(equipement()));
-        when(incidentRepository.findByIdEquipement_IdOrderByDateHeureOuvertureDesc(ID_EQUIPEMENT))
+        when(incidentRepository.findByEquipement_IdOrderByDateHeureOuvertureDesc(ID_EQUIPEMENT))
                 .thenReturn(List.of(enCoursRecent, resoluRecent, enCoursAncien, resoluAncien));
 
         FicheEquipementResponse fiche = equipementService.consulterFiche(ID_EQUIPEMENT);
@@ -64,7 +64,7 @@ class EquipementServiceTest {
         Equipement equipement = new Equipement();
         equipement.setId(ID_EQUIPEMENT);
         equipement.setReferenceUnique("ESC-CHT-001");
-        equipement.setIdStation(station);
+        equipement.setStation(station);
         return equipement;
     }
 

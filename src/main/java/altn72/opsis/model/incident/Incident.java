@@ -39,17 +39,17 @@ public class Incident {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @JoinColumn(name = "id_equipement", nullable = false)
-    private Equipement idEquipement;
+    private Equipement equipement;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @OnDelete(action = OnDeleteAction.SET_NULL)
     @JoinColumn(name = "id_prestataire")
-    private Prestataire idPrestataire;
+    private Prestataire prestataire;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @JoinColumn(name = "id_utilisateur", nullable = false)
-    private Utilisateur idUtilisateur;
+    private Utilisateur declarant;
 
     public Long getId() {
         return id;
@@ -92,11 +92,11 @@ public class Incident {
     }
 
     public boolean estAffecteA(Long idPrestataireCandidat) {
-        return idPrestataire != null && idPrestataire.getId().equals(idPrestataireCandidat);
+        return prestataire != null && prestataire.getId().equals(idPrestataireCandidat);
     }
 
     public boolean estDeclarePar(Long idUtilisateurConnecte) {
-        return idUtilisateur.getId().equals(idUtilisateurConnecte);
+        return declarant.getId().equals(idUtilisateurConnecte);
     }
 
     public LocalDateTime getDateHeureResolution() {
@@ -107,28 +107,28 @@ public class Incident {
         this.dateHeureResolution = dateHeureResolution;
     }
 
-    public Equipement getIdEquipement() {
-        return idEquipement;
+    public Equipement getEquipement() {
+        return equipement;
     }
 
-    public void setIdEquipement(Equipement idEquipement) {
-        this.idEquipement = idEquipement;
+    public void setEquipement(Equipement equipement) {
+        this.equipement = equipement;
     }
 
-    public Prestataire getIdPrestataire() {
-        return idPrestataire;
+    public Prestataire getPrestataire() {
+        return prestataire;
     }
 
-    public void setIdPrestataire(Prestataire idPrestataire) {
-        this.idPrestataire = idPrestataire;
+    public void setPrestataire(Prestataire prestataire) {
+        this.prestataire = prestataire;
     }
 
-    public Utilisateur getIdUtilisateur() {
-        return idUtilisateur;
+    public Utilisateur getDeclarant() {
+        return declarant;
     }
 
-    public void setIdUtilisateur(Utilisateur idUtilisateur) {
-        this.idUtilisateur = idUtilisateur;
+    public void setDeclarant(Utilisateur declarant) {
+        this.declarant = declarant;
     }
 
 }

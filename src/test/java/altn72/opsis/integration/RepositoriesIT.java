@@ -61,7 +61,7 @@ class RepositoriesIT extends AvecBaseMysql {
     // RG7 : l'équipement 1 a deux incidents dans les données de démonstration.
     @Test
     void incidentsDUnEquipement_sontTriesParDateDOuverture() {
-        List<Incident> incidents = incidentRepository.findByIdEquipement_IdOrderByDateHeureOuvertureDesc(1L);
+        List<Incident> incidents = incidentRepository.findByEquipement_IdOrderByDateHeureOuvertureDesc(1L);
 
         assertThat(incidents).hasSizeGreaterThanOrEqualTo(2);
         assertThat(incidents).extracting(Incident::getDateHeureOuverture)
@@ -79,9 +79,9 @@ class RepositoriesIT extends AvecBaseMysql {
     // État d'un équipement à la résolution : l'incident résolu lui-même ne doit pas compter.
     @Test
     void autresIncidentsDUnEquipement_exclutLIncidentDonne() {
-        assertThat(incidentRepository.existsByIdEquipement_IdAndStatutAndIdNot(2L, IncidentStatut.EN_COURS, 1L)).isFalse();
-        assertThat(incidentRepository.existsByIdEquipement_IdAndStatutAndIdNot(2L, IncidentStatut.EN_COURS, 99L)).isTrue();
-        assertThat(incidentRepository.existsByIdEquipement_IdAndStatutNotAndIdNot(2L, IncidentStatut.RESOLU, 1L)).isFalse();
+        assertThat(incidentRepository.existsByEquipement_IdAndStatutAndIdNot(2L, IncidentStatut.EN_COURS, 1L)).isFalse();
+        assertThat(incidentRepository.existsByEquipement_IdAndStatutAndIdNot(2L, IncidentStatut.EN_COURS, 99L)).isTrue();
+        assertThat(incidentRepository.existsByEquipement_IdAndStatutNotAndIdNot(2L, IncidentStatut.RESOLU, 1L)).isFalse();
     }
 
     // Requête SQL native : prestataires sans évaluation de la démonstration exclus, moyenne calculée par la base.
@@ -121,7 +121,7 @@ class RepositoriesIT extends AvecBaseMysql {
         doublon.setLibelleDescription("Doublon de référence");
         doublon.setType(EquipementType.ESCALATOR);
         doublon.setEtatFonctionnement(EquipementEtat.FONCTIONNEL);
-        doublon.setIdStation(stationRepository.findById(1L).orElseThrow());
+        doublon.setStation(stationRepository.findById(1L).orElseThrow());
 
         assertThatThrownBy(() -> equipementRepository.saveAndFlush(doublon))
                 .isInstanceOf(DataIntegrityViolationException.class);
@@ -145,7 +145,7 @@ class RepositoriesIT extends AvecBaseMysql {
         Evaluation evaluation = new Evaluation();
         evaluation.setNote(note);
         evaluation.setDate(LocalDate.now());
-        evaluation.setIdIncident(incidentRepository.findById(idIncident).orElseThrow());
+        evaluation.setIncident(incidentRepository.findById(idIncident).orElseThrow());
         return evaluation;
     }
 }

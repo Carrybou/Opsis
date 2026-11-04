@@ -24,9 +24,9 @@ public record IncidentResponse(
         String prenomUtilisateur
 ) {
     public static IncidentResponse from(Incident incident) {
-        Equipement equipement = incident.getIdEquipement();
-        Prestataire prestataire = incident.getIdPrestataire();
-        Utilisateur utilisateur = incident.getIdUtilisateur();
+        Equipement equipement = incident.getEquipement();
+        Prestataire prestataire = incident.getPrestataire();
+        Utilisateur utilisateur = incident.getDeclarant();
 
         return new IncidentResponse(
                 incident.getId(),
@@ -37,7 +37,7 @@ public record IncidentResponse(
                 equipement.getId(),
                 equipement.getReferenceUnique(),
                 equipement.getLibelleDescription(),
-                equipement.getIdStation().getNom(),
+                equipement.getStation().getNom(),
                 prestataire != null ? prestataire.getId() : null,
                 prestataire != null ? prestataire.getNom() : null,
                 utilisateur.getId(),

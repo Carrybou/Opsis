@@ -66,12 +66,12 @@ class PrestataireServiceTest {
         Incident enCours = incident(4L, IncidentStatut.EN_COURS, LocalDateTime.of(2026, 10, 11, 9, 0), null);
         Incident resoluAncien = incident(6L, IncidentStatut.RESOLU, LocalDateTime.of(2026, 9, 2, 7, 30), LocalDateTime.of(2026, 9, 3, 14, 0));
         Incident resoluRecent = incident(9L, IncidentStatut.RESOLU, LocalDateTime.of(2026, 9, 1, 8, 0), LocalDateTime.of(2026, 9, 20, 9, 30));
-        when(incidentRepository.findByIdPrestataire_IdOrderByDateHeureOuvertureDesc(2L))
+        when(incidentRepository.findByPrestataire_IdOrderByDateHeureOuvertureDesc(2L))
                 .thenReturn(List.of(enCours, resoluAncien, resoluRecent));
         Evaluation evaluation = new Evaluation();
         evaluation.setNote(4);
-        evaluation.setIdIncident(resoluAncien);
-        when(evaluationRepository.findByIdIncident_IdPrestataire_Id(2L)).thenReturn(List.of(evaluation));
+        evaluation.setIncident(resoluAncien);
+        when(evaluationRepository.findByIncident_Prestataire_Id(2L)).thenReturn(List.of(evaluation));
 
         FichePrestataireResponse fiche = prestataireService.consulterFiche(2L);
 
@@ -88,14 +88,14 @@ class PrestataireServiceTest {
         Equipement equipement = new Equipement();
         equipement.setId(10L);
         equipement.setReferenceUnique("ESC-CHT-001");
-        equipement.setIdStation(station);
+        equipement.setStation(station);
         Incident incident = new Incident();
         incident.setId(id);
         incident.setDescription("Escalator à l'arrêt");
         incident.setStatut(statut);
         incident.setDateHeureOuverture(ouverture);
         incident.setDateHeureResolution(resolution);
-        incident.setIdEquipement(equipement);
+        incident.setEquipement(equipement);
         return incident;
     }
 

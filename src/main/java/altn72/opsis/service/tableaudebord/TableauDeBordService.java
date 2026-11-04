@@ -103,12 +103,12 @@ public class TableauDeBordService implements TableauDeBordInterface {
     }
 
     private static Predicate<Equipement> perimetreParc(FiltresTableauDeBord filtres) {
-        return e -> (filtres.idStation() == null || filtres.idStation().equals(e.getIdStation().getId()))
+        return e -> (filtres.idStation() == null || filtres.idStation().equals(e.getStation().getId()))
                 && (filtres.type() == null || filtres.type() == e.getType());
     }
 
     private static Map<Long, String> nomsDesStations(List<Equipement> equipements) {
-        return equipements.stream().collect(Collectors.toMap(e -> e.getIdStation().getId(), e -> e.getIdStation().getNom(),
+        return equipements.stream().collect(Collectors.toMap(e -> e.getStation().getId(), e -> e.getStation().getNom(),
                 (a, b) -> a, TreeMap::new));
     }
 
@@ -120,11 +120,11 @@ public class TableauDeBordService implements TableauDeBordInterface {
 
     private static Predicate<Incident> perimetreHistorique(FiltresTableauDeBord filtres) {
         return incident -> {
-            Equipement equipement = incident.getIdEquipement();
-            return (filtres.idStation() == null || filtres.idStation().equals(equipement.getIdStation().getId()))
+            Equipement equipement = incident.getEquipement();
+            return (filtres.idStation() == null || filtres.idStation().equals(equipement.getStation().getId()))
                     && (filtres.type() == null || filtres.type() == equipement.getType())
                     && correspond(filtres.recherche(), equipement.getReferenceUnique(), incident.getDescription(),
-                    equipement.getIdStation().getNom());
+                    equipement.getStation().getNom());
         };
     }
 

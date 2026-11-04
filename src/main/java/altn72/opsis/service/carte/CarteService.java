@@ -39,10 +39,10 @@ public class CarteService implements CarteInterface {
     @Transactional(readOnly = true)
     public CarteReseauResponse consulter() {
         Map<Long, List<Equipement>> equipementsParStation = equipementRepository.findAllByOrderByReferenceUniqueAsc().stream()
-                .collect(Collectors.groupingBy(equipement -> equipement.getIdStation().getId()));
+                .collect(Collectors.groupingBy(equipement -> equipement.getStation().getId()));
         Map<Long, List<Incident>> incidentsParEquipement = incidentRepository
                 .findByStatutNotOrderByDateHeureOuvertureDesc(IncidentStatut.RESOLU).stream()
-                .collect(Collectors.groupingBy(incident -> incident.getIdEquipement().getId()));
+                .collect(Collectors.groupingBy(incident -> incident.getEquipement().getId()));
 
         List<StationCarte> stations = stationRepository.findAllByOrderByNomAsc().stream()
                 .map(station -> versStation(station, equipementsParStation.getOrDefault(station.getId(), List.of()), incidentsParEquipement))

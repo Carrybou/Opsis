@@ -30,9 +30,9 @@ public record IncidentActifResponse(
         String nomPrestataire
 ) {
     public static IncidentActifResponse from(Incident incident, LocalDateTime maintenant) {
-        Equipement equipement = incident.getIdEquipement();
-        Station station = equipement.getIdStation();
-        Prestataire prestataire = incident.getIdPrestataire();
+        Equipement equipement = incident.getEquipement();
+        Station station = equipement.getStation();
+        Prestataire prestataire = incident.getPrestataire();
         Duration ouvert = Duration.between(incident.getDateHeureOuverture(), maintenant);
         NiveauAttention niveau = NiveauAttention.calculer(incident, maintenant);
 

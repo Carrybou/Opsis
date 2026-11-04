@@ -56,10 +56,10 @@ public class PrestataireService implements PrestataireInterface {
     @Transactional(readOnly = true)
     public FichePrestataireResponse consulterFiche(Long idPrestataire) {
         PrestataireResponse prestataire = trouver(idPrestataire);
-        Map<Long, Integer> notes = evaluationRepository.findByIdIncident_IdPrestataire_Id(idPrestataire).stream()
-                .collect(Collectors.toMap(evaluation -> evaluation.getIdIncident().getId(), Evaluation::getNote));
+        Map<Long, Integer> notes = evaluationRepository.findByIncident_Prestataire_Id(idPrestataire).stream()
+                .collect(Collectors.toMap(evaluation -> evaluation.getIncident().getId(), Evaluation::getNote));
 
-        List<Incident> incidents = incidentRepository.findByIdPrestataire_IdOrderByDateHeureOuvertureDesc(idPrestataire);
+        List<Incident> incidents = incidentRepository.findByPrestataire_IdOrderByDateHeureOuvertureDesc(idPrestataire);
         List<InterventionResponse> enCours = incidents.stream()
                 .filter(incident -> !incident.estResolu())
                 .map(incident -> InterventionResponse.from(incident, null))

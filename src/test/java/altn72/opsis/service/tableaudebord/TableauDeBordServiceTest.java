@@ -100,7 +100,7 @@ class TableauDeBordServiceTest {
         equipement.setReferenceUnique("EQ-" + id);
         equipement.setType(type);
         equipement.setEtatFonctionnement(EquipementEtat.EN_PANNE);
-        equipement.setIdStation(station);
+        equipement.setStation(station);
         return equipement;
     }
 
@@ -112,7 +112,7 @@ class TableauDeBordServiceTest {
         incident.setStatut(statut);
         incident.setDateHeureOuverture(MAINTENANT.minusHours(heuresDepuisOuverture));
         incident.setDateHeureResolution(resolution);
-        incident.setIdEquipement(equipement);
+        incident.setEquipement(equipement);
         return incident;
     }
 }
