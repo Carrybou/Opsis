@@ -50,7 +50,7 @@ En cas de problème :
   | `responsable.test` | Responsable d'exploitation | `1234` |
   | `agent.test` | Agent | `1234` |
   | `technicien.test` | Technicien | `1234` |
-  | `admin` | Responsable d'exploitation | ... |
+  | `admin` | Responsable d'exploitation | `admin` |
   | `agent.bernard`, `agent.petit`, `agent.moreau` | Agent | ... |
   | `tech.martin`, `tech.dubois` | Technicien | ... |
 
