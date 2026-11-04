@@ -7,7 +7,7 @@ import altn72.opsis.model.incident.IncidentStatut;
 import java.math.BigDecimal;
 import java.util.List;
 
-// Lot alpha, cartographie : une station, sa situation et ce qu'on peut ouvrir depuis son panneau.
+// Lot alpha, cartographie : une station, l'état de ses équipements et ce qu'on peut ouvrir depuis son panneau.
 public record CarteReseauResponse(
         List<StationCarte> stations,
         long nombreEnPanne,
@@ -15,7 +15,8 @@ public record CarteReseauResponse(
         long nombreFonctionnelles,
         long nombreSansEquipement
 ) {
-    // situation : l'état le plus grave parmi les équipements, null si la station n'en a aucun.
+    // situation : l'état le plus grave parmi les équipements (couleur du marqueur), null si la station n'en a aucun.
+    // Il décrit les équipements, pas la station : une station reste ouverte même si un équipement est en panne.
     public record StationCarte(
             Long identifiant,
             String nom,
@@ -28,6 +29,25 @@ public record CarteReseauResponse(
     ) {
         public boolean estLocalisee() {
             return latitude != null && longitude != null;
+        }
+
+        public String resumeEquipements() {
+            int total = equipements.size();
+            if (total == 0) {
+                return "Aucun équipement";
+            }
+            String nombre = total == 1 ? "1 équipement" : total + " équipements";
+            if (nombreEnPanne == 0 && nombreEnMaintenance == 0) {
+                return nombre + (total == 1 ? " · fonctionnel" : " · tous fonctionnels");
+            }
+            String detail = nombre;
+            if (nombreEnPanne > 0) {
+                detail += " · " + nombreEnPanne + " en panne";
+            }
+            if (nombreEnMaintenance > 0) {
+                detail += " · " + nombreEnMaintenance + " en maintenance";
+            }
+            return detail;
         }
     }
 

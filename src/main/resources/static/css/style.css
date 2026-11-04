@@ -1313,7 +1313,12 @@ h2 {
     gap: 8px;
 }
 
+.carto-legende-titre {
+    font-weight: 600;
+}
+
 .carto-pastille {
+    flex: none;
     width: 12px;
     height: 12px;
     border-radius: 50%;
@@ -1363,8 +1368,7 @@ h2 {
 
 .carto-station {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    align-items: baseline;
     gap: 12px;
     margin: 0 -10px;
     padding: 12px 10px;
@@ -1390,15 +1394,7 @@ h2 {
     text-decoration: none;
 }
 
-.carto-fiche-titre {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    align-items: center;
-    gap: 8px 12px;
-}
-
-.carto-fiche-titre h2:focus {
+.carto-fiche h2:focus {
     outline: none;
 }
 
@@ -1454,7 +1450,7 @@ h2 {
     overflow-wrap: anywhere;
 }
 
-/* Fond de carte atténué : seules les situations des stations restent en couleur. */
+/* Fond de carte atténué : seuls les marqueurs restent en couleur. */
 .carto-plan .leaflet-tile-pane {
     filter: saturate(.3) brightness(1.04);
 }

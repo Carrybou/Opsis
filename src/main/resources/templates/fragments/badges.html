@@ -10,13 +10,5 @@
       th:classappend="${statut.name() == 'OUVERT'} ? 'badge-danger' : (${statut.name() == 'EN_COURS'} ? 'badge-info' : 'badge-neutre')"
       th:text="${statut.name() == 'OUVERT'} ? 'Non affecté' : (${statut.name() == 'EN_COURS'} ? 'Affecté' : 'Résolu')">Non affecté</span>
 
-<!-- Situation d'une station sur la carte : l'état le plus grave de ses équipements, null si elle n'en a aucun. -->
-<th:block th:fragment="situationStation(situation)">
-    <th:block th:if="${situation != null}">
-        <th:block th:replace="~{:: etatEquipement(${situation})}"></th:block>
-    </th:block>
-    <span th:if="${situation == null}" class="badge badge-neutre">Sans équipement</span>
-</th:block>
-
 </body>
 </html>

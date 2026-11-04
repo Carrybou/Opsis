@@ -19,16 +19,18 @@
             <div class="surtitre">Opsis / supervision</div>
             <h1>Carte du réseau</h1>
         </div>
-        <p class="intro">La situation de chaque station d'un coup d'œil. Cliquez sur une station pour voir ses équipements et leur état.</p>
+        <p class="intro">L'état des équipements de chaque station d'un coup d'œil. Cliquez sur une station pour voir le détail.</p>
     </div>
 
     <section class="carte carto" aria-label="Carte des stations">
-        <!-- La légende donne aussi le nombre de stations par situation : la couleur des marqueurs n'est jamais la seule information. -->
-        <ul class="carto-legende">
-            <li class="situation-EN_PANNE"><span class="carto-pastille" aria-hidden="true"></span>En panne <strong th:text="${carte.nombreEnPanne}">0</strong></li>
-            <li class="situation-EN_MAINTENANCE"><span class="carto-pastille" aria-hidden="true"></span>En maintenance <strong th:text="${carte.nombreEnMaintenance}">0</strong></li>
-            <li class="situation-FONCTIONNEL"><span class="carto-pastille" aria-hidden="true"></span>Fonctionnelle <strong th:text="${carte.nombreFonctionnelles}">0</strong></li>
-            <li class="situation-AUCUNE"><span class="carto-pastille" aria-hidden="true"></span>Sans équipement <strong th:text="${carte.nombreSansEquipement}">0</strong></li>
+        <!-- La couleur décrit les équipements d'une station, pas la station elle-même : une station reste ouverte même si un équipement est en panne.
+             La légende donne aussi le nombre de stations par couleur : la couleur des marqueurs n'est jamais la seule information. -->
+        <ul class="carto-legende" aria-label="Nombre de stations par état de leurs équipements">
+            <li class="carto-legende-titre">Stations :</li>
+            <li class="situation-EN_PANNE"><span class="carto-pastille" aria-hidden="true"></span>avec un équipement en panne <strong th:text="${carte.nombreEnPanne}">0</strong></li>
+            <li class="situation-EN_MAINTENANCE"><span class="carto-pastille" aria-hidden="true"></span>avec un équipement en maintenance <strong th:text="${carte.nombreEnMaintenance}">0</strong></li>
+            <li class="situation-FONCTIONNEL"><span class="carto-pastille" aria-hidden="true"></span>équipements tous fonctionnels <strong th:text="${carte.nombreFonctionnelles}">0</strong></li>
+            <li class="situation-AUCUNE"><span class="carto-pastille" aria-hidden="true"></span>sans équipement <strong th:text="${carte.nombreSansEquipement}">0</strong></li>
         </ul>
 
         <div class="carto-grille">
@@ -43,11 +45,13 @@
                         <li th:each="station : ${carte.stations}">
                             <a class="carto-station" th:href="|#panneau-station-${station.identifiant}|"
                                th:attr="data-station=${station.identifiant},data-nom=${station.nom},data-situation=${station.situation} ?: 'AUCUNE',data-lat=${station.estLocalisee()} ? ${station.latitude},data-lng=${station.estLocalisee()} ? ${station.longitude}">
+                                <span class="carto-pastille" aria-hidden="true"
+                                      th:classappend="|situation-${station.situation ?: 'AUCUNE'}|"></span>
                                 <span>
                                     <strong th:text="${station.nom}">Station</strong>
+                                    <small class="secondaire" th:text="${station.resumeEquipements()}">3 équipements · tous fonctionnels</small>
                                     <small class="secondaire" th:unless="${station.estLocalisee()}">Non localisée</small>
                                 </span>
-                                <th:block th:replace="~{fragments/badges :: situationStation(${station.situation})}"></th:block>
                             </a>
                         </li>
                     </ul>
@@ -57,12 +61,8 @@
                 <section th:each="station : ${carte.stations}" class="carto-fiche" hidden
                          th:id="|panneau-station-${station.identifiant}|" th:attr="data-panneau=${station.identifiant}">
                     <a class="carto-retour" th:href="@{/carte}">← Toutes les stations</a>
-                    <div class="carto-fiche-titre">
-                        <h2 tabindex="-1" th:text="${station.nom}">Station</h2>
-                        <th:block th:replace="~{fragments/badges :: situationStation(${station.situation})}"></th:block>
-                    </div>
-                    <p class="secondaire" th:unless="${#lists.isEmpty(station.equipements)}"
-                       th:text="|${#lists.size(station.equipements)} équipement(s) · ${station.nombreEnPanne} en panne · ${station.nombreEnMaintenance} en maintenance|">3 équipements</p>
+                    <h2 tabindex="-1" th:text="${station.nom}">Station</h2>
+                    <p class="secondaire" th:unless="${#lists.isEmpty(station.equipements)}" th:text="${station.resumeEquipements()}">3 équipements · tous fonctionnels</p>
                     <p class="secondaire" th:unless="${station.estLocalisee()}">Coordonnées non renseignées : cette station n'apparaît pas sur la carte.</p>
 
                     <ul class="carto-equipements" th:unless="${#lists.isEmpty(station.equipements)}">

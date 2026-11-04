@@ -56,6 +56,7 @@ class CarteServiceTest {
         assertThat(premiere.equipements()).extracting("reference").containsExactly("ECR-001", "ESC-001", "ASC-001");
         assertThat(premiere.nombreEnPanne()).isEqualTo(1);
         assertThat(premiere.nombreEnMaintenance()).isEqualTo(1);
+        assertThat(premiere.resumeEquipements()).isEqualTo("3 équipements · 1 en panne · 1 en maintenance");
         assertThat(carte.stations().get(1).situation()).isEqualTo(EquipementEtat.EN_MAINTENANCE);
         assertThat(carte.nombreEnPanne()).isEqualTo(1);
         assertThat(carte.nombreEnMaintenance()).isEqualTo(1);
@@ -72,6 +73,7 @@ class CarteServiceTest {
         assertThat(station.estLocalisee()).isFalse();
         assertThat(station.equipements()).isEmpty();
         assertThat(carte.nombreSansEquipement()).isEqualTo(1);
+        assertThat(station.resumeEquipements()).isEqualTo("Aucun équipement");
     }
 
     @Test
