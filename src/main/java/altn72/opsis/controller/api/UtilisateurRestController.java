@@ -5,12 +5,16 @@ import altn72.opsis.dto.utilisateur.UtilisateurResponse;
 import altn72.opsis.model.utilisateur.UtilisateurType;
 import altn72.opsis.security.ProfilRequis;
 import altn72.opsis.service.utilisateur.UtilisateurInterface;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 
+@Tag(name = "Utilisateurs")
 @RestController
 @RequestMapping("/api/utilisateurs")
 public class UtilisateurRestController {
@@ -22,6 +26,11 @@ public class UtilisateurRestController {
     }
 
     // Seul un responsable peut créer un compte : sans cette règle, n'importe quel profil connecté pouvait se créer un compte responsable.
+    @Operation(summary = "Créer un compte", description = "Responsable d'exploitation.")
+    @ApiResponse(responseCode = "201", description = "Compte créé")
+    @ApiResponse(responseCode = "400", description = "Données invalides")
+    @ApiResponse(responseCode = "403", description = "Profil non autorisé")
+    @ApiResponse(responseCode = "409", description = "Identifiant déjà utilisé")
     @PostMapping
     @ProfilRequis(UtilisateurType.ADMIN)
     public ResponseEntity<UtilisateurResponse> creer(@Valid @RequestBody UtilisateurRequest request) {

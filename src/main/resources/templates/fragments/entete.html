@@ -28,6 +28,7 @@
             <a th:href="@{/prestataires}" th:classappend="${pageActive == 'prestataires'} ? 'actif'">Prestataires</a>
             <a th:if="${utilisateurConnecte.peutGererComptes()}" th:href="@{/comptes}"
                th:classappend="${pageActive == 'comptes'} ? 'actif'">Gestion des comptes</a>
+            <a th:href="@{/swagger-ui.html}">Documentation de l'API</a>
             <hr>
             <a th:href="@{/deconnexion}" class="deconnexion">Se déconnecter</a>
         </div>

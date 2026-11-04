@@ -99,7 +99,7 @@ En cas de problème :
 - Commandes :
   - `sh mvnw test` : tests unitaires et de contrôleurs, sans base, sans Docker et sans `.env`.
   - `sh mvnw verify` : tous les tests et le rapport de couverture. Docker doit être démarré ; ni `.env` ni base locale ne sont nécessaires.
-- Couvert (102 tests, tous verts : 84 sans base, 18 sur vrai MySQL ; 88 % des lignes et 70 % des branches couvertes) :
+- Couvert (105 tests, tous verts : 84 sans base, 21 sur vrai MySQL ; 88 % des lignes et 70 % des branches couvertes) :
 
   | Domaine | Tests | Ce qui est vérifié |
   |:--|:--|:--|
@@ -121,9 +121,10 @@ En cas de problème :
   | Vraie base : écritures simultanées | `EcrituresSimultaneesIT` | RG10 : l'écriture périmée échoue entièrement, ni l'incident ni l'équipement ne changent |
   | Erreurs HTTP (§7.4) | `IncidentRestControllerTest`, `UtilisateurRestControllerTest`, `ErreursHttpIT` | identifiant mal formé, format refusé, erreur inattendue, identifiant déjà pris : code correct et message en français, sans détail technique ; adresse inconnue et méthode non prise en charge sur un vrai serveur |
   | Stations | `StationServiceTest`, `StationViewControllerTest` | regroupement par station et synthèse ; station inexistante ; liens vers les équipements |
+  | F12 documentation | `DocumentationApiIT` | redirection vers la connexion sans session ; documentation limitée à l'API, avec son jeton ; interface Swagger affichée |
   | F12 API | `IncidentRestControllerTest` | 401 sans token, 403 profil, 404 incident inexistant, 400 donnée invalide, 409 état incompatible, 200 / 201 sur chaque opération |
 
-- Non couvert : le code JavaScript (carte, tableau de bord), vérifié à la main ; une grande partie de la gestion des comptes côté service (`UtilisateurService` : 46 % des lignes) ; documentation Swagger de l'API (F12) non encore réalisée.
+- Non couvert : le code JavaScript (carte, tableau de bord), vérifié à la main ; une grande partie de la gestion des comptes côté service (`UtilisateurService` : 46 % des lignes).
 
 ## CHOIX TECHNIQUES
 ### Droits par profil
@@ -176,6 +177,7 @@ En cas de problème :
   - `POST /api/utilisateurs` exige maintenant le profil responsable : avant, n'importe quel utilisateur connecté à l'API pouvait se créer un compte responsable.
 - Navigation : la barre du haut contient les pages principales (Tableau de bord pour le responsable, Stations). Les pages secondaires (Historique, Prestataires, Gestion des comptes pour le responsable) et la déconnexion sont regroupées dans un menu ouvert en cliquant sur le profil (initiale, prénom et libellé du profil en clair). Le menu est un `<details>` : il fonctionne sans JavaScript, et un petit script le referme au clic en dehors ou sur Échap.
 - API REST (F12) : `GET /api/incidents/{id}`, `GET /api/incidents/historique`, `POST /api/incidents`, `PATCH /api/incidents/{id}` (description), `PUT /api/incidents/{id}/prestataire` (`{"idPrestataire": 2}`), `POST /api/incidents/{id}/evaluation` (`{"note": 4, "commentaire": "..."}`), `POST /api/incidents/{id}/resolution` (F8). Authentification par JWT, mêmes droits que les pages.
+- Documentation de l'API (F12) : Swagger UI sur `/swagger-ui.html` (springdoc), avec un lien dans le menu du profil. Comme les pages, elle exige d'être connecté au site (RG11). Pour essayer les routes : obtenir un jeton avec `POST /api/auth/login`, puis le renseigner avec le bouton **Authorize**.
 
 ### Exceptions : @ControllerAdvice
 - Les exceptions métier sont personnalisées, avec un message en français, et héritent d'une classe mère par type d'erreur (`RessourceIntrouvableException` → `EquipementIntrouvableException`, `IncidentIntrouvableException`, `PrestataireIntrouvableException`…).
@@ -250,7 +252,7 @@ Analyse critique :
   - Un seul conteneur partagé entre les tests d'intégration, pour ne pas recréer la base à chaque classe. Les tests qui écrivent réellement utilisent des données réservées (équipement 9, prestataire 5, incident 16).
   - Pas de seuil de couverture bloquant : le chiffre sert à repérer ce qui n'est pas testé, pas à écrire des tests sans valeur (accesseurs, DTO).
   - Horloge injectée dans `IncidentService` et `EvaluationService`, comme le conseille le sujet : les dates de RG1 et RG5 sont vérifiées exactement dans les tests.
-- Ce qui fonctionne : 18 tests sur vrai MySQL, couverture de 88 % des lignes et 70 % des branches, workflow GitHub Actions.
+- Ce qui fonctionne : 21 tests sur vrai MySQL, couverture de 88 % des lignes et 70 % des branches, workflow GitHub Actions.
 - Difficultés :
   - Premier test d'écritures simultanées bloqué 50 secondes : `resoudre` écrit dans la base dès sa requête de vérification (flush automatique), donc la seconde transaction attendait le verrou de ligne de la première. Le scénario a été réécrit dans le bon ordre : le premier lit, le second écrit, puis le premier tente d'écrire.
   - Les tests sur l'historique et l'état de l'équipement dépendent des données de `bdd.sql` : modifier ces données peut les casser.
