@@ -39,14 +39,17 @@ import java.util.stream.Collectors;
 public class TableauDeBordService implements TableauDeBordInterface {
 
     private static final int JOURS_COURBE = 30;
+    private static final int JOURS_TENDANCE = 7;
+    private static final int HEURES_PAR_JOUR = 24;
+    private static final int HEURES_PAR_SEMAINE = JOURS_TENDANCE * HEURES_PAR_JOUR;
 
     // Tranches de l'histogramme d'âge : bornes en heures et couleur RG3 d'un incident sans prestataire de cette tranche.
     private static final List<Tranche> TRANCHES = List.of(
-            new Tranche("< 24 h", 0, 24),
-            new Tranche("24-48 h", 24, 48),
-            new Tranche("48-72 h", 48, 72),
-            new Tranche("3-7 j", 72, 168),
-            new Tranche("> 7 j", 168, Long.MAX_VALUE));
+            new Tranche("< " + HEURES_PAR_JOUR + " h", 0, HEURES_PAR_JOUR),
+            new Tranche(HEURES_PAR_JOUR + "-" + NiveauAttention.HEURES_SEUIL_ORANGE + " h", HEURES_PAR_JOUR, NiveauAttention.HEURES_SEUIL_ORANGE),
+            new Tranche(NiveauAttention.HEURES_SEUIL_ORANGE + "-" + NiveauAttention.HEURES_SEUIL_ROUGE + " h", NiveauAttention.HEURES_SEUIL_ORANGE, NiveauAttention.HEURES_SEUIL_ROUGE),
+            new Tranche(NiveauAttention.HEURES_SEUIL_ROUGE / HEURES_PAR_JOUR + "-" + JOURS_TENDANCE + " j", NiveauAttention.HEURES_SEUIL_ROUGE, HEURES_PAR_SEMAINE),
+            new Tranche("> " + JOURS_TENDANCE + " j", HEURES_PAR_SEMAINE, Long.MAX_VALUE));
 
     private record Tranche(String libelle, long debutHeures, long finHeures) {
         boolean contient(Duration ouvert) {
@@ -84,10 +87,7 @@ public class TableauDeBordService implements TableauDeBordInterface {
                 .filter(i -> filtres.niveaux().isEmpty() || filtres.niveaux().contains(i.niveau()))
                 .toList();
         List<Incident> historique = tous.stream().filter(perimetreHistorique(filtres)).toList();
-        List<Equipement> parc = equipements.stream()
-                .filter(e -> filtres.idStation() == null || filtres.idStation().equals(e.getIdStation().getId()))
-                .filter(e -> filtres.type() == null || filtres.type() == e.getType())
-                .toList();
+        List<Equipement> parc = equipements.stream().filter(perimetreParc(filtres)).toList();
 
         return new TableauDeBordResponse(
                 maintenant,
@@ -98,9 +98,18 @@ public class TableauDeBordService implements TableauDeBordInterface {
                 courbeActifs(historique, maintenant),
                 grouper(selection, filtres.tri()),
                 selection.size(),
-                equipements.stream().collect(Collectors.toMap(e -> e.getIdStation().getId(), e -> e.getIdStation().getNom(),
-                        (a, b) -> a, TreeMap::new))
+                nomsDesStations(equipements)
         );
+    }
+
+    private static Predicate<Equipement> perimetreParc(FiltresTableauDeBord filtres) {
+        return e -> (filtres.idStation() == null || filtres.idStation().equals(e.getIdStation().getId()))
+                && (filtres.type() == null || filtres.type() == e.getType());
+    }
+
+    private static Map<Long, String> nomsDesStations(List<Equipement> equipements) {
+        return equipements.stream().collect(Collectors.toMap(e -> e.getIdStation().getId(), e -> e.getIdStation().getNom(),
+                (a, b) -> a, TreeMap::new));
     }
 
     private static Predicate<IncidentActifResponse> perimetreActif(FiltresTableauDeBord filtres) {
@@ -139,19 +148,19 @@ public class TableauDeBordService implements TableauDeBordInterface {
 
     private static Indicateurs indicateurs(List<IncidentActifResponse> selection, List<Incident> historique,
                                            List<Equipement> parc, LocalDateTime maintenant, boolean filtreParNiveau) {
-        LocalDateTime ilYa7Jours = maintenant.minusDays(7);
-        LocalDateTime ilYa14Jours = maintenant.minusDays(14);
-        long actifsIlYa7Jours = historique.stream().filter(i -> etaitActif(i, ilYa7Jours)).count();
+        LocalDateTime debutSemaine = maintenant.minusDays(JOURS_TENDANCE);
+        LocalDateTime debutSemainePrecedente = debutSemaine.minusDays(JOURS_TENDANCE);
+        long actifsDebutSemaine = historique.stream().filter(i -> etaitActif(i, debutSemaine)).count();
         return new Indicateurs(
                 selection.size(),
-                filtreParNiveau ? null : historique.stream().filter(i -> etaitActif(i, maintenant)).count() - actifsIlYa7Jours,
+                filtreParNiveau ? null : historique.stream().filter(i -> etaitActif(i, maintenant)).count() - actifsDebutSemaine,
                 selection.stream().filter(IncidentActifResponse::estSansPrestataire).count(),
                 selection.stream().filter(i -> i.niveau() == NiveauAttention.ROUGE).count(),
                 parc.stream().filter(e -> e.getEtatFonctionnement() != EquipementEtat.FONCTIONNEL).count(),
                 parc.stream().filter(e -> e.getEtatFonctionnement() == EquipementEtat.EN_MAINTENANCE).count(),
                 parc.size(),
-                historique.stream().filter(i -> resoluEntre(i, ilYa7Jours, maintenant)).count(),
-                historique.stream().filter(i -> resoluEntre(i, ilYa14Jours, ilYa7Jours)).count()
+                historique.stream().filter(i -> resoluEntre(i, debutSemaine, maintenant)).count(),
+                historique.stream().filter(i -> resoluEntre(i, debutSemainePrecedente, debutSemaine)).count()
         );
     }
 

@@ -8,7 +8,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 class OpsisApplicationIT extends AvecBaseMysql {
 
     @Test
-    void contextLoads() {
+    void leContexteDemarre() {
     }
 
 }

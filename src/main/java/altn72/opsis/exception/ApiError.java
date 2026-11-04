@@ -8,4 +8,8 @@ public record ApiError(
         String message,
         Map<String, String> erreurs,
         LocalDateTime date
-) {}
+) {
+    public static ApiError de(int status, String message) {
+        return new ApiError(status, message, Map.of(), LocalDateTime.now());
+    }
+}

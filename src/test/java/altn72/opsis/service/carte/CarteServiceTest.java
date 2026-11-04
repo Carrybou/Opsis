@@ -45,8 +45,8 @@ class CarteServiceTest {
         Equipement enMaintenance = equipement(2L, "ESC-001", EquipementEtat.EN_MAINTENANCE, chatelet);
         Equipement enPanne = equipement(3L, "ECR-001", EquipementEtat.EN_PANNE, chatelet);
         Equipement seulEnMaintenance = equipement(4L, "ESC-002", EquipementEtat.EN_MAINTENANCE, republique);
-        when(stationRepository.findAll()).thenReturn(List.of(republique, chatelet));
-        when(equipementRepository.findAll()).thenReturn(List.of(fonctionnel, enMaintenance, enPanne, seulEnMaintenance));
+        when(stationRepository.findAllByOrderByNomAsc()).thenReturn(List.of(chatelet, republique));
+        when(equipementRepository.findAllByOrderByReferenceUniqueAsc()).thenReturn(List.of(fonctionnel, enMaintenance, enPanne, seulEnMaintenance));
 
         CarteReseauResponse carte = carteService.consulter();
 
@@ -64,7 +64,7 @@ class CarteServiceTest {
 
     @Test
     void consulter_stationSansEquipementNiCoordonnees_resteDansLaReponse() {
-        when(stationRepository.findAll()).thenReturn(List.of(station(1L, "Nouvelle station", null, null)));
+        when(stationRepository.findAllByOrderByNomAsc()).thenReturn(List.of(station(1L, "Nouvelle station", null, null)));
 
         CarteReseauResponse carte = carteService.consulter();
 
@@ -86,8 +86,8 @@ class CarteServiceTest {
         actif.setDescription("Ascenseur bloqué");
         actif.setStatut(IncidentStatut.OUVERT);
         actif.setIdEquipement(ascenseur);
-        when(stationRepository.findAll()).thenReturn(List.of(chatelet));
-        when(equipementRepository.findAll()).thenReturn(List.of(ascenseur, escalator));
+        when(stationRepository.findAllByOrderByNomAsc()).thenReturn(List.of(chatelet));
+        when(equipementRepository.findAllByOrderByReferenceUniqueAsc()).thenReturn(List.of(ascenseur, escalator));
         when(incidentRepository.findByStatutNotOrderByDateHeureOuvertureDesc(IncidentStatut.RESOLU)).thenReturn(List.of(actif));
 
         StationCarte station = carteService.consulter().stations().getFirst();

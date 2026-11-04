@@ -38,14 +38,13 @@ public class CarteService implements CarteInterface {
     @Override
     @Transactional(readOnly = true)
     public CarteReseauResponse consulter() {
-        Map<Long, List<Equipement>> equipementsParStation = equipementRepository.findAll().stream()
+        Map<Long, List<Equipement>> equipementsParStation = equipementRepository.findAllByOrderByReferenceUniqueAsc().stream()
                 .collect(Collectors.groupingBy(equipement -> equipement.getIdStation().getId()));
         Map<Long, List<Incident>> incidentsParEquipement = incidentRepository
                 .findByStatutNotOrderByDateHeureOuvertureDesc(IncidentStatut.RESOLU).stream()
                 .collect(Collectors.groupingBy(incident -> incident.getIdEquipement().getId()));
 
-        List<StationCarte> stations = stationRepository.findAll().stream()
-                .sorted(Comparator.comparing(Station::getNom))
+        List<StationCarte> stations = stationRepository.findAllByOrderByNomAsc().stream()
                 .map(station -> versStation(station, equipementsParStation.getOrDefault(station.getId(), List.of()), incidentsParEquipement))
                 .toList();
 

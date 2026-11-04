@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Action impossible - Opsis</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<main class="contenu page-erreur">
+    <h1>Action impossible</h1>
+    <p>Cette action n'est pas possible depuis cette adresse.</p>
+    <div class="actions-erreur">
+        <a th:href="@{/stations}" class="bouton">Voir les stations</a>
+    </div>
+</main>
+</body>
+</html>

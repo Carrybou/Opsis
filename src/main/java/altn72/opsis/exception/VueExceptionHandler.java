@@ -17,7 +17,7 @@ public class VueExceptionHandler {
     private static final Logger log = LoggerFactory.getLogger(VueExceptionHandler.class);
 
     @ExceptionHandler(RessourceIntrouvableException.class)
-    public String handleIntrouvable(RessourceIntrouvableException e,
+    public String traiterIntrouvable(RessourceIntrouvableException e,
                                     @SessionAttribute(name = UtilisateurConnecte.ATTRIBUT, required = false) UtilisateurConnecte utilisateur,
                                     HttpServletResponse response, Model model) {
         return afficherErreur(HttpServletResponse.SC_NOT_FOUND, "Élément introuvable", e.getMessage(),
@@ -25,7 +25,7 @@ public class VueExceptionHandler {
     }
 
     @ExceptionHandler(ModificationIncidentInterditeException.class)
-    public String handleModificationInterdite(ModificationIncidentInterditeException e,
+    public String traiterModificationInterdite(ModificationIncidentInterditeException e,
                                               @SessionAttribute(name = UtilisateurConnecte.ATTRIBUT, required = false) UtilisateurConnecte utilisateur,
                                               HttpServletResponse response, Model model) {
         return afficherErreur(HttpServletResponse.SC_FORBIDDEN, "Modification impossible", e.getMessage(),
@@ -33,7 +33,7 @@ public class VueExceptionHandler {
     }
 
     @ExceptionHandler(AffectationIncidentImpossibleException.class)
-    public String handleAffectationImpossible(AffectationIncidentImpossibleException e,
+    public String traiterAffectationImpossible(AffectationIncidentImpossibleException e,
                                               @SessionAttribute(name = UtilisateurConnecte.ATTRIBUT, required = false) UtilisateurConnecte utilisateur,
                                               HttpServletResponse response, Model model) {
         return afficherErreur(HttpServletResponse.SC_CONFLICT, "Affectation impossible", e.getMessage(),
@@ -41,7 +41,7 @@ public class VueExceptionHandler {
     }
 
     @ExceptionHandler(EvaluationImpossibleException.class)
-    public String handleEvaluationImpossible(EvaluationImpossibleException e,
+    public String traiterEvaluationImpossible(EvaluationImpossibleException e,
                                              @SessionAttribute(name = UtilisateurConnecte.ATTRIBUT, required = false) UtilisateurConnecte utilisateur,
                                              HttpServletResponse response, Model model) {
         return afficherErreur(HttpServletResponse.SC_CONFLICT, "Évaluation impossible", e.getMessage(),
@@ -49,7 +49,7 @@ public class VueExceptionHandler {
     }
 
     @ExceptionHandler(OptimisticLockingFailureException.class)
-    public String handleModificationSimultanee(OptimisticLockingFailureException e,
+    public String traiterModificationSimultanee(OptimisticLockingFailureException e,
                                                @SessionAttribute(name = UtilisateurConnecte.ATTRIBUT, required = false) UtilisateurConnecte utilisateur,
                                                HttpServletResponse response, Model model) {
         return afficherErreur(HttpServletResponse.SC_CONFLICT, "Modification simultanée",
@@ -58,7 +58,7 @@ public class VueExceptionHandler {
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
-    public String handleParametreInvalide(MethodArgumentTypeMismatchException e,
+    public String traiterParametreInvalide(MethodArgumentTypeMismatchException e,
                                           @SessionAttribute(name = UtilisateurConnecte.ATTRIBUT, required = false) UtilisateurConnecte utilisateur,
                                           HttpServletResponse response, Model model) {
         return afficherErreur(HttpServletResponse.SC_BAD_REQUEST, "Adresse invalide",
@@ -66,7 +66,7 @@ public class VueExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
-    public String handleInattendue(Exception e,
+    public String traiterInattendue(Exception e,
                                    @SessionAttribute(name = UtilisateurConnecte.ATTRIBUT, required = false) UtilisateurConnecte utilisateur,
                                    HttpServletResponse response, Model model) {
         log.error("Erreur inattendue sur une vue", e);
@@ -76,7 +76,7 @@ public class VueExceptionHandler {
     }
 
     @ExceptionHandler(AccesRefuseException.class)
-    public String handleAccesRefuse(AccesRefuseException e,
+    public String traiterAccesRefuse(AccesRefuseException e,
                                     @SessionAttribute(name = UtilisateurConnecte.ATTRIBUT, required = false) UtilisateurConnecte utilisateur,
                                     HttpServletResponse response, Model model) {
         return afficherErreur(HttpServletResponse.SC_FORBIDDEN, "Accès refusé", e.getMessage(),

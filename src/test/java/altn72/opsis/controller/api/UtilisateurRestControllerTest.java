@@ -1,6 +1,7 @@
 package altn72.opsis.controller.api;
 
 import altn72.opsis.dto.utilisateur.UtilisateurResponse;
+import altn72.opsis.exception.IdentifiantDejaUtiliseException;
 import altn72.opsis.model.utilisateur.UtilisateurType;
 import altn72.opsis.security.JwtService;
 import altn72.opsis.security.UtilisateurConnecte;
@@ -75,6 +76,18 @@ class UtilisateurRestControllerTest {
                         .content(COMPTE_JSON))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.identifiant").value(10));
+    }
+
+    @Test
+    void creer_identifiantDejaUtilise_renvoie409AuFormatCommun() throws Exception {
+        when(utilisateurService.creer(any())).thenThrow(new IdentifiantDejaUtiliseException("nouveau.compte"));
+
+        mockMvc.perform(post("/api/utilisateurs")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer token-responsable")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(COMPTE_JSON))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.status").value(409));
     }
 
     @Test

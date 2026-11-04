@@ -18,7 +18,7 @@ public class EquipementRestController {
     }
 
     @GetMapping("/{id}")
-    public FicheEquipementResponse getFiche(@PathVariable Long id) {
+    public FicheEquipementResponse consulterFiche(@PathVariable Long id) {
         return equipementService.consulterFiche(id);
     }
 }

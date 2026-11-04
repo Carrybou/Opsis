@@ -181,6 +181,10 @@ public class IncidentViewController {
         if (incident.idPrestataire() != null) {
             model.addAttribute("prestataireActuel", prestataireService.trouver(incident.idPrestataire()));
         }
+        ajouterFormulairesManquants(incident, model);
+    }
+
+    private static void ajouterFormulairesManquants(IncidentDetailResponse incident, Model model) {
         if (!model.containsAttribute("incidentModificationRequest")) {
             model.addAttribute("incidentModificationRequest", new IncidentModificationRequest(incident.description()));
         }

@@ -4,7 +4,6 @@ import altn72.opsis.dto.login.LoginRequest;
 import altn72.opsis.dto.login.LoginResponse;
 import altn72.opsis.service.auth.AuthInterface;
 import jakarta.validation.Valid;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -21,7 +20,7 @@ public class AuthRestController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
-        return ResponseEntity.ok(authService.login(request));
+    public LoginResponse connecter(@Valid @RequestBody LoginRequest request) {
+        return authService.login(request);
     }
 }

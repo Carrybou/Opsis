@@ -45,9 +45,9 @@
                         <strong>Niveaux d'attention</strong>
                         <p>Pour un incident <em>sans prestataire</em>, selon le temps écoulé depuis l'ouverture :</p>
                         <ul>
-                            <li><span class="tdb-pastille niveau-VERT"></span> &lt; 48 h : vert</li>
-                            <li><span class="tdb-pastille niveau-ORANGE"></span> 48 – 72 h : orange</li>
-                            <li><span class="tdb-pastille niveau-ROUGE"></span> 72 h + : rouge</li>
+                            <li><span class="tdb-pastille niveau-VERT"></span> <span th:text="${T(altn72.opsis.model.incident.NiveauAttention).VERT.libelle}">&lt; 48 h</span> : vert</li>
+                            <li><span class="tdb-pastille niveau-ORANGE"></span> <span th:text="${T(altn72.opsis.model.incident.NiveauAttention).ORANGE.libelle}">48 – 72 h</span> : orange</li>
+                            <li><span class="tdb-pastille niveau-ROUGE"></span> <span th:text="${T(altn72.opsis.model.incident.NiveauAttention).ROUGE.libelle}">72 h +</span> : rouge</li>
                         </ul>
                         <p><span class="tdb-pastille niveau-AFFECTE"></span> Pris en charge : un prestataire est affecté, l'incident ne porte plus de couleur d'urgence.</p>
                         <p class="secondaire">Les niveaux sont recalculés à chaque affichage.</p>
@@ -102,7 +102,7 @@
             <strong class="tdb-kpi-valeur" th:text="${ind.sansPrestataire}">3</strong>
             <span class="tdb-kpi-detail" th:if="${ind.rougesSansPrestataire > 0}">
                 <span class="tdb-pastille niveau-ROUGE" aria-hidden="true"></span>
-                <span th:text="|dont ${ind.rougesSansPrestataire} depuis plus de 72 h|">dont 1 depuis plus de 72 h</span>
+                <span th:text="|dont ${ind.rougesSansPrestataire} depuis ${T(altn72.opsis.model.incident.NiveauAttention).HEURES_SEUIL_ROUGE} h ou plus|">dont 1 depuis plus de 72 h</span>
             </span>
             <span class="tdb-kpi-detail" th:if="${ind.rougesSansPrestataire == 0}">aucun en retard</span>
         </div>
@@ -137,9 +137,9 @@
                 <p class="secondaire">Depuis combien de temps ils sont ouverts</p>
             </header>
             <ul class="tdb-legende">
-                <li><span class="tdb-carre niveau-VERT"></span>&lt; 48 h</li>
-                <li><span class="tdb-carre niveau-ORANGE"></span>48 – 72 h</li>
-                <li><span class="tdb-carre niveau-ROUGE"></span>72 h +</li>
+                <li><span class="tdb-carre niveau-VERT"></span><span th:text="${T(altn72.opsis.model.incident.NiveauAttention).VERT.libelle}">&lt; 48 h</span></li>
+                <li><span class="tdb-carre niveau-ORANGE"></span><span th:text="${T(altn72.opsis.model.incident.NiveauAttention).ORANGE.libelle}">48 – 72 h</span></li>
+                <li><span class="tdb-carre niveau-ROUGE"></span><span th:text="${T(altn72.opsis.model.incident.NiveauAttention).ROUGE.libelle}">72 h +</span></li>
                 <li><span class="tdb-carre niveau-AFFECTE"></span>Pris en charge</li>
             </ul>
             <div class="tdb-colonnes" role="img" aria-label="Histogramme de l'âge des incidents actifs, détail dans le tableau de données">
@@ -179,9 +179,9 @@
                 <p class="secondaire">Cliquez sur une station pour filtrer</p>
             </header>
             <ul class="tdb-legende">
-                <li><span class="tdb-carre niveau-ROUGE"></span>72 h +</li>
-                <li><span class="tdb-carre niveau-ORANGE"></span>48 – 72 h</li>
-                <li><span class="tdb-carre niveau-VERT"></span>&lt; 48 h</li>
+                <li><span class="tdb-carre niveau-ROUGE"></span><span th:text="${T(altn72.opsis.model.incident.NiveauAttention).ROUGE.libelle}">72 h +</span></li>
+                <li><span class="tdb-carre niveau-ORANGE"></span><span th:text="${T(altn72.opsis.model.incident.NiveauAttention).ORANGE.libelle}">48 – 72 h</span></li>
+                <li><span class="tdb-carre niveau-VERT"></span><span th:text="${T(altn72.opsis.model.incident.NiveauAttention).VERT.libelle}">&lt; 48 h</span></li>
                 <li><span class="tdb-carre niveau-AFFECTE"></span>Pris en charge</li>
             </ul>
             <ol class="tdb-barres" th:unless="${#lists.isEmpty(tableau.chargeParStation)}">
@@ -290,9 +290,9 @@
                     <span th:case="*">Pris en charge</span>
                 </strong>
                 <span class="secondaire" th:switch="${g.niveau.name()}">
-                    <span th:case="'ROUGE'">sans prestataire depuis 72 h ou plus</span>
-                    <span th:case="'ORANGE'">sans prestataire depuis 48 à 72 h</span>
-                    <span th:case="'VERT'">sans prestataire depuis moins de 48 h</span>
+                    <span th:case="'ROUGE'" th:text="|sans prestataire depuis ${T(altn72.opsis.model.incident.NiveauAttention).HEURES_SEUIL_ROUGE} h ou plus|">sans prestataire depuis 72 h ou plus</span>
+                    <span th:case="'ORANGE'" th:text="|sans prestataire depuis ${T(altn72.opsis.model.incident.NiveauAttention).HEURES_SEUIL_ORANGE} à ${T(altn72.opsis.model.incident.NiveauAttention).HEURES_SEUIL_ROUGE} h|">sans prestataire depuis 48 à 72 h</span>
+                    <span th:case="'VERT'" th:text="|sans prestataire depuis moins de ${T(altn72.opsis.model.incident.NiveauAttention).HEURES_SEUIL_ORANGE} h|">sans prestataire depuis moins de 48 h</span>
                     <span th:case="*">un prestataire intervient</span>
                 </span>
                 <span class="tdb-groupe-compte" th:text="${#lists.size(g.incidents)}">1</span>

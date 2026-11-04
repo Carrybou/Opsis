@@ -6,13 +6,16 @@ import java.time.LocalDateTime;
 // RG3 / RG4 : niveau d'attention d'un incident actif, toujours calculé à partir de l'heure courante (jamais stocké en base).
 // L'ordre des constantes est celui de l'urgence, utilisé pour trier et grouper le tableau de bord.
 public enum NiveauAttention {
-    ROUGE("72 h +"),
-    ORANGE("48 – 72 h"),
-    VERT("< 48 h"),
+    ROUGE(NiveauAttention.HEURES_SEUIL_ROUGE + " h +"),
+    ORANGE(NiveauAttention.HEURES_SEUIL_ORANGE + " – " + NiveauAttention.HEURES_SEUIL_ROUGE + " h"),
+    VERT("< " + NiveauAttention.HEURES_SEUIL_ORANGE + " h"),
     AFFECTE("Pris en charge");
 
-    public static final Duration SEUIL_ORANGE = Duration.ofHours(48);
-    public static final Duration SEUIL_ROUGE = Duration.ofHours(72);
+    // RG3 : les seuils sont définis ici et nulle part ailleurs ; libellés, graphiques et pages en sont déduits.
+    public static final int HEURES_SEUIL_ORANGE = 48;
+    public static final int HEURES_SEUIL_ROUGE = 72;
+    public static final Duration SEUIL_ORANGE = Duration.ofHours(HEURES_SEUIL_ORANGE);
+    public static final Duration SEUIL_ROUGE = Duration.ofHours(HEURES_SEUIL_ROUGE);
 
     private final String libelle;
 

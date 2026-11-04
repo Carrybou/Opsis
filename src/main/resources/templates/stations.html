@@ -19,19 +19,19 @@
     </div>
 
     <section class="indicateurs" aria-label="Synthèse du réseau">
-        <div class="indicateur"><strong th:text="${nombreStations}">0</strong><span>stations suivies</span></div>
-        <div class="indicateur"><strong th:text="${nombreEquipements}">0</strong><span>équipements référencés</span></div>
-        <div class="indicateur"><strong th:text="${nombreEnPanne}">0</strong><span>équipements en panne</span></div>
-        <div class="indicateur"><strong th:text="${nombreEnMaintenance}">0</strong><span>en maintenance</span></div>
+        <div class="indicateur"><strong th:text="${#lists.size(reseau.stations)}">0</strong><span>stations suivies</span></div>
+        <div class="indicateur"><strong th:text="${reseau.nombreEquipements}">0</strong><span>équipements référencés</span></div>
+        <div class="indicateur"><strong th:text="${reseau.nombreEnPanne}">0</strong><span>équipements en panne</span></div>
+        <div class="indicateur"><strong th:text="${reseau.nombreEnMaintenance}">0</strong><span>en maintenance</span></div>
     </section>
 
-    <section th:each="station : ${stations}" th:id="|station-${station.id}|" class="carte">
+    <section th:each="station : ${reseau.stations}" th:id="|station-${station.identifiant}|" class="carte">
         <div class="carte-entete">
             <h2 th:text="${station.nom}">Nom de la station</h2>
             <span class="secondaire" th:if="${station.latitude != null and station.longitude != null}"
                   th:text="|${station.latitude}, ${station.longitude}|">48.00000000, 2.00000000</span>
         </div>
-        <table class="tableau" th:if="${equipementsParStation[station.id] != null}">
+        <table class="tableau" th:if="${reseau.equipementsParStation[station.identifiant] != null}">
             <thead>
             <tr>
                 <th>Référence</th>
@@ -41,9 +41,9 @@
             </tr>
             </thead>
             <tbody>
-            <tr th:each="equipement : ${equipementsParStation[station.id]}">
+            <tr th:each="equipement : ${reseau.equipementsParStation[station.identifiant]}">
                 <td class="reference">
-                    <a th:href="@{/equipements/{id}(id=${equipement.id})}" th:text="${equipement.referenceUnique}">ESC-STA-001</a>
+                    <a th:href="@{/equipements/{id}(id=${equipement.identifiant})}" th:text="${equipement.referenceUnique}">ESC-STA-001</a>
                 </td>
                 <td th:text="${equipement.type}">ESCALATOR</td>
                 <td th:text="${equipement.libelleDescription}">Description</td>
@@ -51,10 +51,10 @@
             </tr>
             </tbody>
         </table>
-        <p class="vide" th:if="${equipementsParStation[station.id] == null}">Aucun équipement enregistré pour cette station.</p>
+        <p class="vide" th:if="${reseau.equipementsParStation[station.identifiant] == null}">Aucun équipement enregistré pour cette station.</p>
     </section>
 
-    <p class="vide" th:if="${#lists.isEmpty(stations)}">Aucune station enregistrée.</p>
+    <p class="vide" th:if="${#lists.isEmpty(reseau.stations)}">Aucune station enregistrée.</p>
 </main>
 </body>
 </html>

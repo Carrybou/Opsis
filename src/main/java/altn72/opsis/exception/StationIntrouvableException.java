@@ -1,0 +1,8 @@
+package altn72.opsis.exception;
+
+public class StationIntrouvableException extends RessourceIntrouvableException {
+
+    public StationIntrouvableException(Long idStation) {
+        super("La station n°" + idStation + " est introuvable");
+    }
+}

@@ -1,9 +1,11 @@
 package altn72.opsis.controller.api;
 
 import altn72.opsis.dto.station.StationResponse;
-import altn72.opsis.model.station.StationRepository;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import altn72.opsis.service.station.StationInterface;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
@@ -11,24 +13,19 @@ import java.util.List;
 @RequestMapping("/api/stations")
 public class StationRestController {
 
-    private final StationRepository stationRepository;
+    private final StationInterface stationService;
 
-    public StationRestController(StationRepository stationRepository) {
-        this.stationRepository = stationRepository;
+    public StationRestController(StationInterface stationService) {
+        this.stationService = stationService;
     }
 
     @GetMapping
-    public List<StationResponse> getStations() {
-        return stationRepository.findAll().stream()
-                .map(StationResponse::from)
-                .toList();
+    public List<StationResponse> lister() {
+        return stationService.lister();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<StationResponse> getStation(@PathVariable Long id) {
-        return stationRepository.findById(id)
-                .map(StationResponse::from)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public StationResponse consulter(@PathVariable Long id) {
+        return stationService.trouver(id);
     }
 }

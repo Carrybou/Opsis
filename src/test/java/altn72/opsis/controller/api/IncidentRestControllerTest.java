@@ -197,6 +197,33 @@ class IncidentRestControllerTest {
         verifyNoInteractions(evaluationService);
     }
 
+    // §7.4 : un identifiant mal formé donne un message clair, sans nom de classe Java.
+    @Test
+    void consulter_identifiantNonNumerique_renvoie400SansDetailTechnique() throws Exception {
+        mockMvc.perform(get("/api/incidents/abc").header(HttpHeaders.AUTHORIZATION, "Bearer token-agent"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Le paramètre « id » n'est pas valide"));
+    }
+
+    @Test
+    void declarer_formatNonAccepte_renvoie415SansDetailTechnique() throws Exception {
+        mockMvc.perform(post("/api/incidents")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer token-agent")
+                        .contentType(MediaType.TEXT_PLAIN)
+                        .content("texte"))
+                .andExpect(status().isUnsupportedMediaType())
+                .andExpect(jsonPath("$.message").value("Ce format de données n'est pas accepté"));
+    }
+
+    @Test
+    void consulter_erreurInattendue_renvoie500SansDetailTechnique() throws Exception {
+        when(incidentService.consulterDetail(1L)).thenThrow(new IllegalStateException("détail interne"));
+
+        mockMvc.perform(get("/api/incidents/1").header(HttpHeaders.AUTHORIZATION, "Bearer token-agent"))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.message").value("Une erreur interne est survenue. Réessayez dans quelques instants."));
+    }
+
     // RG8 : une note décimale est refusée, pas tronquée.
     @Test
     void evaluer_noteDecimale_renvoie400SansRienEnregistrer() throws Exception {

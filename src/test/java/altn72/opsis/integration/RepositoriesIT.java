@@ -11,6 +11,7 @@ import altn72.opsis.model.incident.DeclarationsUtilisateur;
 import altn72.opsis.model.incident.Incident;
 import altn72.opsis.model.incident.IncidentRepository;
 import altn72.opsis.model.incident.IncidentStatut;
+import altn72.opsis.model.station.Station;
 import altn72.opsis.model.station.StationRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -104,6 +105,12 @@ class RepositoriesIT extends AvecBaseMysql {
         assertThat(agent.getDeclares().longValue()).isGreaterThanOrEqualTo(agent.getActifs().longValue());
         assertThat(agent.getActifs().longValue()).isPositive();
         assertThat(agent.getDerniereDeclaration()).isNotNull();
+    }
+
+    @Test
+    void stationsEtEquipements_sontRenvoyesDansLOrdreDAffichage() {
+        assertThat(stationRepository.findAllByOrderByNomAsc()).extracting(Station::getNom).isSorted();
+        assertThat(equipementRepository.findAllByOrderByReferenceUniqueAsc()).extracting(Equipement::getReferenceUnique).isSorted();
     }
 
     // RG9

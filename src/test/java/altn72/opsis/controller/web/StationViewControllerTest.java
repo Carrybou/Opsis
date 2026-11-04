@@ -1,28 +1,27 @@
 package altn72.opsis.controller.web;
 
-import altn72.opsis.model.equipement.Equipement;
+import altn72.opsis.dto.equipement.EquipementResponse;
+import altn72.opsis.dto.station.ReseauStationsResponse;
+import altn72.opsis.dto.station.StationResponse;
 import altn72.opsis.model.equipement.EquipementEtat;
-import altn72.opsis.model.equipement.EquipementRepository;
 import altn72.opsis.model.equipement.EquipementType;
-import altn72.opsis.model.station.Station;
-import altn72.opsis.model.station.StationRepository;
 import altn72.opsis.model.utilisateur.UtilisateurType;
 import altn72.opsis.security.JwtService;
 import altn72.opsis.security.UtilisateurConnecte;
+import altn72.opsis.service.station.StationInterface;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
 
 import java.util.List;
 import java.util.Map;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
@@ -37,10 +36,7 @@ class StationViewControllerTest {
     private MockMvc mockMvc;
 
     @MockitoBean
-    private StationRepository stationRepository;
-
-    @MockitoBean
-    private EquipementRepository equipementRepository;
+    private StationInterface stationService;
 
     // Requis par le JwtInterceptor enregistré dans WebConfig.
     @MockitoBean
@@ -54,46 +50,16 @@ class StationViewControllerTest {
     }
 
     @Test
-    void afficherStations_regroupeLesEquipementsParStationEtCalculeLaSynthese() throws Exception {
-        Station chatelet = station(1L, "Châtelet");
-        Station gareDeLyon = station(2L, "Gare de Lyon");
-        Equipement escalator = equipement(1L, "ESC-CHT-001", EquipementEtat.FONCTIONNEL, chatelet);
-        Equipement ascenseur = equipement(2L, "ASC-CHT-001", EquipementEtat.EN_PANNE, chatelet);
-        Equipement ecran = equipement(3L, "ECR-GDL-001", EquipementEtat.EN_MAINTENANCE, gareDeLyon);
-        when(stationRepository.findAll()).thenReturn(List.of(chatelet, gareDeLyon));
-        when(equipementRepository.findAll()).thenReturn(List.of(escalator, ascenseur, ecran));
+    void afficherStations_afficheLesEquipementsDeChaqueStation() throws Exception {
+        when(stationService.consulterReseau()).thenReturn(new ReseauStationsResponse(
+                List.of(new StationResponse(1L, "Châtelet", null, null), new StationResponse(2L, "Gare de Lyon", null, null)),
+                Map.of(1L, List.of(new EquipementResponse(4L, "ASC-CHT-001", "Ascenseur", EquipementType.ASCENSEUR, EquipementEtat.EN_PANNE, "Châtelet"))),
+                1, 1, 0));
 
-        MvcResult resultat = mockMvc.perform(get("/stations").sessionAttr(UtilisateurConnecte.ATTRIBUT, THOMAS))
+        mockMvc.perform(get("/stations").sessionAttr(UtilisateurConnecte.ATTRIBUT, THOMAS))
                 .andExpect(status().isOk())
                 .andExpect(view().name("stations"))
-                .andExpect(model().attribute("nombreStations", 2))
-                .andExpect(model().attribute("nombreEquipements", 3))
-                .andExpect(model().attribute("nombreEnPanne", 1L))
-                .andExpect(model().attribute("nombreEnMaintenance", 1L))
-                .andReturn();
-
-        @SuppressWarnings("unchecked")
-        Map<Long, List<Equipement>> equipementsParStation =
-                (Map<Long, List<Equipement>>) resultat.getModelAndView().getModel().get("equipementsParStation");
-        assertThat(equipementsParStation.get(1L)).containsExactly(escalator, ascenseur);
-        assertThat(equipementsParStation.get(2L)).containsExactly(ecran);
-    }
-
-    private static Station station(Long id, String nom) {
-        Station station = new Station();
-        station.setId(id);
-        station.setNom(nom);
-        return station;
-    }
-
-    private static Equipement equipement(Long id, String reference, EquipementEtat etat, Station station) {
-        Equipement equipement = new Equipement();
-        equipement.setId(id);
-        equipement.setReferenceUnique(reference);
-        equipement.setLibelleDescription("Description " + reference);
-        equipement.setType(reference.startsWith("ASC") ? EquipementType.ASCENSEUR : EquipementType.ESCALATOR);
-        equipement.setEtatFonctionnement(etat);
-        equipement.setIdStation(station);
-        return equipement;
+                .andExpect(content().string(containsString("href=\"/equipements/4\"")))
+                .andExpect(content().string(containsString("Aucun équipement enregistré pour cette station.")));
     }
 }

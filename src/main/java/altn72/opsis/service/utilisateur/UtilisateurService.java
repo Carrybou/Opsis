@@ -30,6 +30,8 @@ import java.util.stream.Collectors;
 @Service
 public class UtilisateurService implements UtilisateurInterface {
 
+    private static final int JOURS_STATISTIQUES = 30;
+
     private final UtilisateurRepository utilisateurRepository;
     private final IncidentRepository incidentRepository;
     private final PasswordEncoder passwordEncoder;
@@ -76,7 +78,7 @@ public class UtilisateurService implements UtilisateurInterface {
                 .max(Comparator.comparingLong(CompteResponse::incidentsDeclares))
                 .orElse(null);
         long declarations30j = incidentRepository.countByDateHeureOuvertureGreaterThanEqual(
-                LocalDateTime.now(horloge).minusDays(30));
+                LocalDateTime.now(horloge).minusDays(JOURS_STATISTIQUES));
 
         return new GestionComptesResponse(comptes, parProfil, declarations30j, plusActif);
     }

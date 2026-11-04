@@ -2,12 +2,10 @@ package altn72.opsis.controller.api;
 
 import altn72.opsis.dto.utilisateur.UtilisateurRequest;
 import altn72.opsis.dto.utilisateur.UtilisateurResponse;
-import altn72.opsis.exception.IdentifiantDejaUtiliseException;
 import altn72.opsis.model.utilisateur.UtilisateurType;
 import altn72.opsis.security.ProfilRequis;
 import altn72.opsis.service.utilisateur.UtilisateurInterface;
 import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,15 +24,10 @@ public class UtilisateurRestController {
     // Seul un responsable peut créer un compte : sans cette règle, n'importe quel profil connecté pouvait se créer un compte responsable.
     @PostMapping
     @ProfilRequis(UtilisateurType.ADMIN)
-    public ResponseEntity<UtilisateurResponse> postUtilisateur(@Valid @RequestBody UtilisateurRequest request) {
+    public ResponseEntity<UtilisateurResponse> creer(@Valid @RequestBody UtilisateurRequest request) {
         UtilisateurResponse cree = utilisateurService.creer(request);
         return ResponseEntity
                 .created(URI.create("/api/utilisateurs/" + cree.identifiant()))
                 .body(cree);
-    }
-
-    @ExceptionHandler(IdentifiantDejaUtiliseException.class)
-    public ResponseEntity<String> handleIdentifiantDejaUtilise(IdentifiantDejaUtiliseException e) {
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
     }
 }

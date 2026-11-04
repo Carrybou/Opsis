@@ -36,25 +36,7 @@ public record IncidentActifResponse(
         Duration ouvert = Duration.between(incident.getDateHeureOuverture(), maintenant);
         NiveauAttention niveau = NiveauAttention.calculer(incident, maintenant);
 
-        String echeance = null;
-        int progression = 0;
-        switch (niveau) {
-            case VERT -> {
-                echeance = "orange dans " + FormatDuree.formater(NiveauAttention.SEUIL_ORANGE.minus(ouvert));
-                progression = pourcentage(ouvert, NiveauAttention.SEUIL_ORANGE);
-            }
-            case ORANGE -> {
-                Duration tranche = NiveauAttention.SEUIL_ROUGE.minus(NiveauAttention.SEUIL_ORANGE);
-                echeance = "rouge dans " + FormatDuree.formater(NiveauAttention.SEUIL_ROUGE.minus(ouvert));
-                progression = pourcentage(ouvert.minus(NiveauAttention.SEUIL_ORANGE), tranche);
-            }
-            case ROUGE -> {
-                echeance = "en retard de " + FormatDuree.formater(ouvert.minus(NiveauAttention.SEUIL_ROUGE));
-                progression = 100;
-            }
-            case AFFECTE -> {
-            }
-        }
+        Avancement avancement = Avancement.de(niveau, ouvert);
 
         return new IncidentActifResponse(
                 incident.getId(),
@@ -62,8 +44,8 @@ public record IncidentActifResponse(
                 niveau,
                 incident.getDateHeureOuverture(),
                 FormatDuree.formater(ouvert),
-                echeance,
-                progression,
+                avancement.echeance(),
+                avancement.progression(),
                 equipement.getId(),
                 equipement.getReferenceUnique(),
                 equipement.getType(),
@@ -76,6 +58,21 @@ public record IncidentActifResponse(
 
     public boolean estSansPrestataire() {
         return niveau != NiveauAttention.AFFECTE;
+    }
+
+    private record Avancement(String echeance, int progression) {
+        private static final Avancement AUCUN = new Avancement(null, 0);
+
+        static Avancement de(NiveauAttention niveau, Duration ouvert) {
+            return switch (niveau) {
+                case VERT -> new Avancement("orange dans " + FormatDuree.formater(NiveauAttention.SEUIL_ORANGE.minus(ouvert)),
+                        pourcentage(ouvert, NiveauAttention.SEUIL_ORANGE));
+                case ORANGE -> new Avancement("rouge dans " + FormatDuree.formater(NiveauAttention.SEUIL_ROUGE.minus(ouvert)),
+                        pourcentage(ouvert.minus(NiveauAttention.SEUIL_ORANGE), NiveauAttention.SEUIL_ROUGE.minus(NiveauAttention.SEUIL_ORANGE)));
+                case ROUGE -> new Avancement("en retard de " + FormatDuree.formater(ouvert.minus(NiveauAttention.SEUIL_ROUGE)), 100);
+                case AFFECTE -> AUCUN;
+            };
+        }
     }
 
     private static int pourcentage(Duration ecoule, Duration total) {

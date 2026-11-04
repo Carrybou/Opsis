@@ -50,8 +50,8 @@ public class IncidentRestController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<IncidentDetailResponse> consulter(@PathVariable Long id) {
-        return ResponseEntity.ok(incidentService.consulterDetail(id));
+    public IncidentDetailResponse consulter(@PathVariable Long id) {
+        return incidentService.consulterDetail(id);
     }
 
     @PatchMapping("/{id}")
@@ -72,14 +72,14 @@ public class IncidentRestController {
 
     @ProfilRequis({UtilisateurType.ADMIN, UtilisateurType.TECHNICIEN})
     @PostMapping("/{id}/resolution")
-    public ResponseEntity<IncidentDetailResponse> resoudre(@PathVariable Long id,
-                                                           @RequestAttribute(UtilisateurConnecte.ATTRIBUT) UtilisateurConnecte utilisateur) {
-        return ResponseEntity.ok(incidentService.resoudre(id, utilisateur));
+    public IncidentDetailResponse resoudre(@PathVariable Long id,
+                                           @RequestAttribute(UtilisateurConnecte.ATTRIBUT) UtilisateurConnecte utilisateur) {
+        return incidentService.resoudre(id, utilisateur);
     }
 
     @GetMapping("/historique")
-    public ResponseEntity<List<IncidentResponse>> historique() {
-        return ResponseEntity.ok(incidentService.listerHistoriqueResolus());
+    public List<IncidentResponse> historique() {
+        return incidentService.listerHistoriqueResolus();
     }
 
     @PostMapping("/{id}/evaluation")
