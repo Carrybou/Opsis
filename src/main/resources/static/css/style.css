@@ -1496,3 +1496,122 @@ h2 {
         border-left: 0;
     }
 }
+
+/* Gestion des comptes */
+
+.indicateurs-3 { grid-template-columns: repeat(3, 1fr); }
+
+.formulaire-compte {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px 24px;
+    max-width: 760px;
+}
+
+.formulaire-compte .champ {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.formulaire-compte .champ .secondaire { margin: 0; }
+.formulaire-compte .actions { grid-column: 1 / -1; margin-top: 0; }
+
+.formulaire-compte input,
+.ligne-edition input,
+.ligne-edition select {
+    width: 100%;
+    padding: 9px 10px;
+    border: 1px solid var(--trait);
+    border-radius: 6px;
+    background: var(--carte);
+    color: var(--encre);
+    font: inherit;
+}
+
+.formulaire-compte input:focus-visible,
+.ligne-edition input:focus-visible,
+.ligne-edition select:focus-visible {
+    border-color: var(--accent);
+    outline: 2px solid var(--accent-doux);
+}
+
+.formulaire-compte .champ-invalide,
+.ligne-edition .champ-invalide {
+    border-color: var(--danger);
+    background: var(--danger-doux);
+}
+
+.tableau-comptes th,
+.tableau-comptes td { padding: 12px 12px; vertical-align: middle; }
+.tableau-comptes th:first-child,
+.tableau-comptes td:first-child { padding-left: 24px; }
+.tableau-comptes th:last-child,
+.tableau-comptes td:last-child { padding-right: 24px; }
+.tableau-comptes .nombre { text-align: right; }
+.tableau-comptes .nombre { font-variant-numeric: tabular-nums; }
+
+.compte-identite {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.compte-identite .avatar { flex: none; }
+
+.compte-vous {
+    margin-left: 6px;
+    white-space: nowrap;
+    padding: 1px 8px;
+    border-radius: 999px;
+    background: var(--trait-leger);
+    color: var(--discret);
+    font-size: .75rem;
+    font-weight: 600;
+}
+
+.droit {
+    display: inline-block;
+    margin: 2px 4px 2px 0;
+    padding: 2px 8px;
+    border: 1px solid var(--trait);
+    border-radius: 6px;
+    font-size: .8rem;
+    white-space: nowrap;
+}
+
+.actions-ligne {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin: 0;
+}
+
+.bouton-petit { padding: 6px 12px; font-size: .85rem; }
+
+.bouton.bouton-danger { border-color: var(--danger-doux); color: var(--danger); }
+.bouton.bouton-danger:hover { border-color: var(--danger); background: var(--danger-doux); }
+
+.ligne-edition { background: var(--fond); }
+.ligne-edition td { vertical-align: top; }
+.ligne-edition input + label,
+.ligne-edition .erreur-champ + label { margin-top: 8px; }
+.ligne-edition input + .sr-only + input,
+.ligne-edition .erreur-champ + .sr-only + input { margin-top: 8px; }
+.ligne-edition label:not(.sr-only) {
+    display: block;
+    margin-bottom: 6px;
+    font-size: .85rem;
+    font-weight: 600;
+}
+
+.tableau-droits td:not(:first-child),
+.tableau-droits th:not(:first-child) { width: 18%; text-align: center; }
+.droit-oui { color: var(--accent); font-weight: 800; }
+.droit-non { color: var(--trait); }
+.note-droits { margin: 0; padding: 14px 24px 18px; }
+
+@media (max-width: 760px) {
+    .indicateurs-3 { grid-template-columns: 1fr; }
+    .formulaire-compte { grid-template-columns: 1fr; }
+}

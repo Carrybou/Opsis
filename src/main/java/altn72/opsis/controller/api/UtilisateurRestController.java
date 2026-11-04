@@ -3,6 +3,8 @@ package altn72.opsis.controller.api;
 import altn72.opsis.dto.utilisateur.UtilisateurRequest;
 import altn72.opsis.dto.utilisateur.UtilisateurResponse;
 import altn72.opsis.exception.IdentifiantDejaUtiliseException;
+import altn72.opsis.model.utilisateur.UtilisateurType;
+import altn72.opsis.security.ProfilRequis;
 import altn72.opsis.service.utilisateur.UtilisateurInterface;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,7 +22,9 @@ public class UtilisateurRestController {
         this.utilisateurService = utilisateurService;
     }
 
+    // Seul un responsable peut créer un compte : sans cette règle, n'importe quel profil connecté pouvait se créer un compte responsable.
     @PostMapping
+    @ProfilRequis(UtilisateurType.ADMIN)
     public ResponseEntity<UtilisateurResponse> postUtilisateur(@RequestBody UtilisateurRequest request) {
         UtilisateurResponse cree = utilisateurService.creer(request);
         return ResponseEntity

@@ -14,7 +14,7 @@
 
     <!-- Menu du profil : pages secondaires et déconnexion. <details> fonctionne sans JS ; le script le referme au clic extérieur et sur Échap. -->
     <details class="menu-profil" th:if="${utilisateurConnecte != null}"
-             th:classappend="${pageActive == 'historique' or pageActive == 'prestataires'} ? 'actif'">
+             th:classappend="${pageActive == 'historique' or pageActive == 'prestataires' or pageActive == 'comptes'} ? 'actif'">
         <summary th:attr="aria-label=|Menu de ${utilisateurConnecte.prenom}|">
             <span class="avatar" aria-hidden="true" th:text="${#strings.toUpperCase(#strings.substring(utilisateurConnecte.prenom, 0, 1))}">T</span>
             <span class="identite">
@@ -26,6 +26,8 @@
         <div class="menu-profil-panneau">
             <a th:href="@{/incidents/historique}" th:classappend="${pageActive == 'historique'} ? 'actif'">Historique des incidents</a>
             <a th:href="@{/prestataires}" th:classappend="${pageActive == 'prestataires'} ? 'actif'">Prestataires</a>
+            <a th:if="${utilisateurConnecte.peutGererComptes()}" th:href="@{/comptes}"
+               th:classappend="${pageActive == 'comptes'} ? 'actif'">Gestion des comptes</a>
             <hr>
             <a th:href="@{/deconnexion}" class="deconnexion">Se déconnecter</a>
         </div>

@@ -45,6 +45,7 @@ public class AuthService implements AuthInterface {
 
     private Utilisateur verifierIdentifiants(String identifiantConnexion, String motDePasse) {
         return utilisateurRepository.findByIdentifiantConnexion(identifiantConnexion)
+                .filter(Utilisateur::isActif)
                 .filter(u -> passwordEncoder.matches(motDePasse, u.getMotDePasse()))
                 .orElseThrow(IdentifiantsInvalidesException::new);
     }

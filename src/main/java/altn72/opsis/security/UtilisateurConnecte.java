@@ -1,5 +1,6 @@
 package altn72.opsis.security;
 
+import altn72.opsis.model.utilisateur.Droit;
 import altn72.opsis.model.utilisateur.Utilisateur;
 import altn72.opsis.model.utilisateur.UtilisateurType;
 
@@ -32,28 +33,27 @@ public record UtilisateurConnecte(
         return false;
     }
 
-    // Libellé affiché dans l'en-tête, plutôt que le nom technique du profil.
     public String libelleProfil() {
-        return switch (profil) {
-            case ADMIN -> "Responsable d'exploitation";
-            case AGENT -> "Agent";
-            case TECHNICIEN -> "Technicien";
-        };
+        return profil.getLibelle();
     }
 
     public boolean peutDeclarerIncident() {
-        return aUnProfil(UtilisateurType.ADMIN, UtilisateurType.AGENT);
+        return Droit.DECLARER_INCIDENT.estAccordeA(profil);
     }
 
     public boolean peutResoudreIncident() {
-        return aUnProfil(UtilisateurType.ADMIN, UtilisateurType.TECHNICIEN);
+        return Droit.RESOUDRE_INCIDENT.estAccordeA(profil);
     }
 
     public boolean peutConsulterTableauDeBord() {
-        return aUnProfil(UtilisateurType.ADMIN);
+        return Droit.CONSULTER_TABLEAU_DE_BORD.estAccordeA(profil);
     }
 
     public boolean peutEvaluerPrestataire() {
-        return aUnProfil(UtilisateurType.ADMIN);
+        return Droit.EVALUER_PRESTATAIRE.estAccordeA(profil);
+    }
+
+    public boolean peutGererComptes() {
+        return Droit.GERER_COMPTES.estAccordeA(profil);
     }
 }

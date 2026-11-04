@@ -34,7 +34,8 @@ CREATE TABLE utilisateur (
                              identifiant_connexion VARCHAR(100) NOT NULL UNIQUE,
                              mot_de_passe VARCHAR(255) NOT NULL, -- Assez long pour stocker le hash (BCrypt, Argon2...)
                              prenom VARCHAR(100) NOT NULL,
-                             profil VARCHAR(50) NOT NULL
+                             profil VARCHAR(50) NOT NULL,
+                             actif BOOLEAN NOT NULL DEFAULT TRUE -- Un compte supprimé est désactivé : ses incidents restent dans l'historique
 );
 
 -- Table Prestataire
@@ -95,7 +96,11 @@ INSERT INTO utilisateur (identifiant, identifiant_connexion, mot_de_passe, preno
                                                                                                (3, 'tech.dubois', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BW', 'Inès', 'TECHNICIEN'),
                                                                                                (4, 'agent.bernard', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BW', 'Hugo', 'AGENT'),
                                                                                                (5, 'agent.petit', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BW', 'Léa', 'AGENT'),
-                                                                                               (6, 'agent.moreau', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BW', 'Nathan', 'AGENT');
+                                                                                               (6, 'agent.moreau', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BW', 'Nathan', 'AGENT'),
+                                                                                               -- Comptes de test, un par profil, mot de passe : 1234
+                                                                                               (7, 'responsable.test', '$2a$10$3bjl172Q5tSNhOaATWmxN.rI2F2a2G2Qjq5tc2xnphyh9pWfkcWL6', 'Camille', 'ADMIN'),
+                                                                                               (8, 'agent.test', '$2a$10$3bjl172Q5tSNhOaATWmxN.rI2F2a2G2Qjq5tc2xnphyh9pWfkcWL6', 'Sacha', 'AGENT'),
+                                                                                               (9, 'technicien.test', '$2a$10$3bjl172Q5tSNhOaATWmxN.rI2F2a2G2Qjq5tc2xnphyh9pWfkcWL6', 'Alex', 'TECHNICIEN');
 
 INSERT INTO prestataire (identifiant, nom, contact) VALUES
                                                         (1, 'AscenTech Services', 'astreinte@ascentech-exemple.fr'),

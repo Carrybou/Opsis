@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Gestion des comptes - Opsis</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div th:replace="~{fragments/entete :: entete('comptes')}"></div>
+
+<main class="contenu" th:with="moi=${utilisateurConnecte.id}">
+    <div class="titre-page">
+        <div>
+            <div class="surtitre">Administration</div>
+            <h1>Gestion des comptes</h1>
+        </div>
+        <div class="titre-actions" th:unless="${enCreation}">
+            <a class="bouton" th:href="@{/comptes(creer=true)} + '#nouveau-compte'">Nouveau compte</a>
+        </div>
+    </div>
+
+    <p class="message succes" th:if="${succes}" th:text="${succes}"></p>
+    <p class="message erreur" th:if="${erreur}" th:text="${erreur}"></p>
+
+    <section class="indicateurs indicateurs-3" aria-label="Synthèse des comptes">
+        <div class="indicateur">
+            <strong th:text="${#lists.size(gestion.comptes)}">9</strong>
+            <span th:text="|${gestion.parProfil.get(profils[0])} responsable(s) · ${gestion.parProfil.get(profils[1])} agent(s) · ${gestion.parProfil.get(profils[2])} technicien(s)|">comptes actifs</span>
+        </div>
+        <div class="indicateur">
+            <strong th:text="${gestion.declarations30j}">12</strong>
+            <span>incidents déclarés sur 30 jours</span>
+        </div>
+        <div class="indicateur">
+            <strong th:text="${gestion.plusActif != null} ? ${gestion.plusActif.prenom} : '—'">Hugo</strong>
+            <span th:if="${gestion.plusActif != null}"
+                  th:text="|déclarant le plus actif · ${gestion.plusActif.incidentsDeclares} incident(s)|">déclarant le plus actif</span>
+            <span th:unless="${gestion.plusActif != null}">aucune déclaration pour l'instant</span>
+        </div>
+    </section>
+
+    <!-- Création : formulaire ouvert sur la page (?creer=true), comme l'édition d'un incident. -->
+    <section class="carte" id="nouveau-compte" th:if="${enCreation}">
+        <div class="carte-entete"><h2>Nouveau compte</h2></div>
+        <div class="carte-corps">
+            <form class="formulaire formulaire-compte" th:action="@{/comptes}" method="post" th:object="${nouveauCompte}" novalidate>
+                <div class="champ">
+                    <label for="nouveau-prenom">Prénom</label>
+                    <input id="nouveau-prenom" type="text" th:field="*{prenom}" maxlength="100" autocomplete="off"
+                           th:classappend="${#fields.hasErrors('prenom')} ? 'champ-invalide'">
+                    <p class="erreur-champ" th:if="${#fields.hasErrors('prenom')}" th:errors="*{prenom}"></p>
+                </div>
+                <div class="champ">
+                    <label for="nouveau-identifiant">Identifiant de connexion</label>
+                    <input id="nouveau-identifiant" type="text" th:field="*{identifiantConnexion}" maxlength="100"
+                           autocomplete="off" placeholder="prenom.nom"
+                           th:classappend="${#fields.hasErrors('identifiantConnexion')} ? 'champ-invalide'">
+                    <p class="erreur-champ" th:if="${#fields.hasErrors('identifiantConnexion')}" th:errors="*{identifiantConnexion}"></p>
+                </div>
+                <div class="champ">
+                    <label for="nouveau-profil">Profil</label>
+                    <select id="nouveau-profil" th:field="*{profil}"
+                            th:classappend="${#fields.hasErrors('profil')} ? 'champ-invalide'">
+                        <option value="">Choisir un profil</option>
+                        <option th:each="p : ${profils}" th:value="${p}" th:text="${p.libelle}">Agent</option>
+                    </select>
+                    <p class="erreur-champ" th:if="${#fields.hasErrors('profil')}" th:errors="*{profil}"></p>
+                </div>
+                <div class="champ">
+                    <label for="nouveau-mot-de-passe">Mot de passe</label>
+                    <input id="nouveau-mot-de-passe" type="password" name="motDePasse" maxlength="72" autocomplete="new-password"
+                           aria-describedby="aide-mot-de-passe"
+                           th:classappend="${#fields.hasErrors('motDePasse')} ? 'champ-invalide'">
+                    <p class="erreur-champ" th:if="${#fields.hasErrors('motDePasse')}" th:errors="*{motDePasse}"></p>
+                    <p class="secondaire" id="aide-mot-de-passe" th:unless="${#fields.hasErrors('motDePasse')}">8 caractères minimum.</p>
+                </div>
+                <div class="actions">
+                    <a class="bouton secondaire" th:href="@{/comptes}">Annuler</a>
+                    <button type="submit" class="bouton">Créer le compte</button>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <section class="carte">
+        <div class="carte-entete">
+            <h2>Comptes actifs</h2>
+            <span class="secondaire">Une suppression désactive le compte : ses incidents restent dans l'historique.</span>
+        </div>
+
+        <table class="tableau tableau-comptes">
+            <thead>
+            <tr>
+                <th>Utilisateur</th>
+                <th>Profil</th>
+                <th>Droits</th>
+                <th class="nombre" title="Incidents déclarés">Déclarés</th>
+                <th class="nombre" title="Incidents déclarés encore actifs">En cours</th>
+                <th>Dernière décl.</th>
+                <th><span class="sr-only">Actions</span></th>
+            </tr>
+            </thead>
+            <tbody>
+            <th:block th:each="c : ${gestion.comptes}">
+                <!-- Ligne en lecture -->
+                <tr th:if="${c.identifiant != idEnModification}" th:id="|compte-${c.identifiant}|">
+                    <td>
+                        <div class="compte-identite">
+                            <span class="avatar" aria-hidden="true" th:text="${#strings.toUpperCase(#strings.substring(c.prenom, 0, 1))}">H</span>
+                            <div>
+                                <strong th:text="${c.prenom}">Hugo</strong>
+                                <span class="compte-vous" th:if="${c.identifiant == moi}">Vous</span>
+                                <div class="secondaire" th:text="${c.identifiantConnexion}">agent.bernard</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td><span th:replace="~{fragments/badges :: profil(${c.profil})}"></span></td>
+                    <td>
+                        <span th:if="${c.aTousLesDroits()}" class="droit">Tous les droits</span>
+                        <th:block th:unless="${c.aTousLesDroits()}">
+                            <span th:each="d : ${c.droitsParticuliers()}" class="droit" th:text="${d.libelleCourt}"
+                                  th:title="${d.libelle}">Déclarer</span>
+                            <span th:if="${#lists.isEmpty(c.droitsParticuliers())}" class="secondaire">Consultation</span>
+                        </th:block>
+                    </td>
+                    <td class="nombre" th:text="${c.incidentsDeclares}">0</td>
+                    <td class="nombre" th:text="${c.incidentsActifs}">0</td>
+                    <td th:text="${c.derniereDeclaration != null} ? ${#temporals.format(c.derniereDeclaration, 'dd/MM/yyyy')} : '—'">—</td>
+                    <td>
+                        <div class="actions-ligne">
+                            <a class="bouton secondaire bouton-petit"
+                               th:href="@{/comptes(modifier=${c.identifiant})} + |#compte-${c.identifiant}|">Modifier</a>
+                            <form th:if="${c.identifiant != moi}" th:action="@{/comptes/{id}(id=${c.identifiant})}" th:method="delete"
+                                  th:attr="onsubmit=|return confirm('Supprimer le compte ${c.identifiantConnexion} ? Il ne pourra plus se connecter.');|">
+                                <button type="submit" class="bouton secondaire bouton-petit bouton-danger">Supprimer</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+
+                <!-- Ligne en édition : les champs sont rattachés au formulaire de la dernière cellule par l'attribut form. -->
+                <tr th:if="${c.identifiant == idEnModification}" th:id="|compte-${c.identifiant}|" class="ligne-edition"
+                    th:object="${compteModifie}" th:with="formulaire=|modifier-compte-${c.identifiant}|">
+                    <td>
+                        <label class="sr-only" for="modif-prenom">Prénom</label>
+                        <input id="modif-prenom" type="text" th:field="*{prenom}" th:attr="form=${formulaire}" maxlength="100"
+                               th:classappend="${#fields.hasErrors('prenom')} ? 'champ-invalide'">
+                        <p class="erreur-champ" th:if="${#fields.hasErrors('prenom')}" th:errors="*{prenom}"></p>
+                        <label class="sr-only" for="modif-identifiant">Identifiant de connexion</label>
+                        <input id="modif-identifiant" type="text" th:field="*{identifiantConnexion}" th:attr="form=${formulaire}"
+                               maxlength="100" th:classappend="${#fields.hasErrors('identifiantConnexion')} ? 'champ-invalide'">
+                        <p class="erreur-champ" th:if="${#fields.hasErrors('identifiantConnexion')}" th:errors="*{identifiantConnexion}"></p>
+                    </td>
+                    <td>
+                        <th:block th:if="${c.identifiant == moi}">
+                            <input type="hidden" th:field="*{profil}" th:attr="form=${formulaire}">
+                            <span th:replace="~{fragments/badges :: profil(${c.profil})}"></span>
+                            <div class="secondaire">Votre propre profil ne peut pas être changé.</div>
+                        </th:block>
+                        <th:block th:unless="${c.identifiant == moi}">
+                            <label class="sr-only" for="modif-profil">Profil</label>
+                            <select id="modif-profil" th:field="*{profil}" th:attr="form=${formulaire}">
+                                <option th:each="p : ${profils}" th:value="${p}" th:text="${p.libelle}">Agent</option>
+                            </select>
+                        </th:block>
+                    </td>
+                    <td colspan="4">
+                        <label for="modif-mot-de-passe">Nouveau mot de passe</label>
+                        <input id="modif-mot-de-passe" type="password" name="motDePasse" th:attr="form=${formulaire}"
+                               maxlength="72" autocomplete="new-password" placeholder="Laisser vide pour le conserver"
+                               th:classappend="${#fields.hasErrors('motDePasse')} ? 'champ-invalide'">
+                        <p class="erreur-champ" th:if="${#fields.hasErrors('motDePasse')}" th:errors="*{motDePasse}"></p>
+                    </td>
+                    <td>
+                        <form th:id="${formulaire}" th:action="@{/comptes/{id}(id=${c.identifiant})}" th:method="put" novalidate
+                              class="actions-ligne">
+                            <a class="bouton secondaire bouton-petit" th:href="@{/comptes} + |#compte-${c.identifiant}|">Annuler</a>
+                            <button type="submit" class="bouton bouton-petit">Enregistrer</button>
+                        </form>
+                    </td>
+                </tr>
+            </th:block>
+            </tbody>
+        </table>
+        <p class="vide" th:if="${#lists.isEmpty(gestion.comptes)}">Aucun compte actif.</p>
+    </section>
+
+    <section class="carte">
+        <div class="carte-entete">
+            <h2>Droits par profil</h2>
+        </div>
+        <table class="tableau tableau-droits">
+            <thead>
+            <tr>
+                <th>Action</th>
+                <th th:each="p : ${profils}" th:text="${p.libelle}">Agent</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="d : ${droits}">
+                <td th:text="${d.libelle}">Déclarer un incident</td>
+                <td th:each="p : ${profils}">
+                    <span th:if="${d.estAccordeA(p)}" class="droit-oui" aria-label="Oui">✓</span>
+                    <span th:unless="${d.estAccordeA(p)}" class="droit-non" aria-label="Non">—</span>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+        <p class="secondaire note-droits">Un agent ne modifie que les incidents qu'il a déclarés, tant qu'aucun prestataire n'y est affecté.</p>
+    </section>
+</main>
+</body>
+</html>

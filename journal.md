@@ -11,7 +11,13 @@ set -a; source .env; set +a               # 2. charge les variables (JWT_SECRET,
 DB_PORT=3307 sh mvnw spring-boot:run      # 3. lance l'application sur le MySQL Docker
 ```
 
-Ouvrir ensuite http://localhost:8080 et se connecter avec un des comptes de test (voir README ci-dessous).
+Ouvrir ensuite http://localhost:8080 et se connecter avec un des comptes de test, mot de passe **`1234`** :
+
+| Identifiant | Profil |
+|:--|:--|
+| `responsable.test` | Responsable d'exploitation (accès à tout, dont le tableau de bord et la gestion des comptes) |
+| `agent.test` | Agent |
+| `technicien.test` | Technicien |
 
 En cas de problème :
 - **`Port 8080 was already in use`** : une ancienne instance tourne encore. `lsof -ti:8080` donne son PID, puis `kill <PID>`.
@@ -40,11 +46,17 @@ En cas de problème :
 
   | Identifiant | Profil | Mot de passe |
   |:--|:--|:--|
+  | `responsable.test` | Responsable d'exploitation | `1234` |
+  | `agent.test` | Agent | `1234` |
+  | `technicien.test` | Technicien | `1234` |
   | `admin` | Responsable d'exploitation | ... |
   | `agent.bernard`, `agent.petit`, `agent.moreau` | Agent | ... |
   | `tech.martin`, `tech.dubois` | Technicien | ... |
+
+  Les comptes `*.test` servent à l'évaluation : un par profil, même mot de passe. Les autres portent les incidents de démonstration.
 - Limites connues :
   - Les dates des données de démonstration sont relatives au moment où la base est créée (`NOW() - INTERVAL …` dans `bdd.sql`). Elles « vieillissent » ensuite : recréer la base (`docker compose down -v && docker compose up -d`) pour retrouver un tableau de bord avec les trois couleurs.
+  - Un compte supprimé ou modifié garde sa session (30 min) ou son JWT en cours jusqu'à leur expiration : le profil n'est relu qu'à la connexion.
   - Les identifiants de la base sont encore écrits dans `application.properties` au lieu d'être lus depuis les variables d'environnement (§7.7).
 
 ## ARCHITECTURE
@@ -81,11 +93,11 @@ En cas de problème :
   - Contrôleurs : `@WebMvcTest` + MockMvc. Seule la couche web est chargée (contrôleurs, advices, intercepteurs de session et JWT), les services sont des `@MockitoBean`. Les templates Thymeleaf sont réellement rendus.
   - Un test `@SpringBootTest` vérifie que le contexte complet démarre (base réelle).
 - Commande : `DB_PORT=3307 mvn test` (base démarrée et `.env` chargé, pour `OpsisApplicationTests`).
-- Couvert (66 tests, tous verts) :
+- Couvert (71 tests, tous verts) :
 
   | Domaine | Tests | Ce qui est vérifié |
   |:--|:--|:--|
-  | F1 connexion | `AuthServiceTest`, `LoginViewControllerTest` | identifiants valides ; même message pour un identifiant inconnu et un mauvais mot de passe ; ouverture de session, erreur réaffichée, déconnexion |
+  | F1 connexion | `AuthServiceTest`, `LoginViewControllerTest` | identifiants valides ; même message pour un identifiant inconnu et un mauvais mot de passe ; compte supprimé refusé ; ouverture de session, erreur réaffichée, déconnexion |
   | F2–F3 stations, équipements | `StationViewControllerTest`, `EquipementServiceTest`, `EquipementViewControllerTest` | redirection vers `/login` sans session ; regroupement par station et synthèse ; incidents en cours / passés dans l'ordre (RG7) ; boutons Déclarer / Modifier selon le profil |
   | F4 déclaration | `IncidentViewControllerTest` | responsable : incident enregistré ; technicien : 403 |
   | F6 modification | `IncidentServiceTest`, `IncidentViewControllerTest` | responsable : tout incident non résolu ; agent : seulement ses incidents non affectés ; incident résolu figé (RG5) ; 403 technicien ; description invalide réaffichée |
@@ -94,6 +106,7 @@ En cas de problème :
   | F10 évaluation | `EvaluationServiceTest`, `PrestataireServiceTest`, `IncidentViewControllerTest`, `PrestataireViewControllerTest` | RG8 : évaluation enregistrée, refus si non résolu, sans prestataire ou déjà évalué ; note hors de 1 à 5 refusée ; moyenne de la requête native rattachée au bon prestataire ; fiche prestataire ; 403 agent / technicien |
   | F11 tableau de bord | `NiveauAttentionTest`, `TableauDeBordServiceTest`, `TableauDeBordViewControllerTest` | RG3 aux bornes exactes (47 h vert, 48 h pile orange, 72 h pile rouge) ; RG4 : affecté jamais vert / orange / rouge ; groupes par urgence, échéance avant le seuil suivant (« orange dans 4 h ») ; filtres appliqués aux indicateurs et à la liste, compteurs des puces sur le périmètre ; RG6 (résolu exclu) ; 403 agent ; filtres de l'URL (niveaux multiples, recherche, tri) transmis au service |
   | Lot alpha, cartographie | `CarteServiceTest`, `CarteViewControllerTest` | couleur d'une station selon son équipement le plus grave, résumé de ses équipements, tri par gravité ; station sans équipement ni coordonnées conservée ; incidents actifs rattachés à leur équipement ; redirection vers `/login` sans session ; coordonnées et liens vers équipements et incidents dans la page |
+  | Gestion des comptes | `UtilisateurServiceTest`, `CompteViewControllerTest` | suppression = désactivation, sans toucher aux incidents ; impossible de supprimer son propre compte ou de changer son propre profil ; mot de passe vide conservé en modification ; 403 hors responsable ; création sans mot de passe réaffichée avec l'erreur |
   | F12 API | `IncidentRestControllerTest` | 401 sans token, 403 profil, 404 incident inexistant, 400 donnée invalide, 409 état incompatible, 200 / 201 sur chaque opération |
 
 - Non couvert : repositories (`@DataJpaTest`), prévus dans le lot alpha « Qualité renforcée » ; documentation Swagger de l'API (F12) non encore réalisée.
@@ -111,6 +124,7 @@ En cas de problème :
 | F9    | Consulter l'historique                | Lecture seule                         | Lecture seule                                           |
 | F10   | Évaluer un prestataire                | Accès complet                         | Lecture seule (notes et fiches prestataire)             |
 | F11   | Tableau de bord                       | Accès complet                         | Interdit                                                |
+| —     | Gestion des comptes                   | Accès complet                         | Interdit                                                |
 
 - Technicien (troisième profil, absent du tableau du sujet) : consultation de tout ; il ne peut ni déclarer ni modifier un incident (F4, F6), ni affecter (F7), ni ouvrir le tableau de bord (F11), mais il peut le déclarer résolu (F8). Il ne peut pas évaluer (F10) : c'est lui qui intervient, il ne doit pas noter son propre travail.
 - F6 pour l'agent : il ne modifie que les incidents qu'il a déclarés, tant qu'aucun prestataire n'est affecté. Un incident résolu n'est plus modifiable par personne (RG5).
@@ -137,7 +151,15 @@ En cas de problème :
   - **Filtres** sur une seule ligne, au-dessus de tout ce qu'ils filtrent (indicateurs, graphiques et liste) : recherche (référence, description, station, sans tenir compte des accents), niveaux en puces cumulables libellées par durée (« < 48 h », « 48 – 72 h », « 72 h + », « Pris en charge ») qui servent aussi de légende (couleur, durée, nombre), un « ? » qui explique les seuils, station et type d'équipement. Les filtres appliqués s'affichent en étiquettes retirables une à une, avec « Tout effacer ». Ils passent dans l'URL (`GET`), donc une vue filtrée se recharge et se partage.
   - **Niveau d'attention** (RG3 / RG4) : `NiveauAttention.calculer(incident, maintenant)` dans le modèle, avec des `Duration` exactes (pas des heures arrondies). Rien n'est stocké en base. L'heure vient d'un bean `Clock` injecté, ce qui permet de tester les bornes avec une horloge fixe. Seuls les incidents non résolus apparaissent dans la liste et les niveaux (RG6).
   - **Fraîcheur** : « Mis à jour il y a X min », et la page se recharge toute seule toutes les 5 minutes (sauf pendant une saisie), puisque les niveaux dépendent de l'heure.
-- Navigation : la barre du haut contient les pages principales (Tableau de bord pour le responsable, Stations). Les pages secondaires (Historique, Prestataires) et la déconnexion sont regroupées dans un menu ouvert en cliquant sur le profil (initiale, prénom et libellé du profil en clair). Le menu est un `<details>` : il fonctionne sans JavaScript, et un petit script le referme au clic en dehors ou sur Échap.
+- Gestion des comptes (`/comptes`, responsable uniquement, lien « Gestion des comptes » dans le menu du profil) :
+  - **Synthèse** : nombre de comptes actifs par profil, incidents déclarés sur 30 jours, déclarant le plus actif.
+  - **Liste des comptes actifs** : prénom, identifiant, profil, droits du profil, incidents déclarés, dont encore en cours, date de la dernière déclaration. Les statistiques viennent d'une seule requête JPQL groupée par déclarant (`IncidentRepository.compterDeclarationsParUtilisateur`).
+  - **Créer, modifier, supprimer** sur la page même, comme pour les incidents : `?creer=true` ouvre le formulaire de création, `?modifier={id}` passe la ligne en édition (prénom, identifiant, profil, nouveau mot de passe facultatif : vide, l'actuel est conservé). Mots de passe hachés en BCrypt, 8 caractères minimum. `POST /comptes`, `PUT /comptes/{id}`, `DELETE /comptes/{id}` (champ caché `_method`), suppression confirmée.
+  - **Supprimer = désactiver** (colonne `actif`) : la clé étrangère `incident → utilisateur` est en `ON DELETE CASCADE`, une vraie suppression effacerait les incidents déclarés et fausserait l'historique. Un compte désactivé disparaît de la liste et ne peut plus se connecter ; son identifiant n'est pas réattribuable.
+  - **Garde-fous** : un responsable ne peut ni supprimer son propre compte ni changer son propre profil, pour qu'il reste toujours au moins un responsable. Modifier son propre prénom met à jour l'en-tête immédiatement.
+  - **Droits** : l'énumération `Droit` liste chaque action et les profils autorisés. Elle alimente la matrice « Droits par profil » de la page et les méthodes `peutXxx()` de `UtilisateurConnecte` qui affichent ou masquent les boutons. Les routes restent protégées par `@ProfilRequis`.
+  - `POST /api/utilisateurs` exige maintenant le profil responsable : avant, n'importe quel utilisateur connecté à l'API pouvait se créer un compte responsable.
+- Navigation : la barre du haut contient les pages principales (Tableau de bord pour le responsable, Stations). Les pages secondaires (Historique, Prestataires, Gestion des comptes pour le responsable) et la déconnexion sont regroupées dans un menu ouvert en cliquant sur le profil (initiale, prénom et libellé du profil en clair). Le menu est un `<details>` : il fonctionne sans JavaScript, et un petit script le referme au clic en dehors ou sur Échap.
 - API REST (F12) : `GET /api/incidents/{id}`, `GET /api/incidents/historique`, `POST /api/incidents`, `PATCH /api/incidents/{id}` (description), `PUT /api/incidents/{id}/prestataire` (`{"idPrestataire": 2}`), `POST /api/incidents/{id}/evaluation` (`{"note": 4, "commentaire": "..."}`), `POST /api/incidents/{id}/resolution` (F8). Authentification par JWT, mêmes droits que les pages.
 
 ### Exceptions : @ControllerAdvice
@@ -171,6 +193,7 @@ En cas de problème :
 - `IncidentService.modifier` : l'incident chargé reste suivi par JPA, donc la nouvelle description est enregistrée à la fin de la méthode sans `save` explicite.
 - `IncidentService.affecter` : le prestataire, le statut `EN_COURS` et l'état de l'équipement sont enregistrés ensemble ; si une vérification échoue (incident résolu, prestataire inexistant), rien n'est modifié.
 - `IncidentService.resoudre` : le statut `RESOLU`, la date de résolution et le nouvel état de l'équipement sont enregistrés ensemble.
+- `UtilisateurService.modifier` et `supprimer` : les changements du compte (ou sa désactivation) sont enregistrés à la fin de la méthode, sans `save` explicite.
 - `EvaluationService.evaluer` : la vérification « pas encore évalué » et l'insertion se font dans la même transaction.
 - Les lectures (`consulterDetail`, `estModifiable`, `estAffectable`, `estEvaluable`, `incidentsModifiables`, historique, prestataires avec leur note, tableau de bord, carte du réseau) sont en `readOnly = true`.
 
