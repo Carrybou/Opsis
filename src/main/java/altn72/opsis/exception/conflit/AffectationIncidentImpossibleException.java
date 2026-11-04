@@ -1,4 +1,4 @@
-package altn72.opsis.exception;
+package altn72.opsis.exception.conflit;
 
 // F7 : l'état de l'incident ne permet pas l'affectation demandée (incident résolu, prestataire déjà affecté).
 public class AffectationIncidentImpossibleException extends RuntimeException {

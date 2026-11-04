@@ -2,7 +2,7 @@ package altn72.opsis.service.auth;
 
 import altn72.opsis.dto.login.LoginRequest;
 import altn72.opsis.dto.login.LoginResponse;
-import altn72.opsis.exception.IdentifiantsInvalidesException;
+import altn72.opsis.exception.acces.IdentifiantsInvalidesException;
 import altn72.opsis.model.utilisateur.Utilisateur;
 import altn72.opsis.model.utilisateur.UtilisateurRepository;
 import altn72.opsis.security.JwtService;

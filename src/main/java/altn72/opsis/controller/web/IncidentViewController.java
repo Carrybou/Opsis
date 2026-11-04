@@ -7,7 +7,7 @@ import altn72.opsis.dto.incident.IncidentDetailResponse;
 import altn72.opsis.dto.incident.IncidentModificationRequest;
 import altn72.opsis.dto.incident.IncidentRequest;
 import altn72.opsis.dto.incident.IncidentResponse;
-import altn72.opsis.exception.IncidentDejaResoluException;
+import altn72.opsis.exception.conflit.IncidentDejaResoluException;
 import altn72.opsis.model.utilisateur.UtilisateurType;
 import altn72.opsis.security.ProfilRequis;
 import altn72.opsis.security.UtilisateurConnecte;

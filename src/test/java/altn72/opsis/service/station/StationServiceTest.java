@@ -1,7 +1,7 @@
 package altn72.opsis.service.station;
 
 import altn72.opsis.dto.station.ReseauStationsResponse;
-import altn72.opsis.exception.StationIntrouvableException;
+import altn72.opsis.exception.introuvable.StationIntrouvableException;
 import altn72.opsis.model.equipement.Equipement;
 import altn72.opsis.model.equipement.EquipementEtat;
 import altn72.opsis.model.equipement.EquipementRepository;

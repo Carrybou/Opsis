@@ -7,7 +7,7 @@ import altn72.opsis.dto.incident.IncidentDetailResponse;
 import altn72.opsis.dto.incident.IncidentModificationRequest;
 import altn72.opsis.dto.incident.IncidentResponse;
 import altn72.opsis.dto.prestataire.PrestataireResponse;
-import altn72.opsis.exception.ModificationIncidentInterditeException;
+import altn72.opsis.exception.acces.ModificationIncidentInterditeException;
 import altn72.opsis.model.equipement.EquipementType;
 import altn72.opsis.model.incident.IncidentStatut;
 import altn72.opsis.model.utilisateur.UtilisateurType;

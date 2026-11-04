@@ -1,7 +1,7 @@
 package altn72.opsis.service.utilisateur;
 
 import altn72.opsis.dto.utilisateur.CompteRequest;
-import altn72.opsis.exception.OperationCompteInterditeException;
+import altn72.opsis.exception.acces.OperationCompteInterditeException;
 import altn72.opsis.model.incident.IncidentRepository;
 import altn72.opsis.model.utilisateur.Utilisateur;
 import altn72.opsis.model.utilisateur.UtilisateurRepository;

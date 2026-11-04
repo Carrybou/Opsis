@@ -2,9 +2,9 @@ package altn72.opsis.service.evaluation;
 
 import altn72.opsis.dto.evaluation.EvaluationRequest;
 import altn72.opsis.dto.evaluation.EvaluationResponse;
-import altn72.opsis.exception.AccesRefuseException;
-import altn72.opsis.exception.EvaluationImpossibleException;
-import altn72.opsis.exception.IncidentIntrouvableException;
+import altn72.opsis.exception.acces.AccesRefuseException;
+import altn72.opsis.exception.conflit.EvaluationImpossibleException;
+import altn72.opsis.exception.introuvable.IncidentIntrouvableException;
 import altn72.opsis.model.evaluation.Evaluation;
 import altn72.opsis.model.evaluation.EvaluationRepository;
 import altn72.opsis.model.incident.Incident;

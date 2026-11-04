@@ -1,5 +1,10 @@
-package altn72.opsis.exception;
+package altn72.opsis.exception.gestion;
 
+import altn72.opsis.exception.acces.AccesRefuseException;
+import altn72.opsis.exception.acces.ModificationIncidentInterditeException;
+import altn72.opsis.exception.conflit.AffectationIncidentImpossibleException;
+import altn72.opsis.exception.conflit.EvaluationImpossibleException;
+import altn72.opsis.exception.introuvable.RessourceIntrouvableException;
 import altn72.opsis.security.UtilisateurConnecte;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;

@@ -1,4 +1,4 @@
-package altn72.opsis.exception;
+package altn72.opsis.exception.gestion;
 
 // Message en français d'une erreur que le code métier n'a pas levée lui-même : le texte d'origine de Spring ou de Java
 // est technique (noms de classes, types attendus) et ne doit jamais atteindre l'utilisateur.

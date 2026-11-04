@@ -1,4 +1,4 @@
-package altn72.opsis.exception;
+package altn72.opsis.exception.gestion;
 
 import java.time.LocalDateTime;
 import java.util.Map;

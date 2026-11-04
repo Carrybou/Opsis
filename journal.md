@@ -72,7 +72,7 @@ En cas de problème :
   | `service`          | Règles métier, exposées par des interfaces (`EquipementInterface`…)            |
   | `model`            | Entités JPA et repositories Spring Data, regroupés par domaine                  |
   | `dto`              | Objets échangés avec les vues et l'API (records)                                |
-  | `exception`        | Exceptions métier et advices (API en JSON, pages d'erreur)                      |
+  | `exception`        | Exceptions métier rangées par type d'erreur (`introuvable`, `acces`, `conflit`) et leur traitement (`gestion` : advices, format JSON, pages d'erreur) |
   | `security`         | Intercepteurs session / JWT, contrôle des profils (`@ProfilRequis`)             |
   | `config`           | Enregistrement des intercepteurs, beans de sécurité                             |
 

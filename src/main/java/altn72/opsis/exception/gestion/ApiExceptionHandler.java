@@ -1,5 +1,13 @@
-package altn72.opsis.exception;
+package altn72.opsis.exception.gestion;
 
+import altn72.opsis.exception.acces.AccesRefuseException;
+import altn72.opsis.exception.acces.IdentifiantsInvalidesException;
+import altn72.opsis.exception.acces.ModificationIncidentInterditeException;
+import altn72.opsis.exception.conflit.AffectationIncidentImpossibleException;
+import altn72.opsis.exception.conflit.EvaluationImpossibleException;
+import altn72.opsis.exception.conflit.IdentifiantDejaUtiliseException;
+import altn72.opsis.exception.conflit.IncidentDejaResoluException;
+import altn72.opsis.exception.introuvable.RessourceIntrouvableException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.OptimisticLockingFailureException;

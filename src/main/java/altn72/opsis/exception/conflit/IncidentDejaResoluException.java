@@ -1,4 +1,4 @@
-package altn72.opsis.exception;
+package altn72.opsis.exception.conflit;
 
 public class IncidentDejaResoluException extends RuntimeException {
 

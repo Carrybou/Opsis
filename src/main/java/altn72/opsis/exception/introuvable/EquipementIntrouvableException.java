@@ -1,4 +1,4 @@
-package altn72.opsis.exception;
+package altn72.opsis.exception.introuvable;
 
 public class EquipementIntrouvableException extends RessourceIntrouvableException {
 

@@ -1,7 +1,7 @@
 package altn72.opsis.controller.api;
 
 import altn72.opsis.dto.utilisateur.UtilisateurResponse;
-import altn72.opsis.exception.IdentifiantDejaUtiliseException;
+import altn72.opsis.exception.conflit.IdentifiantDejaUtiliseException;
 import altn72.opsis.model.utilisateur.UtilisateurType;
 import altn72.opsis.security.JwtService;
 import altn72.opsis.security.UtilisateurConnecte;

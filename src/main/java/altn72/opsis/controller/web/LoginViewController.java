@@ -1,6 +1,6 @@
 package altn72.opsis.controller.web;
 
-import altn72.opsis.exception.IdentifiantsInvalidesException;
+import altn72.opsis.exception.acces.IdentifiantsInvalidesException;
 import altn72.opsis.security.UtilisateurConnecte;
 import altn72.opsis.service.auth.AuthInterface;
 import jakarta.servlet.http.HttpServletRequest;

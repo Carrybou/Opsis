@@ -3,7 +3,7 @@ package altn72.opsis.service.prestataire;
 import altn72.opsis.dto.prestataire.FichePrestataireResponse;
 import altn72.opsis.dto.prestataire.InterventionResponse;
 import altn72.opsis.dto.prestataire.PrestataireResponse;
-import altn72.opsis.exception.PrestataireIntrouvableException;
+import altn72.opsis.exception.introuvable.PrestataireIntrouvableException;
 import altn72.opsis.model.evaluation.Evaluation;
 import altn72.opsis.model.evaluation.EvaluationRepository;
 import altn72.opsis.model.evaluation.NotePrestataire;

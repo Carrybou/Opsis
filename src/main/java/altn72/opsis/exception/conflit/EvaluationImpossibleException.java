@@ -1,4 +1,4 @@
-package altn72.opsis.exception;
+package altn72.opsis.exception.conflit;
 
 // F10 / RG8 : l'état de l'incident ne permet pas de l'évaluer (non résolu, sans prestataire, déjà évalué).
 public class EvaluationImpossibleException extends RuntimeException {

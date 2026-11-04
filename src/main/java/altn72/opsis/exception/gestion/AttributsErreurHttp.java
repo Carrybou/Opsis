@@ -1,4 +1,4 @@
-package altn72.opsis.exception;
+package altn72.opsis.exception.gestion;
 
 import org.springframework.boot.web.error.ErrorAttributeOptions;
 import org.springframework.boot.webmvc.error.DefaultErrorAttributes;
@@ -7,7 +7,6 @@ import org.springframework.web.context.request.WebRequest;
 
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
 // Réponse JSON des erreurs survenues avant d'atteindre un contrôleur (adresse inconnue, méthode non prise en charge) :
