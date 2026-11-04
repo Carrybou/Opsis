@@ -44,7 +44,7 @@ En cas de problème :
   | `agent.bernard`, `agent.petit`, `agent.moreau` | Agent | ... |
   | `tech.martin`, `tech.dubois` | Technicien | ... |
 - Limites connues :
-  - Les dates des incidents de démonstration sont figées dans `bdd.sql` ; elles devront être générées relativement à l'instant présent (§4).
+  - Les dates des données de démonstration sont relatives au moment où la base est créée (`NOW() - INTERVAL …` dans `bdd.sql`). Elles « vieillissent » ensuite : recréer la base (`docker compose down -v && docker compose up -d`) pour retrouver un tableau de bord avec les trois couleurs.
   - Les identifiants de la base sont encore écrits dans `application.properties` au lieu d'être lus depuis les variables d'environnement (§7.7).
 
 ## ARCHITECTURE
@@ -81,7 +81,7 @@ En cas de problème :
   - Contrôleurs : `@WebMvcTest` + MockMvc. Seule la couche web est chargée (contrôleurs, advices, intercepteurs de session et JWT), les services sont des `@MockitoBean`. Les templates Thymeleaf sont réellement rendus.
   - Un test `@SpringBootTest` vérifie que le contexte complet démarre (base réelle).
 - Commande : `DB_PORT=3307 mvn test` (base démarrée et `.env` chargé, pour `OpsisApplicationTests`).
-- Couvert (54 tests, tous verts) :
+- Couvert (60 tests, tous verts) :
 
   | Domaine | Tests | Ce qui est vérifié |
   |:--|:--|:--|
@@ -92,9 +92,10 @@ En cas de problème :
   | F7 affectation | `IncidentServiceTest`, `IncidentViewControllerTest` | affectation → `EN_COURS` et équipement en maintenance ; réaffectation ; incident résolu refusé (RG5) ; refus sans rien modifier (RG10) ; 403 agent / technicien |
   | F8 résolution | `IncidentServiceTest`, `IncidentViewControllerTest` | clôture et état de l'équipement selon les incidents restants (fonctionnel, en maintenance, en panne) ; déjà résolu ; 403 agent |
   | F10 évaluation | `EvaluationServiceTest`, `PrestataireServiceTest`, `IncidentViewControllerTest`, `PrestataireViewControllerTest` | RG8 : évaluation enregistrée, refus si non résolu, sans prestataire ou déjà évalué ; note hors de 1 à 5 refusée ; moyenne de la requête native rattachée au bon prestataire ; fiche prestataire ; 403 agent / technicien |
+  | F11 tableau de bord | `NiveauAttentionTest`, `TableauDeBordServiceTest`, `TableauDeBordViewControllerTest` | RG3 aux bornes exactes (47 h vert, 48 h pile orange, 72 h pile rouge) ; RG4 : affecté jamais vert / orange / rouge ; groupes par urgence, échéance avant le seuil suivant (« orange dans 4 h ») ; filtres appliqués aux indicateurs et à la liste, compteurs des puces sur le périmètre ; RG6 (résolu exclu) ; 403 agent ; filtres de l'URL (niveaux multiples, recherche, tri) transmis au service |
   | F12 API | `IncidentRestControllerTest` | 401 sans token, 403 profil, 404 incident inexistant, 400 donnée invalide, 409 état incompatible, 200 / 201 sur chaque opération |
 
-- Non couvert : repositories (`@DataJpaTest`), prévus dans le lot alpha « Qualité renforcée » ; règles RG3, RG4 et RG6, fonctionnalité F11 et documentation Swagger de l'API (F12) non encore implémentées.
+- Non couvert : repositories (`@DataJpaTest`), prévus dans le lot alpha « Qualité renforcée » ; documentation Swagger de l'API (F12) non encore réalisée.
 
 ## CHOIX TECHNIQUES
 ### Droits par profil
@@ -108,9 +109,9 @@ En cas de problème :
 | F8    | Déclarer un incident résolu           | Accès complet                         | Interdit                                                |
 | F9    | Consulter l'historique                | Lecture seule                         | Lecture seule                                           |
 | F10   | Évaluer un prestataire                | Accès complet                         | Lecture seule (notes et fiches prestataire)             |
-| F11   | Tableau de bord                       | Accès complet (pas encore réalisé)    | Interdit                                                |
+| F11   | Tableau de bord                       | Accès complet                         | Interdit                                                |
 
-- Technicien (troisième profil, absent du tableau du sujet) : consultation de tout ; il ne peut ni déclarer ni modifier un incident (F4, F6), ni affecter (F7), mais il peut le déclarer résolu (F8). Il ne peut pas évaluer (F10) : c'est lui qui intervient, il ne doit pas noter son propre travail.
+- Technicien (troisième profil, absent du tableau du sujet) : consultation de tout ; il ne peut ni déclarer ni modifier un incident (F4, F6), ni affecter (F7), ni ouvrir le tableau de bord (F11), mais il peut le déclarer résolu (F8). Il ne peut pas évaluer (F10) : c'est lui qui intervient, il ne doit pas noter son propre travail.
 - F6 pour l'agent : il ne modifie que les incidents qu'il a déclarés, tant qu'aucun prestataire n'est affecté. Un incident résolu n'est plus modifiable par personne (RG5).
 - F7 : un incident résolu ne peut plus être affecté ni réaffecté (RG5). Une fois l'incident affecté, l'agent qui l'a déclaré ne peut plus modifier sa description (F6).
 - F10 : seulement une fois l'incident résolu et s'il a été affecté à un prestataire (RG8).
@@ -123,7 +124,19 @@ En cas de problème :
   - F7 : `PUT /incidents/{id}/prestataire`. Le bouton s'appelle « Affecter » ou « Réaffecter » ; lors d'une réaffectation, le prestataire actuel est marqué « (actuel) » et ne peut pas être choisi.
   - F10 : `POST /incidents/{id}/evaluation`. 5 étoiles qui sont de vrais boutons radio masqués (utilisables au clavier et sans JavaScript), commentaire facultatif. Une évaluation n'est plus modifiable ensuite.
 - Où consulter la note (F10) : colonne « Évaluation » de l'historique (F9) ; fiche prestataire (`/prestataires/{id}` : note moyenne, nombre d'évaluations, interventions en cours et terminées avec leur note) ; note moyenne dans la carte Prestataire de la page détail et dans la liste d'affectation (F7), pour que le responsable choisisse en connaissant la qualité des prestataires. Les noms de prestataires mènent à leur fiche.
-- Navigation : la barre du haut ne garde que la page principale (Stations). Les pages secondaires (Historique, Prestataires) et la déconnexion sont regroupées dans un menu ouvert en cliquant sur le profil (initiale, prénom et libellé du profil en clair). Le menu est un `<details>` : il fonctionne sans JavaScript, et un petit script le referme au clic en dehors ou sur Échap.
+- Tableau de bord (F11, `/tableau-de-bord`, responsable uniquement, page d'arrivée après connexion pour ce profil). Objectif : dire en quelques secondes où est le problème et quoi faire ensuite.
+  - **Indicateurs** : incidents actifs (avec leur variation sur 7 jours), incidents sans prestataire (dont rouges), équipements hors service (nombre, part du parc, jauge panne / maintenance), incidents résolus en 7 jours comparés à la semaine précédente.
+  - **Graphiques**, rendus côté serveur en HTML / SVG, sans bibliothèque JavaScript ni CDN :
+    - âge des incidents actifs : colonnes par tranche (< 24 h, 24-48 h, 48-72 h, 3-7 j, > 7 j), la couleur RG3 de la tranche pour les incidents sans prestataire, le bleu pour ceux pris en charge, empilé au-dessus ;
+    - charge par station : barres découpées par niveau, triées de la plus chargée à la moins chargée ; un clic filtre sur la station ;
+    - incidents actifs sur 30 jours : courbe du stock en fin de journée, pour voir s'il monte (on ouvre plus qu'on ne résout) ou baisse.
+
+    Chaque graphique a une infobulle au survol et au clavier, une légende, et un tableau « Voir les données » (la couleur n'est jamais la seule information). Les quatre couleurs de niveau ont été vérifiées avec un outil de contrôle des palettes : distinctes en vision normale et pour les principaux daltonismes.
+  - **Liste groupée par urgence** : Critique, À surveiller, Récents, puis Pris en charge (replié, car il n'y a rien à faire). Pour chaque incident sans prestataire, une barre montre où il en est avant le seuil suivant : « orange dans 2 h 57 min », « rouge dans 10 h », ou « en retard de 6 j » pour un rouge. On passe d'une couleur subie à une échéance qu'on peut anticiper.
+  - **Filtres** sur une seule ligne, au-dessus de tout ce qu'ils filtrent (indicateurs, graphiques et liste) : recherche (référence, description, station, sans tenir compte des accents), niveaux en puces cumulables libellées par durée (« < 48 h », « 48 – 72 h », « 72 h + », « Pris en charge ») qui servent aussi de légende (couleur, durée, nombre), un « ? » qui explique les seuils, station et type d'équipement. Les filtres appliqués s'affichent en étiquettes retirables une à une, avec « Tout effacer ». Ils passent dans l'URL (`GET`), donc une vue filtrée se recharge et se partage.
+  - **Niveau d'attention** (RG3 / RG4) : `NiveauAttention.calculer(incident, maintenant)` dans le modèle, avec des `Duration` exactes (pas des heures arrondies). Rien n'est stocké en base. L'heure vient d'un bean `Clock` injecté, ce qui permet de tester les bornes avec une horloge fixe. Seuls les incidents non résolus apparaissent dans la liste et les niveaux (RG6).
+  - **Fraîcheur** : « Mis à jour il y a X min », et la page se recharge toute seule toutes les 5 minutes (sauf pendant une saisie), puisque les niveaux dépendent de l'heure.
+- Navigation : la barre du haut contient les pages principales (Tableau de bord pour le responsable, Stations). Les pages secondaires (Historique, Prestataires) et la déconnexion sont regroupées dans un menu ouvert en cliquant sur le profil (initiale, prénom et libellé du profil en clair). Le menu est un `<details>` : il fonctionne sans JavaScript, et un petit script le referme au clic en dehors ou sur Échap.
 - API REST (F12) : `GET /api/incidents/{id}`, `GET /api/incidents/historique`, `POST /api/incidents`, `PATCH /api/incidents/{id}` (description), `PUT /api/incidents/{id}/prestataire` (`{"idPrestataire": 2}`), `POST /api/incidents/{id}/evaluation` (`{"note": 4, "commentaire": "..."}`), `POST /api/incidents/{id}/resolution` (F8). Authentification par JWT, mêmes droits que les pages.
 
 ### Exceptions : @ControllerAdvice
@@ -144,9 +157,9 @@ En cas de problème :
 - L'unicité d'une évaluation par incident (RG8) est vérifiée par le service avant l'insertion, avec un message clair ; la contrainte `UNIQUE` de la base reste une sécurité.
 
 ### SOLID
-- **S — Responsabilité unique** : contrôleurs web et REST séparés ; les contrôleurs délèguent au service, qui porte la règle métier. Un service par domaine (`IncidentService`, `EvaluationService`, `PrestataireService`, `EquipementService`…) : l'évaluation a son propre service plutôt que d'alourdir `IncidentService`.
+- **S — Responsabilité unique** : contrôleurs web et REST séparés ; les contrôleurs délèguent au service, qui porte la règle métier. Un service par domaine (`IncidentService`, `EvaluationService`, `PrestataireService`, `TableauDeBordService`, `EquipementService`…) : l'évaluation a son propre service plutôt que d'alourdir `IncidentService`.
 - **O — Ouvert/fermé** : les advices traitent `RessourceIntrouvableException` ; une nouvelle ressource introuvable (prestataire…) produit un 404 sans modifier les handlers.
-- **D — Inversion des dépendances** : les contrôleurs dépendent des interfaces de service (`IncidentInterface`, `EvaluationInterface`, `PrestataireInterface`, `EquipementInterface`, `AuthInterface`…), injectées par constructeur. Le même service sert la vue et l'API, et les services se testent avec des repositories simulés.
+- **D — Inversion des dépendances** : les contrôleurs dépendent des interfaces de service (`IncidentInterface`, `EvaluationInterface`, `PrestataireInterface`, `TableauDeBordInterface`, `EquipementInterface`, `AuthInterface`…), injectées par constructeur. Le même service sert la vue et l'API, et les services se testent avec des repositories simulés.
 - L, I : ...
 
 ### Requête SQL native
@@ -158,7 +171,7 @@ En cas de problème :
 - `IncidentService.affecter` : le prestataire, le statut `EN_COURS` et l'état de l'équipement sont enregistrés ensemble ; si une vérification échoue (incident résolu, prestataire inexistant), rien n'est modifié.
 - `IncidentService.resoudre` : le statut `RESOLU`, la date de résolution et le nouvel état de l'équipement sont enregistrés ensemble.
 - `EvaluationService.evaluer` : la vérification « pas encore évalué » et l'insertion se font dans la même transaction.
-- Les lectures (`consulterDetail`, `estModifiable`, `estAffectable`, `estEvaluable`, `incidentsModifiables`, historique, prestataires avec leur note) sont en `readOnly = true`.
+- Les lectures (`consulterDetail`, `estModifiable`, `estAffectable`, `estEvaluable`, `incidentsModifiables`, historique, prestataires avec leur note, tableau de bord) sont en `readOnly = true`.
 
 ## LOT ALPHA
 ### Fonctionnalité transverse 1 : Cartographie du réseau

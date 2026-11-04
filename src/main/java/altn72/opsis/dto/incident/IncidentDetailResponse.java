@@ -48,7 +48,7 @@ public record IncidentDetailResponse(
                 incident.getDateHeureOuverture(),
                 incident.getDateHeureResolution(),
                 incident.estResolu(),
-                formaterDuree(Duration.between(incident.getDateHeureOuverture(), fin)),
+                FormatDuree.formater(Duration.between(incident.getDateHeureOuverture(), fin)),
                 equipement.getId(),
                 equipement.getReferenceUnique(),
                 equipement.getLibelleDescription(),
@@ -61,22 +61,5 @@ public record IncidentDetailResponse(
                 incident.getIdUtilisateur().getPrenom(),
                 evaluation != null ? EvaluationResponse.from(evaluation) : null
         );
-    }
-
-    private static String formaterDuree(Duration duree) {
-        if (duree.isNegative()) {
-            return "0 min";
-        }
-        long jours = duree.toDays();
-        int heures = duree.toHoursPart();
-        int minutes = duree.toMinutesPart();
-
-        if (jours > 0) {
-            return jours + " j " + heures + " h";
-        }
-        if (heures > 0) {
-            return heures + " h " + minutes + " min";
-        }
-        return minutes + " min";
     }
 }

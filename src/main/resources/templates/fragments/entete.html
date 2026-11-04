@@ -3,8 +3,10 @@
 <body>
 <header th:fragment="entete(pageActive)" class="entete">
     <div class="entete-gauche">
-        <a th:href="@{/stations}" class="logo">Opsis</a>
+        <a th:href="@{/accueil}" class="logo">Opsis</a>
         <nav class="navigation" th:if="${utilisateurConnecte != null}" aria-label="Navigation principale">
+            <a th:if="${utilisateurConnecte.peutConsulterTableauDeBord()}" th:href="@{/tableau-de-bord}"
+               th:classappend="${pageActive == 'tableau-de-bord'} ? 'actif'">Tableau de bord</a>
             <a th:href="@{/stations}" th:classappend="${pageActive == 'stations'} ? 'actif'">Stations</a>
         </nav>
     </div>

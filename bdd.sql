@@ -105,39 +105,51 @@ INSERT INTO prestataire (identifiant, nom, contact) VALUES
                                                         (5, 'Nettoyage Express', '01 98 76 54 32');
 
 INSERT INTO equipement (identifiant, reference_unique, libelle_description, type, etat_fonctionnement, id_station) VALUES
-                                                                                                                       (1, 'ESC-CHT-001', 'Escalator sortie rue de Rivoli', 'ESCALATOR', 'FONCTIONNEL', 1),
-                                                                                                                       (2, 'ASC-CHT-001', 'Ascenseur accès quai ligne 1', 'ASCENSEUR', 'EN_PANNE', 1),
-                                                                                                                       (3, 'DIS-CHT-001', 'Distributeur de titres hall principal', 'DISTRIBUTEUR', 'FONCTIONNEL', 1),
-                                                                                                                       (4, 'ESC-GDL-001', 'Escalator accès RER A', 'ESCALATOR', 'EN_MAINTENANCE', 2),
-                                                                                                                       (5, 'VAL-GDL-001', 'Valideur portique nord', 'VALIDEUR', 'FONCTIONNEL', 2),
-                                                                                                                       (6, 'ECR-GDL-001', 'Écran information voyageurs hall 1', 'ECRAN', 'EN_PANNE', 2),
-                                                                                                                       (7, 'ASC-REP-001', 'Ascenseur PMR sortie 1', 'ASCENSEUR', 'FONCTIONNEL', 3),
-                                                                                                                       (8, 'DIS-REP-001', 'Distributeur de titres sortie 3', 'DISTRIBUTEUR', 'EN_PANNE', 3),
-                                                                                                                       (9, 'ESC-LDF-001', 'Escalator parvis', 'ESCALATOR', 'FONCTIONNEL', 4),
-                                                                                                                       (10, 'VAL-LDF-001', 'Valideur portique sud', 'VALIDEUR', 'FONCTIONNEL', 4),
-                                                                                                                       (11, 'ECR-LDF-001', 'Écran quai ligne 1', 'ECRAN', 'FONCTIONNEL', 4),
-                                                                                                                       (12, 'ASC-MTP-001', 'Ascenseur accès grandes lignes', 'ASCENSEUR', 'FONCTIONNEL', 5),
-                                                                                                                       (13, 'DIS-MTP-001', 'Distributeur de titres hall 2', 'DISTRIBUTEUR', 'EN_MAINTENANCE', 5),
-                                                                                                                       (14, 'VAL-MTP-001', 'Valideur portique est', 'VALIDEUR', 'FONCTIONNEL', 5);
+    (1, 'ESC-CHT-001', 'Escalator sortie rue de Rivoli', 'ESCALATOR', 'FONCTIONNEL', 1),
+    (2, 'ASC-CHT-001', 'Ascenseur accès quai ligne 1', 'ASCENSEUR', 'EN_MAINTENANCE', 1),
+    (3, 'DIS-CHT-001', 'Distributeur de titres hall principal', 'DISTRIBUTEUR', 'EN_PANNE', 1),
+    (4, 'ESC-GDL-001', 'Escalator accès RER A', 'ESCALATOR', 'EN_MAINTENANCE', 2),
+    (5, 'VAL-GDL-001', 'Valideur portique nord', 'VALIDEUR', 'EN_PANNE', 2),
+    (6, 'ECR-GDL-001', 'Écran information voyageurs hall 1', 'ECRAN', 'EN_PANNE', 2),
+    (7, 'ASC-REP-001', 'Ascenseur PMR sortie 1', 'ASCENSEUR', 'EN_PANNE', 3),
+    (8, 'DIS-REP-001', 'Distributeur de titres sortie 3', 'DISTRIBUTEUR', 'EN_MAINTENANCE', 3),
+    (9, 'ESC-LDF-001', 'Escalator parvis', 'ESCALATOR', 'FONCTIONNEL', 4),
+    (10, 'VAL-LDF-001', 'Valideur portique sud', 'VALIDEUR', 'FONCTIONNEL', 4),
+    (11, 'ECR-LDF-001', 'Écran quai ligne 1', 'ECRAN', 'EN_PANNE', 4),
+    (12, 'ASC-MTP-001', 'Ascenseur accès grandes lignes', 'ASCENSEUR', 'FONCTIONNEL', 5),
+    (13, 'DIS-MTP-001', 'Distributeur de titres hall 2', 'DISTRIBUTEUR', 'EN_MAINTENANCE', 5),
+    (14, 'VAL-MTP-001', 'Valideur portique est', 'VALIDEUR', 'EN_PANNE', 5);
 
+-- Dates relatives à l'instant du chargement (NOW()) : les niveaux d'attention du tableau de bord (RG3) restent parlants
+-- quel que soit le jour de la démonstration. Incidents actifs : 2 rouges, 2 oranges, 2 verts, 4 pris en charge.
 INSERT INTO incident (identifiant, description, date_heure_ouverture, statut, date_heure_resolution, id_equipement, id_prestataire, id_utilisateur) VALUES
-                                                                                                                                                        (1, 'Ascenseur bloqué entre deux niveaux, aucun usager à l''intérieur', '2026-10-10 08:15:00', 'EN_COURS', NULL, 2, 1, 4),
-                                                                                                                                                        (2, 'Écran éteint, aucun affichage des prochains départs', '2026-10-13 07:40:00', 'OUVERT', NULL, 6, NULL, 5),
-                                                                                                                                                        (3, 'Le distributeur refuse les paiements par carte bancaire', '2026-10-12 18:20:00', 'EN_COURS', NULL, 8, 3, 6),
-                                                                                                                                                        (4, 'Bruit anormal puis arrêt complet de l''escalator', '2026-10-11 09:00:00', 'EN_COURS', NULL, 4, 2, 4),
-                                                                                                                                                        (5, 'Écran tactile du distributeur ne répond plus', '2026-10-14 06:50:00', 'EN_COURS', NULL, 13, 3, 5),
-                                                                                                                                                        (6, 'Marche cassée en bas de l''escalator', '2026-09-02 07:30:00', 'RESOLU', '2026-09-03 14:00:00', 1, 2, 4),
-                                                                                                                                                        (7, 'Le valideur n''accepte plus les passes sans contact', '2026-09-10 17:45:00', 'RESOLU', '2026-09-10 21:10:00', 5, 4, 5),
-                                                                                                                                                        (8, 'Bouton d''appel du rez-de-chaussée hors service', '2026-09-15 10:20:00', 'RESOLU', '2026-09-16 11:00:00', 7, 1, 6),
-                                                                                                                                                        (9, 'Arrêt d''urgence déclenché, redémarrage impossible', '2026-09-20 08:05:00', 'RESOLU', '2026-09-20 09:30:00', 9, 2, 4),
-                                                                                                                                                        (10, 'Affichage figé sur une information périmée', '2026-09-25 12:00:00', 'RESOLU', '2026-09-26 08:45:00', 11, 4, 5),
-                                                                                                                                                        (11, 'Les portes se rouvrent en permanence', '2026-10-01 16:30:00', 'RESOLU', '2026-10-03 10:00:00', 12, 1, 6),
-                                                                                                                                                        (12, 'Lecteur de carte intermittent', '2026-10-05 07:10:00', 'RESOLU', '2026-10-05 15:20:00', 10, 4, 2),
-                                                                                                                                                        (13, 'Signalement ouvert sans prestataire affecté', '2026-10-14 09:30:00', 'OUVERT', NULL, 3, NULL, 3);
+    -- Actifs, pris en charge par un prestataire
+    (1, 'Ascenseur bloqué entre deux niveaux, aucun usager à l''intérieur', NOW() - INTERVAL 6 DAY, 'EN_COURS', NULL, 2, 1, 4),
+    (3, 'Le distributeur refuse les paiements par carte bancaire', NOW() - INTERVAL 4 DAY, 'EN_COURS', NULL, 8, 3, 6),
+    (4, 'Bruit anormal puis arrêt complet de l''escalator', NOW() - INTERVAL 3 DAY, 'EN_COURS', NULL, 4, 2, 4),
+    (5, 'Écran tactile du distributeur ne répond plus', NOW() - INTERVAL 30 HOUR, 'EN_COURS', NULL, 13, 3, 5),
+    -- Actifs, sans prestataire : rouges (72 h et plus), oranges (48 h à 72 h), verts (moins de 48 h)
+    (16, 'Porte de l''ascenseur PMR bloquée en position fermée', NOW() - INTERVAL 9 DAY, 'OUVERT', NULL, 7, NULL, 6),
+    (13, 'Écran du distributeur figé sur la page d''accueil', NOW() - INTERVAL 4 DAY, 'OUVERT', NULL, 3, NULL, 3),
+    (17, 'Valideur bloqué en position fermée, file d''attente au portique', NOW() - INTERVAL 60 HOUR, 'OUVERT', NULL, 14, NULL, 5),
+    (2, 'Écran éteint, aucun affichage des prochains départs', NOW() - INTERVAL 52 HOUR, 'OUVERT', NULL, 6, NULL, 5),
+    (14, 'Le valideur affiche « carte non reconnue » une fois sur deux', NOW() - INTERVAL 44 HOUR, 'OUVERT', NULL, 5, NULL, 4),
+    (15, 'Écran de quai qui clignote par intermittence', NOW() - INTERVAL 6 HOUR, 'OUVERT', NULL, 11, NULL, 6),
+    -- Résolus au cours des 30 derniers jours (historique F9, courbe du tableau de bord)
+    (6, 'Marche cassée en bas de l''escalator', NOW() - INTERVAL 29 DAY, 'RESOLU', NOW() - INTERVAL 24 DAY, 1, 2, 4),
+    (7, 'Le valideur n''accepte plus les passes sans contact', NOW() - INTERVAL 27 DAY, 'RESOLU', NOW() - INTERVAL 19 DAY, 5, 4, 5),
+    (8, 'Bouton d''appel du rez-de-chaussée hors service', NOW() - INTERVAL 23 DAY, 'RESOLU', NOW() - INTERVAL 15 DAY, 7, 1, 6),
+    (9, 'Arrêt d''urgence déclenché, redémarrage impossible', NOW() - INTERVAL 20 DAY, 'RESOLU', NOW() - INTERVAL 13 DAY, 9, 2, 4),
+    (10, 'Affichage figé sur une information périmée', NOW() - INTERVAL 17 DAY, 'RESOLU', NOW() - INTERVAL 11 DAY, 11, 4, 5),
+    (11, 'Les portes se rouvrent en permanence', NOW() - INTERVAL 14 DAY, 'RESOLU', NOW() - INTERVAL 8 DAY, 12, 1, 6),
+    (12, 'Lecteur de carte intermittent', NOW() - INTERVAL 12 DAY, 'RESOLU', NOW() - INTERVAL 5 DAY, 10, 4, 2),
+    (18, 'Main courante de l''escalator qui ne suit plus les marches', NOW() - INTERVAL 3 DAY, 'RESOLU', NOW() - INTERVAL 2 DAY, 1, 2, 4),
+    (19, 'Valideur hors tension après un orage', NOW() - INTERVAL 2 DAY, 'RESOLU', NOW() - INTERVAL 1 DAY, 10, 4, 5),
+    (20, 'Escalator arrêté après une détection d''objet', NOW() - INTERVAL 1 DAY, 'RESOLU', NOW() - INTERVAL 10 HOUR, 9, 2, 6);
 
 INSERT INTO evaluation (identifiant, note, commentaire, date, id_incident) VALUES
-                                                                               (1, 4, 'Intervention rapide, marche remplacée dans la journée', '2026-09-04', 6),
-                                                                               (2, 5, 'Réparé le soir même, parfait', '2026-09-11', 7),
-                                                                               (3, 3, 'Délai d''intervention un peu long', '2026-09-17', 8),
-                                                                               (4, 5, 'Remise en service en moins de deux heures', '2026-09-21', 9),
-                                                                               (5, 2, 'Le problème est réapparu deux jours plus tard', '2026-09-28', 10);
+    (1, 4, 'Intervention rapide, marche remplacée dans la journée', CURDATE() - INTERVAL 23 DAY, 6),
+    (2, 5, 'Réparé le soir même, parfait', CURDATE() - INTERVAL 18 DAY, 7),
+    (3, 3, 'Délai d''intervention un peu long', CURDATE() - INTERVAL 14 DAY, 8),
+    (4, 5, 'Remise en service en moins de deux heures', CURDATE() - INTERVAL 12 DAY, 9),
+    (5, 2, 'Le problème est réapparu deux jours plus tard', CURDATE() - INTERVAL 10 DAY, 10);

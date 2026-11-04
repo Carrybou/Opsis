@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Tableau de bord - Opsis</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div th:replace="~{fragments/entete :: entete('tableau-de-bord')}"></div>
+
+<main class="contenu tdb" th:with="ind=${tableau.indicateurs}">
+    <div class="titre-page">
+        <div>
+            <div class="surtitre">Supervision</div>
+            <h1>Tableau de bord</h1>
+        </div>
+        <p class="tdb-maj" id="maj" th:attr="data-genere-a=${#temporals.format(tableau.genereA, 'yyyy-MM-dd''T''HH:mm:ss')}">
+            <span id="maj-texte" th:text="|Mis à jour à ${#temporals.format(tableau.genereA, 'HH:mm')}|">Mis à jour à 10:00</span>
+            · <a th:href="@{/tableau-de-bord}" id="maj-rafraichir">Actualiser</a>
+        </p>
+    </div>
+
+    <!-- 1. Filtres : une seule ligne, ils s'appliquent à tout ce qui suit (indicateurs, graphiques, liste). -->
+    <form class="tdb-filtres carte" th:action="@{/tableau-de-bord}" method="get" id="filtres" role="search">
+        <div class="tdb-filtres-ligne">
+            <label class="tdb-recherche">
+                <span class="sr-only">Rechercher</span>
+                <svg aria-hidden="true" viewBox="0 0 20 20" width="16" height="16"><circle cx="8.5" cy="8.5" r="5.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M13 13l4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                <input type="search" name="q" th:value="${filtres.recherche}" placeholder="Rechercher…" title="Référence, description ou station" autocomplete="off">
+            </label>
+
+            <!-- Les puces de niveau servent aussi de légende : couleur, libellé et nombre d'incidents. -->
+            <fieldset class="tdb-puces">
+                <legend class="sr-only">Niveau d'attention</legend>
+                <label th:each="n : ${niveaux}" class="tdb-puce" th:classappend="|niveau-${n}|">
+                    <input type="checkbox" name="niveau" th:value="${n}" th:checked="${filtres.contientNiveau(n)}">
+                    <span class="tdb-pastille" aria-hidden="true"></span>
+                    <span th:text="${n.libelle}">72 h +</span>
+                    <span class="tdb-puce-compte" th:text="${tableau.compteParNiveau.get(n)}">0</span>
+                </label>
+                <details class="tdb-aide">
+                    <summary aria-label="Comment sont calculés les niveaux ?">?</summary>
+                    <div class="tdb-aide-panneau">
+                        <strong>Niveaux d'attention</strong>
+                        <p>Pour un incident <em>sans prestataire</em>, selon le temps écoulé depuis l'ouverture :</p>
+                        <ul>
+                            <li><span class="tdb-pastille niveau-VERT"></span> &lt; 48 h : vert</li>
+                            <li><span class="tdb-pastille niveau-ORANGE"></span> 48 – 72 h : orange</li>
+                            <li><span class="tdb-pastille niveau-ROUGE"></span> 72 h + : rouge</li>
+                        </ul>
+                        <p><span class="tdb-pastille niveau-AFFECTE"></span> Pris en charge : un prestataire est affecté, l'incident ne porte plus de couleur d'urgence.</p>
+                        <p class="secondaire">Les niveaux sont recalculés à chaque affichage.</p>
+                    </div>
+                </details>
+            </fieldset>
+
+            <label class="tdb-select">
+                <span class="sr-only">Station</span>
+                <select name="station">
+                    <option value="">Toutes les stations</option>
+                    <option th:each="s : ${tableau.stations}" th:value="${s.key}" th:text="${s.value}"
+                            th:selected="${s.key == filtres.idStation}">Station</option>
+                </select>
+            </label>
+            <label class="tdb-select">
+                <span class="sr-only">Type d'équipement</span>
+                <select name="type">
+                    <option value="">Tous les types</option>
+                    <option th:each="t : ${types}" th:value="${t}" th:text="${#strings.capitalize(#strings.toLowerCase(t))}"
+                            th:selected="${t == filtres.type}">Type</option>
+                </select>
+            </label>
+            <input type="hidden" name="tri" th:value="${filtres.tri}" id="filtre-tri">
+            <button type="submit" class="bouton" id="bouton-filtrer">Appliquer</button>
+        </div>
+
+        <div class="tdb-filtres-actifs" th:unless="${#lists.isEmpty(filtresActifs)}">
+            <span class="secondaire">Filtres :</span>
+            <a th:each="f : ${filtresActifs}" class="tdb-etiquette" th:href="${f.urlSansCeFiltre}"
+               th:attr="aria-label=|Retirer le filtre ${f.libelle}|">
+                <span th:text="${f.libelle}">Châtelet</span><span aria-hidden="true">✕</span>
+            </a>
+            <a th:href="@{/tableau-de-bord}" class="tdb-effacer">Tout effacer</a>
+            <span class="secondaire tdb-portee"
+                  th:text="|${tableau.nombreAffiches} incident${tableau.nombreAffiches > 1 ? 's' : ''} sur ${#aggregates.sum(tableau.compteParNiveau.values())} dans ce périmètre|"></span>
+        </div>
+    </form>
+
+    <!-- 2. Indicateurs -->
+    <section class="tdb-kpis" aria-label="Indicateurs">
+        <div class="tdb-kpi">
+            <span class="tdb-kpi-libelle">Incidents actifs</span>
+            <strong class="tdb-kpi-valeur" th:text="${ind.actifs}">6</strong>
+            <span class="tdb-delta" th:if="${ind.variationActifs7j == null}">dans la sélection</span>
+            <span class="tdb-delta" th:unless="${ind.variationActifs7j == null}"
+                  th:classappend="${ind.variationActifs7j > 0} ? 'mauvais' : (${ind.variationActifs7j < 0} ? 'bon' : '')"
+                  th:text="${ind.variationActifs7j == 0} ? 'Stable sur 7 jours' : |${ind.variationActifs7j > 0 ? '▲ +' : '▼ '}${ind.variationActifs7j} en 7 jours|">▲ +2 en 7 jours</span>
+        </div>
+        <div class="tdb-kpi">
+            <span class="tdb-kpi-libelle">Sans prestataire</span>
+            <strong class="tdb-kpi-valeur" th:text="${ind.sansPrestataire}">3</strong>
+            <span class="tdb-kpi-detail" th:if="${ind.rougesSansPrestataire > 0}">
+                <span class="tdb-pastille niveau-ROUGE" aria-hidden="true"></span>
+                <span th:text="|dont ${ind.rougesSansPrestataire} depuis plus de 72 h|">dont 1 depuis plus de 72 h</span>
+            </span>
+            <span class="tdb-kpi-detail" th:if="${ind.rougesSansPrestataire == 0}">aucun en retard</span>
+        </div>
+        <div class="tdb-kpi">
+            <span class="tdb-kpi-libelle">Équipements hors service</span>
+            <strong class="tdb-kpi-valeur">
+                <span th:text="${ind.equipementsHorsService}">9</span><small th:text="| / ${ind.equipementsTotal}|"> / 14</small>
+            </strong>
+            <span class="tdb-jauge" role="img"
+                  th:attr="aria-label=|${ind.equipementsHorsService - ind.equipementsEnMaintenance} en panne, ${ind.equipementsEnMaintenance} en maintenance, ${ind.equipementsTotal - ind.equipementsHorsService} en service|">
+                <span class="tdb-jauge-panne" th:if="${ind.equipementsTotal > 0}"
+                      th:style="|width: ${(ind.equipementsHorsService - ind.equipementsEnMaintenance) * 100.0 / ind.equipementsTotal}%|"></span>
+                <span class="tdb-jauge-maintenance" th:if="${ind.equipementsTotal > 0}"
+                      th:style="|width: ${ind.equipementsEnMaintenance * 100.0 / ind.equipementsTotal}%|"></span>
+            </span>
+            <span class="tdb-kpi-detail" th:text="|${ind.pourcentageHorsService()} % du parc · ${ind.equipementsEnMaintenance} en maintenance|">64 % du parc</span>
+        </div>
+        <div class="tdb-kpi">
+            <span class="tdb-kpi-libelle">Résolus en 7 jours</span>
+            <strong class="tdb-kpi-valeur" th:text="${ind.resolus7j}">4</strong>
+            <span class="tdb-delta" th:classappend="${ind.variationResolus() > 0} ? 'bon' : (${ind.variationResolus() < 0} ? 'mauvais' : '')"
+                  th:text="${ind.variationResolus() == 0} ? 'Autant que la semaine précédente' : |${ind.variationResolus() > 0 ? '▲ +' : '▼ '}${ind.variationResolus()} vs semaine précédente|">▲ +1</span>
+        </div>
+    </section>
+
+    <!-- 3. Graphiques -->
+    <section class="tdb-graphes">
+        <!-- Âge : colonnes empilées, couleur RG3 de la tranche pour les incidents sans prestataire, bleu pour les pris en charge. -->
+        <article class="carte tdb-graphe">
+            <header>
+                <h2>Âge des incidents actifs</h2>
+                <p class="secondaire">Depuis combien de temps ils sont ouverts</p>
+            </header>
+            <ul class="tdb-legende">
+                <li><span class="tdb-carre niveau-VERT"></span>&lt; 48 h</li>
+                <li><span class="tdb-carre niveau-ORANGE"></span>48 – 72 h</li>
+                <li><span class="tdb-carre niveau-ROUGE"></span>72 h +</li>
+                <li><span class="tdb-carre niveau-AFFECTE"></span>Pris en charge</li>
+            </ul>
+            <div class="tdb-colonnes" role="img" aria-label="Histogramme de l'âge des incidents actifs, détail dans le tableau de données">
+                <div class="tdb-colonne" th:each="t : ${tableau.tranchesAge}">
+                    <div class="tdb-colonne-zone">
+                        <span class="tdb-colonne-valeur" th:if="${t.total() > 0}" th:text="${t.total()}">3</span>
+                        <span class="tdb-segment niveau-AFFECTE" th:if="${t.prisEnCharge > 0}" tabindex="0"
+                              th:style="|height: ${t.hauteurPrisEnCharge}%|"
+                              th:attr="data-infobulle-valeur=${t.prisEnCharge},data-infobulle-libelle=|pris en charge · ${t.libelle}|"></span>
+                        <span class="tdb-segment" th:if="${t.sansPrestataire > 0}" tabindex="0"
+                              th:classappend="|niveau-${t.niveauSansPrestataire}|"
+                              th:style="|height: ${t.hauteurSansPrestataire}%|"
+                              th:attr="data-infobulle-valeur=${t.sansPrestataire},data-infobulle-libelle=|sans prestataire · ${t.libelle}|"></span>
+                    </div>
+                    <span class="tdb-colonne-libelle" th:text="${t.libelle}">&lt; 24 h</span>
+                </div>
+            </div>
+            <details class="tdb-donnees">
+                <summary>Voir les données</summary>
+                <table class="tableau">
+                    <thead><tr><th>Âge</th><th>Sans prestataire</th><th>Pris en charge</th></tr></thead>
+                    <tbody>
+                    <tr th:each="t : ${tableau.tranchesAge}">
+                        <td th:text="${t.libelle}">&lt; 24 h</td>
+                        <td th:text="|${t.sansPrestataire} (${t.niveauSansPrestataire.libelle})|">0</td>
+                        <td th:text="${t.prisEnCharge}">0</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </details>
+        </article>
+
+        <!-- Par station : barres horizontales découpées par niveau ; un clic filtre sur la station. -->
+        <article class="carte tdb-graphe">
+            <header>
+                <h2>Par station</h2>
+                <p class="secondaire">Cliquez sur une station pour filtrer</p>
+            </header>
+            <ul class="tdb-legende">
+                <li><span class="tdb-carre niveau-ROUGE"></span>72 h +</li>
+                <li><span class="tdb-carre niveau-ORANGE"></span>48 – 72 h</li>
+                <li><span class="tdb-carre niveau-VERT"></span>&lt; 48 h</li>
+                <li><span class="tdb-carre niveau-AFFECTE"></span>Pris en charge</li>
+            </ul>
+            <ol class="tdb-barres" th:unless="${#lists.isEmpty(tableau.chargeParStation)}">
+                <li th:each="s : ${tableau.chargeParStation}">
+                    <a class="tdb-barre-ligne" th:href="@{/tableau-de-bord(station=${s.idStation})}" th:attr="data-station=${s.idStation}"
+                       th:classappend="${s.idStation == filtres.idStation} ? 'actif'">
+                        <span class="tdb-barre-nom" th:text="${s.nomStation}">Châtelet</span>
+                        <span class="tdb-barre-piste">
+                            <span class="tdb-barre" th:style="|width: ${s.largeurTotale}%|">
+                                <span th:each="seg : ${s.segments}" class="tdb-segment" th:classappend="|niveau-${seg.niveau}|"
+                                      th:style="|width: ${seg.largeur}%|"
+                                      th:attr="data-infobulle-valeur=${seg.nombre},data-infobulle-libelle=|${seg.niveau.libelle} · ${s.nomStation}|"></span>
+                            </span>
+                            <span class="tdb-barre-valeur" th:text="${s.total}">2</span>
+                        </span>
+                    </a>
+                </li>
+            </ol>
+            <p class="vide" th:if="${#lists.isEmpty(tableau.chargeParStation)}">Aucun incident actif.</p>
+            <details class="tdb-donnees">
+                <summary>Voir les données</summary>
+                <table class="tableau">
+                    <thead><tr><th>Station</th><th>Total</th><th>Détail</th></tr></thead>
+                    <tbody>
+                    <tr th:each="s : ${tableau.chargeParStation}">
+                        <td th:text="${s.nomStation}">Station</td>
+                        <td th:text="${s.total}">0</td>
+                        <td>
+                            <span th:each="seg, it : ${s.segments}" th:text="|${seg.niveau.libelle} : ${seg.nombre}${it.last ? '' : ', '}|">72 h + : 1</span>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </details>
+        </article>
+
+        <!-- Tendance : nombre d'incidents actifs à la fin de chaque jour, sur 30 jours. -->
+        <article class="carte tdb-graphe" th:with="c=${tableau.courbeActifs}">
+            <header>
+                <h2>Incidents actifs sur 30 jours</h2>
+                <p class="secondaire">Le stock monte quand on ouvre plus qu'on ne résout</p>
+            </header>
+            <div class="tdb-courbe" tabindex="0" role="img"
+                 th:attr="aria-label=|Courbe des incidents actifs sur 30 jours, ${c.dernier().valeur} aujourd'hui. Détail dans le tableau de données.|">
+                <div class="tdb-courbe-zone">
+                    <span th:each="g : ${c.graduations}" class="tdb-graduation" th:style="|top: ${g.y}%|">
+                        <span th:text="${g.valeur}">0</span>
+                    </span>
+                    <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+                        <path th:attr="d=${c.cheminAire}" class="tdb-courbe-aire"></path>
+                        <path th:attr="d=${c.chemin}" class="tdb-courbe-ligne"></path>
+                    </svg>
+                    <span class="tdb-courbe-fin" th:style="|left: ${c.dernier().x}%; top: ${c.dernier().y}%|"></span>
+                    <span class="tdb-courbe-fin-valeur" th:style="|top: ${c.dernier().y}%|" th:text="${c.dernier().valeur}">6</span>
+                    <span class="tdb-reticule" hidden></span>
+                    <span class="tdb-reticule-point" hidden></span>
+                    <span th:each="p : ${c.points}" class="tdb-point" hidden
+                          th:attr="data-x=${p.x},data-y=${p.y},data-valeur=${p.valeur},data-jour=${#temporals.format(p.jour, 'EEE d MMM')}"></span>
+                </div>
+                <div class="tdb-courbe-axe">
+                    <span th:text="${#temporals.format(c.points[0].jour, 'd MMM')}">5 oct.</span>
+                    <span th:text="${#temporals.format(c.points[14].jour, 'd MMM')}">19 oct.</span>
+                    <span>Aujourd'hui</span>
+                </div>
+            </div>
+            <details class="tdb-donnees">
+                <summary>Voir les données</summary>
+                <table class="tableau">
+                    <thead><tr><th>Jour</th><th>Incidents actifs</th></tr></thead>
+                    <tbody>
+                    <tr th:each="p : ${c.points}">
+                        <td th:text="${#temporals.format(p.jour, 'dd/MM')}">01/10</td>
+                        <td th:text="${p.valeur}">0</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </details>
+        </article>
+    </section>
+
+    <!-- 4. Liste groupée par urgence -->
+    <section class="carte tdb-liste">
+        <header class="carte-entete">
+            <h2>
+                Incidents à traiter
+                <span class="secondaire" th:text="|· ${tableau.nombreAffiches}|">· 10</span>
+            </h2>
+            <label class="tdb-tri">
+                <span class="secondaire">Trier</span>
+                <select id="tri-liste" aria-label="Ordre des incidents dans chaque groupe">
+                    <option value="anciennete" th:selected="${filtres.tri == 'anciennete'}">Plus ancien d'abord</option>
+                    <option value="recent" th:selected="${filtres.tri == 'recent'}">Plus récent d'abord</option>
+                    <option value="station" th:selected="${filtres.tri == 'station'}">Par station</option>
+                </select>
+            </label>
+        </header>
+
+        <details class="tdb-groupe" th:each="g : ${tableau.groupes}" th:classappend="|niveau-${g.niveau}|"
+                 th:open="${g.niveau.name() != 'AFFECTE' or #lists.size(tableau.groupes) == 1}">
+            <summary>
+                <span class="tdb-pastille" th:classappend="|niveau-${g.niveau}|" aria-hidden="true"></span>
+                <strong th:switch="${g.niveau.name()}">
+                    <span th:case="'ROUGE'">Critique</span>
+                    <span th:case="'ORANGE'">À surveiller</span>
+                    <span th:case="'VERT'">Récents</span>
+                    <span th:case="*">Pris en charge</span>
+                </strong>
+                <span class="secondaire" th:switch="${g.niveau.name()}">
+                    <span th:case="'ROUGE'">sans prestataire depuis 72 h ou plus</span>
+                    <span th:case="'ORANGE'">sans prestataire depuis 48 à 72 h</span>
+                    <span th:case="'VERT'">sans prestataire depuis moins de 48 h</span>
+                    <span th:case="*">un prestataire intervient</span>
+                </span>
+                <span class="tdb-groupe-compte" th:text="${#lists.size(g.incidents)}">1</span>
+            </summary>
+
+            <ul class="tdb-incidents">
+                <li th:each="i : ${g.incidents}" class="tdb-incident" th:classappend="|niveau-${i.niveau}|">
+                    <div class="tdb-incident-principal">
+                        <a class="tdb-incident-titre" th:href="@{/incidents/{id}(id=${i.identifiant})}" th:text="${i.description}">Description</a>
+                        <span class="tdb-incident-meta">
+                            <a th:href="@{/equipements/{id}(id=${i.idEquipement})}" th:text="${i.referenceEquipement}">REF</a>
+                            · <span th:text="${#strings.capitalize(#strings.toLowerCase(i.typeEquipement))}">Type</span>
+                            · <span th:text="${i.nomStation}">Station</span>
+                        </span>
+                    </div>
+                    <div class="tdb-incident-age">
+                        <strong th:text="${i.dureeOuverture}">3 j 2 h</strong>
+                        <span class="secondaire">ouvert depuis</span>
+                    </div>
+                    <div class="tdb-incident-echeance">
+                        <th:block th:if="${i.echeance != null}">
+                            <span class="tdb-progression" role="img"
+                                  th:attr="aria-label=|${i.niveau.libelle}, ${i.echeance}|">
+                                <span th:style="|width: ${i.progression}%|"></span>
+                            </span>
+                            <span class="tdb-echeance-texte" th:text="${i.echeance}">orange dans 4 h</span>
+                        </th:block>
+                        <span th:if="${i.echeance == null}" class="tdb-echeance-texte">
+                            par <a th:href="@{/prestataires/{id}(id=${i.idPrestataire})}" th:text="${i.nomPrestataire}">Prestataire</a>
+                        </span>
+                    </div>
+                    <div class="tdb-incident-action">
+                        <a th:if="${i.estSansPrestataire()}" class="bouton"
+                           th:classappend="${i.niveau.name() == 'ROUGE'} ? '' : 'secondaire'"
+                           th:href="@{/incidents/{id}(id=${i.identifiant}, affecter=true)} + '#prestataire'">Affecter</a>
+                        <a th:unless="${i.estSansPrestataire()}" class="bouton secondaire"
+                           th:href="@{/incidents/{id}(id=${i.identifiant})}">Voir</a>
+                    </div>
+                </li>
+            </ul>
+        </details>
+
+        <p class="vide" th:if="${#lists.isEmpty(tableau.groupes) and filtres.estFiltre()}">
+            Aucun incident ne correspond aux filtres. <a th:href="@{/tableau-de-bord}">Tout afficher</a>
+        </p>
+        <p class="vide" th:if="${#lists.isEmpty(tableau.groupes) and !filtres.estFiltre()}">Aucun incident actif : tous les équipements sont en service.</p>
+    </section>
+</main>
+
+<div class="tdb-infobulle" id="infobulle" role="tooltip" hidden>
+    <strong></strong><span></span>
+</div>
+<script th:src="@{/js/tableau-de-bord.js}"></script>
+</body>
+</html>

@@ -49,6 +49,10 @@ public record UtilisateurConnecte(
         return aUnProfil(UtilisateurType.ADMIN, UtilisateurType.TECHNICIEN);
     }
 
+    public boolean peutConsulterTableauDeBord() {
+        return aUnProfil(UtilisateurType.ADMIN);
+    }
+
     public boolean peutEvaluerPrestataire() {
         return aUnProfil(UtilisateurType.ADMIN);
     }
