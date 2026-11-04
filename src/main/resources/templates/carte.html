@@ -77,7 +77,7 @@
                             <ul class="carto-incidents" th:unless="${#lists.isEmpty(equipement.incidentsActifs)}">
                                 <li th:each="incident : ${equipement.incidentsActifs}">
                                     <a th:href="@{/incidents/{id}(id=${incident.identifiant})}" th:text="${incident.description}">Description</a>
-                                    <th:block th:replace="~{fragments/badges :: statutIncident(${incident.statut})}"></th:block>
+                                    <th:block th:replace="~{fragments/badges :: statutIncident(${incident.statut}, ${incident.niveauAttention()})}"></th:block>
                                 </li>
                             </ul>
                         </li>

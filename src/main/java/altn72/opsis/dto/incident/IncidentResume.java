@@ -2,6 +2,7 @@ package altn72.opsis.dto.incident;
 
 import altn72.opsis.model.incident.Incident;
 import altn72.opsis.model.incident.IncidentStatut;
+import altn72.opsis.model.incident.NiveauAttention;
 import altn72.opsis.model.prestataire.Prestataire;
 
 import java.time.LocalDateTime;
@@ -24,5 +25,10 @@ public record IncidentResume(
                 incident.getDateHeureResolution(),
                 prestataire == null ? null : prestataire.getNom()
         );
+    }
+
+    // RG3 : recalculé à chaque affichage, comme sur le tableau de bord.
+    public NiveauAttention niveauAttention() {
+        return NiveauAttention.calculer(statut, dateHeureOuverture, LocalDateTime.now());
     }
 }

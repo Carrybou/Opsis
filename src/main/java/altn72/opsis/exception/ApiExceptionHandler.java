@@ -1,5 +1,6 @@
 package altn72.opsis.exception;
 
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -30,6 +31,13 @@ public class ApiExceptionHandler {
     public ResponseEntity<ApiError> handleAffectationImpossible(AffectationIncidentImpossibleException e) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(new ApiError(409, e.getMessage(), Map.of(), LocalDateTime.now()));
+    }
+
+    @ExceptionHandler(OptimisticLockingFailureException.class)
+    public ResponseEntity<ApiError> handleModificationSimultanee(OptimisticLockingFailureException e) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ApiError(409, "Ces données viennent d'être modifiées par un autre utilisateur : rechargez-les puis recommencez",
+                        Map.of(), LocalDateTime.now()));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

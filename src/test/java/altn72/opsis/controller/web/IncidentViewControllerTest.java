@@ -20,6 +20,7 @@ import altn72.opsis.service.prestataire.PrestataireInterface;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -232,6 +233,18 @@ class IncidentViewControllerTest {
                 .andExpect(content().string(containsString("La note doit être comprise entre 1 et 5")));
 
         verify(evaluationService, never()).evaluer(any(), any(), any());
+    }
+
+    // RG10 : deux utilisateurs modifient le même incident en même temps.
+    @Test
+    void resoudre_modificationSimultanee_afficheLaPageDErreur409() throws Exception {
+        when(incidentService.resoudre(1L, TECHNICIEN))
+                .thenThrow(new ObjectOptimisticLockingFailureException("Incident", 1L));
+
+        mockMvc.perform(post("/incidents/1/resolution").sessionAttr(UtilisateurConnecte.ATTRIBUT, TECHNICIEN))
+                .andExpect(status().isConflict())
+                .andExpect(view().name("erreur"))
+                .andExpect(content().string(containsString("Modification simultanée")));
     }
 
     private static IncidentDetailResponse detail() {

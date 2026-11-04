@@ -59,6 +59,7 @@ CREATE TABLE equipement (
 -- Table Incident
 CREATE TABLE incident (
                           identifiant BIGINT AUTO_INCREMENT PRIMARY KEY,
+                          version BIGINT NOT NULL DEFAULT 0, -- Verrou optimiste (RG10) : voir @Version dans Incident
                           description TEXT NOT NULL,
                           date_heure_ouverture DATETIME NOT NULL,
                           statut VARCHAR(50) NOT NULL,

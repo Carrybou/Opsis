@@ -24,6 +24,7 @@ En cas de problème :
 - **`Unable to determine Dialect without JDBC metadata`** : l'application ne joint pas MySQL. Vérifier que le conteneur tourne (`docker ps`) et que `DB_PORT=3307` est bien passé : sans cette variable, l'application cherche un MySQL local sur le port 3306.
 - **Erreur sur `jwt.secret`** : le `.env` n'a pas été chargé (étape 2), ou VS Code / IntelliJ lance l'application sans lui. Il faut alors ajouter le `.env` dans la configuration de lancement de l'IDE.
 - **Repartir d'une base propre** : `docker compose down -v && docker compose up -d`.
+- **`Unknown column` au chargement d'une page** : la base a été créée avec une ancienne version de `bdd.sql` (colonnes `actif` ou `version` absentes). Il faut la recréer avec la commande ci-dessus.
 
 ## README
 - Prérequis : Java 25, Maven 3.9+, Docker (Docker Desktop ou Docker Engine + Compose).
@@ -93,7 +94,7 @@ En cas de problème :
   - Contrôleurs : `@WebMvcTest` + MockMvc. Seule la couche web est chargée (contrôleurs, advices, intercepteurs de session et JWT), les services sont des `@MockitoBean`. Les templates Thymeleaf sont réellement rendus.
   - Un test `@SpringBootTest` vérifie que le contexte complet démarre (base réelle).
 - Commande : `DB_PORT=3307 mvn test` (base démarrée et `.env` chargé, pour `OpsisApplicationTests`).
-- Couvert (71 tests, tous verts) :
+- Couvert (78 tests, tous verts) :
 
   | Domaine | Tests | Ce qui est vérifié |
   |:--|:--|:--|
@@ -107,6 +108,9 @@ En cas de problème :
   | F11 tableau de bord | `NiveauAttentionTest`, `TableauDeBordServiceTest`, `TableauDeBordViewControllerTest` | RG3 aux bornes exactes (47 h vert, 48 h pile orange, 72 h pile rouge) ; RG4 : affecté jamais vert / orange / rouge ; groupes par urgence, échéance avant le seuil suivant (« orange dans 4 h ») ; filtres appliqués aux indicateurs et à la liste, compteurs des puces sur le périmètre ; RG6 (résolu exclu) ; 403 agent ; filtres de l'URL (niveaux multiples, recherche, tri) transmis au service |
   | Lot alpha, cartographie | `CarteServiceTest`, `CarteViewControllerTest` | couleur d'une station selon son équipement le plus grave, résumé de ses équipements, tri par gravité ; station sans équipement ni coordonnées conservée ; incidents actifs rattachés à leur équipement ; redirection vers `/login` sans session ; coordonnées et liens vers équipements et incidents dans la page |
   | Gestion des comptes | `UtilisateurServiceTest`, `CompteViewControllerTest` | suppression = désactivation, sans toucher aux incidents ; impossible de supprimer son propre compte ou de changer son propre profil ; mot de passe vide conservé en modification ; 403 hors responsable ; création sans mot de passe réaffichée avec l'erreur |
+  | RG3 / RG4 hors tableau de bord | `EquipementViewControllerTest` | badge d'un incident non affecté selon son ancienneté (47 h vert, 48 h orange, 72 h rouge) ; badge distinct pour un incident affecté |
+  | Création de compte par l'API (RG11) | `UtilisateurRestControllerTest` | agent et technicien : 403 ; responsable : 201 ; donnée invalide : 400 sans rien créer |
+  | RG8 et RG10 | `IncidentRestControllerTest`, `IncidentViewControllerTest` | note décimale refusée (400) ; modification simultanée : 409 sur l'API, page d'erreur sur le site |
   | F12 API | `IncidentRestControllerTest` | 401 sans token, 403 profil, 404 incident inexistant, 400 donnée invalide, 409 état incompatible, 200 / 201 sur chaque opération |
 
 - Non couvert : repositories (`@DataJpaTest`), prévus dans le lot alpha « Qualité renforcée » ; documentation Swagger de l'API (F12) non encore réalisée.
@@ -133,6 +137,7 @@ En cas de problème :
 - Double contrôle (RG11) : `@ProfilRequis` filtre la route selon le profil (intercepteur session ou JWT), puis le service vérifie les règles qui dépendent de l'incident (auteur, affectation, statut). Les vues n'affichent un bouton que si le service le permet (`estModifiable`, `estAffectable`, `estEvaluable`) : elles s'appuient sur la même règle, mais la sécurité reste côté serveur.
 
 ### Règles et interface
+- Badge d'un incident (RG3 / RG4) : partout où il apparaît (fiche équipement, détail d'un incident, carte), un incident non affecté prend la couleur de son ancienneté et l'indique en clair (« Non affecté · 48 – 72 h »), comme sur le tableau de bord. Le calcul reste dans `NiveauAttention`.
 - État de l'équipement selon ses incidents (choix du groupe, le sujet n'impose pas de règle) : `EN_PANNE` à la déclaration, `EN_MAINTENANCE` à l'affectation d'un prestataire. À la résolution, il dépend des incidents restants : `EN_MAINTENANCE` s'il en reste un affecté, sinon `EN_PANNE` s'il en reste un non affecté, sinon `FONCTIONNEL`.
 - Actions sur la page détail d'un incident : modification (F6), affectation (F7) et évaluation (F10) se font directement dans la carte concernée, sans changer de page. Un bouton ouvre le formulaire sur place ; l'envoi revient sur la même page avec un message de confirmation ; une erreur de validation réaffiche la page avec le formulaire ouvert. Sans JavaScript, chaque bouton reste un lien (`?modifier=true`, `?affecter=true`, `?evaluer=true`) qui ouvre le formulaire côté serveur.
   - F6 : `PUT /incidents/{id}` (champ caché `_method`), description préremplie avec compteur de caractères.
@@ -169,11 +174,11 @@ En cas de problème :
 
   | Code | Cas | Exception |
   |:--|:--|:--|
-  | 400 | donnée invalide (description, note hors de 1 à 5, prestataire manquant) | validation `@Valid` |
+  | 400 | donnée invalide (description, note hors de 1 à 5 ou non entière, prestataire manquant, compte invalide) | validation `@Valid` |
   | 401 | API sans token ou token invalide | intercepteur JWT |
   | 403 | profil non autorisé, ou règle F6 non respectée (avec le motif) | `@ProfilRequis`, `AccesRefuseException`, `ModificationIncidentInterditeException` |
   | 404 | incident, équipement ou prestataire inexistant | `RessourceIntrouvableException` et ses filles |
-  | 409 | l'état de l'incident empêche l'opération : déjà résolu, affectation impossible (résolu, même prestataire), évaluation impossible (non résolu, sans prestataire, déjà évalué) | `IncidentDejaResoluException`, `AffectationIncidentImpossibleException`, `EvaluationImpossibleException` |
+  | 409 | l'état de l'incident empêche l'opération : déjà résolu, affectation impossible (résolu, même prestataire), évaluation impossible (non résolu, sans prestataire, déjà évalué), modification simultanée | `IncidentDejaResoluException`, `AffectationIncidentImpossibleException`, `EvaluationImpossibleException` |
 
 - Pourquoi pas `ResponseStatusException` : elle obligerait chaque contrôleur ou service à choisir le code HTTP lui-même et lierait la couche métier au web. Avec un advice, le service lève une exception métier, et la traduction HTTP est faite à un seul endroit, différemment pour l'API et pour les pages.
 - `ResponseEntity` est utilisé dans l'advice de l'API pour fixer à la fois le code HTTP et le corps `ApiError`.
@@ -195,6 +200,7 @@ En cas de problème :
 - `IncidentService.resoudre` : le statut `RESOLU`, la date de résolution et le nouvel état de l'équipement sont enregistrés ensemble.
 - `UtilisateurService.modifier` et `supprimer` : les changements du compte (ou sa désactivation) sont enregistrés à la fin de la méthode, sans `save` explicite.
 - `EvaluationService.evaluer` : la vérification « pas encore évalué » et l'insertion se font dans la même transaction.
+- Écritures simultanées sur un incident : `@Version` sur `Incident` (colonne `version`). Si un incident est résolu pendant qu'un autre utilisateur l'affecte, le second reçoit un 409 au lieu d'écraser le premier. Essai réalisé sur une base réelle : la seconde écriture est refusée et l'incident reste résolu. Limite : l'état de l'équipement n'a pas ce verrou. Deux incidents différents du même équipement traités au même instant pourraient donc le laisser dans un état à recalculer.
 - Les lectures (`consulterDetail`, `estModifiable`, `estAffectable`, `estEvaluable`, `incidentsModifiables`, historique, prestataires avec leur note, tableau de bord, carte du réseau) sont en `readOnly = true`.
 
 ## LOT ALPHA
@@ -206,7 +212,7 @@ En cas de problème :
   - La page est rendue par Thymeleaf : la liste des stations porte les coordonnées en attributs `data-*`, et `carte.js` crée les marqueurs à partir de cette liste. Pas de route JSON à ajouter (l'API exige un token, les pages une session), et Thymeleaf échappe les noms.
   - Sans JS ou sans Leaflet, la liste et les fiches restent utilisables (ancres, message à la place de la carte). Une station sans coordonnées reste dans la liste, signalée « Non localisée ».
   - L'ancre garde la station choisie : le bouton « Précédent » depuis un équipement revient sur sa fiche.
-- Ce qui fonctionne : carte, légende avec le nombre de stations par couleur, panneau, navigation clavier par la liste (Échap referme la fiche), affichage mobile. Vérifié dans un navigateur avec des données fictives, et par `CarteServiceTest` et `CarteViewControllerTest`.
+- Ce qui fonctionne : carte, légende avec le nombre de stations par couleur, panneau, navigation clavier par la liste (Échap referme la fiche), affichage mobile. Vérifié dans un navigateur sur l'application réelle, et par `CarteServiceTest` et `CarteViewControllerTest`.
 - Difficultés :
   - Une carte créée alors que son cadre n'a pas encore de taille se cadre mal (tous les marqueurs au même point) : un `ResizeObserver` la recadre dès que le cadre a des dimensions.
   - Les étiquettes se recouvraient quand les stations sont proches : celles qui gêneraient sont masquées jusqu'à ce qu'on zoome.

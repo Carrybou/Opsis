@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -194,6 +195,29 @@ class IncidentRestControllerTest {
                 .andExpect(jsonPath("$.erreurs.note").value("La note doit être comprise entre 1 et 5"));
 
         verifyNoInteractions(evaluationService);
+    }
+
+    // RG8 : une note décimale est refusée, pas tronquée.
+    @Test
+    void evaluer_noteDecimale_renvoie400SansRienEnregistrer() throws Exception {
+        mockMvc.perform(post("/api/incidents/1/evaluation")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer token-responsable")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"note\":4.5}"))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(evaluationService);
+    }
+
+    // RG10 : deux utilisateurs modifient le même incident en même temps.
+    @Test
+    void resoudre_modificationSimultanee_renvoie409() throws Exception {
+        when(incidentService.resoudre(1L, TECHNICIEN))
+                .thenThrow(new ObjectOptimisticLockingFailureException("Incident", 1L));
+
+        mockMvc.perform(post("/api/incidents/1/resolution")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer token-technicien"))
+                .andExpect(status().isConflict());
     }
 
     private static IncidentResponse incident() {

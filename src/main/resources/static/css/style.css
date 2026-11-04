@@ -376,6 +376,7 @@ h2 {
 }
 
 .badge-ok { color: var(--accent); background: var(--accent-doux); }
+.badge-vert { color: var(--vert); background: var(--vert-doux); }
 .badge-alerte { color: var(--alerte); background: var(--alerte-doux); }
 .badge-danger { color: var(--danger); background: var(--danger-doux); }
 .badge-info { color: var(--info); background: var(--info-doux); }

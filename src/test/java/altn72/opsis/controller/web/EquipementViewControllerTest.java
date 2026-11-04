@@ -58,6 +58,27 @@ class EquipementViewControllerTest {
                 .andExpect(content().string(not(containsString("/incidents/3?modifier=true"))));
     }
 
+    // RG3 / RG4 : le badge d'un incident suit son ancienneté tant qu'il n'est pas affecté, y compris hors du tableau de bord.
+    @Test
+    void afficherFiche_badgeDesIncidents_suitLAncienneteTantQuIlsNeSontPasAffectes() throws Exception {
+        LocalDateTime maintenant = LocalDateTime.now();
+        when(equipementService.consulterFiche(2L)).thenReturn(new FicheEquipementResponse(2L, "ASC-CHT-001", "Ascenseur accès quai ligne 1",
+                EquipementType.ASCENSEUR, EquipementEtat.FONCTIONNEL, 3L, "Châtelet",
+                List.of(new IncidentResume(1L, "Récent", IncidentStatut.OUVERT, maintenant.minusHours(47), null, null),
+                        new IncidentResume(2L, "Ancien", IncidentStatut.OUVERT, maintenant.minusHours(48), null, null),
+                        new IncidentResume(3L, "Très ancien", IncidentStatut.OUVERT, maintenant.minusHours(72), null, null),
+                        new IncidentResume(4L, "Pris en charge", IncidentStatut.EN_COURS, maintenant.minusHours(200), null, "AscenTech Services")),
+                List.of()));
+        when(incidentService.incidentsModifiables(2L, AGENT)).thenReturn(Set.of());
+
+        mockMvc.perform(get("/equipements/2").sessionAttr(UtilisateurConnecte.ATTRIBUT, AGENT))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("badge-vert\">Non affecté")))
+                .andExpect(content().string(containsString("badge-alerte\">Non affecté")))
+                .andExpect(content().string(containsString("badge-danger\">Non affecté")))
+                .andExpect(content().string(containsString("badge-info\">Affecté")));
+    }
+
     private static FicheEquipementResponse fiche() {
         return new FicheEquipementResponse(2L, "ASC-CHT-001", "Ascenseur accès quai ligne 1",
                 EquipementType.ASCENSEUR, EquipementEtat.EN_PANNE, 3L, "Châtelet",

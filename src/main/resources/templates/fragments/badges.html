@@ -6,9 +6,10 @@
       th:classappend="${etat.name() == 'FONCTIONNEL'} ? 'badge-ok' : (${etat.name() == 'EN_PANNE'} ? 'badge-danger' : 'badge-alerte')"
       th:text="${etat.name() == 'FONCTIONNEL'} ? 'Fonctionnel' : (${etat.name() == 'EN_PANNE'} ? 'En panne' : 'En maintenance')">Fonctionnel</span>
 
-<span th:fragment="statutIncident(statut)" class="badge"
-      th:classappend="${statut.name() == 'OUVERT'} ? 'badge-danger' : (${statut.name() == 'EN_COURS'} ? 'badge-info' : 'badge-neutre')"
-      th:text="${statut.name() == 'OUVERT'} ? 'Non affecté' : (${statut.name() == 'EN_COURS'} ? 'Affecté' : 'Résolu')">Non affecté</span>
+<!-- RG3 / RG4 : un incident non affecté prend la couleur de son ancienneté ; un incident affecté garde sa propre couleur. -->
+<span th:fragment="statutIncident(statut, niveau)" class="badge"
+      th:classappend="${statut.name() == 'EN_COURS'} ? 'badge-info' : (${statut.name() == 'RESOLU'} ? 'badge-neutre' : (${niveau.name() == 'ROUGE'} ? 'badge-danger' : (${niveau.name() == 'ORANGE'} ? 'badge-alerte' : 'badge-vert')))"
+      th:text="${statut.name() == 'EN_COURS'} ? 'Affecté' : (${statut.name() == 'RESOLU'} ? 'Résolu' : |Non affecté · ${niveau.libelle}|)">Non affecté</span>
 
 <span th:fragment="profil(profil)" class="badge"
       th:classappend="${profil.name() == 'ADMIN'} ? 'badge-ok' : (${profil.name() == 'AGENT'} ? 'badge-info' : 'badge-alerte')"

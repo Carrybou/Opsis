@@ -26,10 +26,14 @@ public enum NiveauAttention {
 
     // Un incident affecté ne porte jamais vert / orange / rouge (RG4). Sinon : < 48 h vert, [48 h ; 72 h[ orange, >= 72 h rouge.
     public static NiveauAttention calculer(Incident incident, LocalDateTime maintenant) {
-        if (incident.estAffecte()) {
+        return calculer(incident.getStatut(), incident.getDateHeureOuverture(), maintenant);
+    }
+
+    public static NiveauAttention calculer(IncidentStatut statut, LocalDateTime ouverture, LocalDateTime maintenant) {
+        if (statut == IncidentStatut.EN_COURS) {
             return AFFECTE;
         }
-        return selonAnciennete(Duration.between(incident.getDateHeureOuverture(), maintenant));
+        return selonAnciennete(Duration.between(ouverture, maintenant));
     }
 
     public static NiveauAttention selonAnciennete(Duration ouvert) {

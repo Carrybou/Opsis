@@ -4,6 +4,7 @@ import altn72.opsis.security.UtilisateurConnecte;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -44,6 +45,15 @@ public class VueExceptionHandler {
                                              @SessionAttribute(name = UtilisateurConnecte.ATTRIBUT, required = false) UtilisateurConnecte utilisateur,
                                              HttpServletResponse response, Model model) {
         return afficherErreur(HttpServletResponse.SC_CONFLICT, "Évaluation impossible", e.getMessage(),
+                utilisateur, response, model);
+    }
+
+    @ExceptionHandler(OptimisticLockingFailureException.class)
+    public String handleModificationSimultanee(OptimisticLockingFailureException e,
+                                               @SessionAttribute(name = UtilisateurConnecte.ATTRIBUT, required = false) UtilisateurConnecte utilisateur,
+                                               HttpServletResponse response, Model model) {
+        return afficherErreur(HttpServletResponse.SC_CONFLICT, "Modification simultanée",
+                "Ces données viennent d'être modifiées par un autre utilisateur : rechargez la page puis recommencez.",
                 utilisateur, response, model);
     }
 

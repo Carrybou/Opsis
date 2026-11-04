@@ -26,7 +26,7 @@
             <h1 th:text="|Incident n°${incident.identifiant}|">Incident n°1</h1>
         </div>
         <div class="titre-actions">
-            <div th:replace="~{fragments/badges :: statutIncident(${incident.statut})}"></div>
+            <div th:replace="~{fragments/badges :: statutIncident(${incident.statut}, ${incident.niveauAttention()})}"></div>
             <form th:if="${!incident.resolu and utilisateurConnecte != null and utilisateurConnecte.peutResoudreIncident()}"
                   th:action="@{/incidents/{id}/resolution(id=${incident.identifiant})}"
                   method="post"

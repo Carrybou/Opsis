@@ -3,8 +3,10 @@ package altn72.opsis.dto.carte;
 import altn72.opsis.model.equipement.EquipementEtat;
 import altn72.opsis.model.equipement.EquipementType;
 import altn72.opsis.model.incident.IncidentStatut;
+import altn72.opsis.model.incident.NiveauAttention;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 // Lot alpha, cartographie : une station, l'état de ses équipements et ce qu'on peut ouvrir depuis son panneau.
@@ -64,7 +66,12 @@ public record CarteReseauResponse(
     public record IncidentCarte(
             Long identifiant,
             String description,
-            IncidentStatut statut
+            IncidentStatut statut,
+            LocalDateTime dateHeureOuverture
     ) {
+        // RG3 : recalculé à chaque affichage, comme sur le tableau de bord.
+        public NiveauAttention niveauAttention() {
+            return NiveauAttention.calculer(statut, dateHeureOuverture, LocalDateTime.now());
+        }
     }
 }

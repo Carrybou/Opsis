@@ -18,6 +18,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.hamcrest.Matchers.allOf;
@@ -58,7 +59,7 @@ class CarteViewControllerTest {
         StationCarte chatelet = new StationCarte(1L, "Châtelet", new BigDecimal("48.85837200"), new BigDecimal("2.34706100"),
                 EquipementEtat.EN_PANNE,
                 List.of(new EquipementCarte(2L, "ASC-CHT-001", "Ascenseur accès quai", EquipementType.ASCENSEUR, EquipementEtat.EN_PANNE,
-                        List.of(new IncidentCarte(7L, "Ascenseur bloqué", IncidentStatut.OUVERT)))),
+                        List.of(new IncidentCarte(7L, "Ascenseur bloqué", IncidentStatut.OUVERT, LocalDateTime.of(2026, 10, 10, 8, 15))))),
                 1, 0);
         StationCarte sansCoordonnees = new StationCarte(9L, "Nouvelle station", null, null, null, List.of(), 0, 0);
         when(carteService.consulter()).thenReturn(new CarteReseauResponse(List.of(chatelet, sansCoordonnees), 1, 0, 0, 1));

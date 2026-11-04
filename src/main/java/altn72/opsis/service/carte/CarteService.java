@@ -75,7 +75,7 @@ public class CarteService implements CarteInterface {
         return new EquipementCarte(equipement.getId(), equipement.getReferenceUnique(), equipement.getLibelleDescription(),
                 equipement.getType(), equipement.getEtatFonctionnement(),
                 incidents.stream()
-                        .map(incident -> new IncidentCarte(incident.getId(), incident.getDescription(), incident.getStatut()))
+                        .map(incident -> new IncidentCarte(incident.getId(), incident.getDescription(), incident.getStatut(), incident.getDateHeureOuverture()))
                         .toList());
     }
 

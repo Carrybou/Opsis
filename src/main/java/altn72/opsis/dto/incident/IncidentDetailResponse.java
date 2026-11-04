@@ -6,6 +6,7 @@ import altn72.opsis.model.equipement.EquipementType;
 import altn72.opsis.model.evaluation.Evaluation;
 import altn72.opsis.model.incident.Incident;
 import altn72.opsis.model.incident.IncidentStatut;
+import altn72.opsis.model.incident.NiveauAttention;
 import altn72.opsis.model.prestataire.Prestataire;
 import altn72.opsis.model.station.Station;
 
@@ -61,5 +62,10 @@ public record IncidentDetailResponse(
                 incident.getIdUtilisateur().getPrenom(),
                 evaluation != null ? EvaluationResponse.from(evaluation) : null
         );
+    }
+
+    // RG3 : recalculé à chaque affichage, comme sur le tableau de bord.
+    public NiveauAttention niveauAttention() {
+        return NiveauAttention.calculer(statut, dateHeureOuverture, LocalDateTime.now());
     }
 }

@@ -17,6 +17,11 @@ public class Incident {
     @Column(name = "identifiant", nullable = false)
     private Long id;
 
+    // RG10 : si deux utilisateurs modifient le même incident en même temps, le second reçoit une erreur au lieu d'écraser le premier.
+    @Version
+    @Column(name = "version", nullable = false)
+    private Long version;
+
     @Lob
     @Column(name = "description", nullable = false)
     private String description;
