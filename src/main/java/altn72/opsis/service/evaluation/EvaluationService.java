@@ -13,6 +13,7 @@ import altn72.opsis.security.UtilisateurConnecte;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.Map;
 import java.util.Optional;
@@ -23,10 +24,12 @@ public class EvaluationService implements EvaluationInterface {
 
     private final EvaluationRepository evaluationRepository;
     private final IncidentRepository incidentRepository;
+    private final Clock horloge;
 
-    public EvaluationService(EvaluationRepository evaluationRepository, IncidentRepository incidentRepository) {
+    public EvaluationService(EvaluationRepository evaluationRepository, IncidentRepository incidentRepository, Clock horloge) {
         this.evaluationRepository = evaluationRepository;
         this.incidentRepository = incidentRepository;
+        this.horloge = horloge;
     }
 
     @Override
@@ -44,7 +47,7 @@ public class EvaluationService implements EvaluationInterface {
         Evaluation evaluation = new Evaluation();
         evaluation.setNote(request.getNote());
         evaluation.setCommentaire(commentaireNettoye(request.getCommentaire()));
-        evaluation.setDate(LocalDate.now());
+        evaluation.setDate(LocalDate.now(horloge));
         evaluation.setIdIncident(incident);
         return EvaluationResponse.from(evaluationRepository.save(evaluation));
     }

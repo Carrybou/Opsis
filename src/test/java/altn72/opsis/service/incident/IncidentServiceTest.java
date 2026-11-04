@@ -3,6 +3,7 @@ package altn72.opsis.service.incident;
 import altn72.opsis.dto.incident.AffectationRequest;
 import altn72.opsis.dto.incident.IncidentDetailResponse;
 import altn72.opsis.dto.incident.IncidentModificationRequest;
+import altn72.opsis.dto.incident.IncidentRequest;
 import altn72.opsis.dto.incident.IncidentResponse;
 import altn72.opsis.exception.AffectationIncidentImpossibleException;
 import altn72.opsis.exception.IncidentDejaResoluException;
@@ -25,15 +26,21 @@ import altn72.opsis.security.UtilisateurConnecte;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
+import org.mockito.AdditionalAnswers;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -66,8 +73,31 @@ class IncidentServiceTest {
     @Mock
     private EvaluationRepository evaluationRepository;
 
+    @Spy
+    private Clock horloge = Clock.fixed(Instant.parse("2026-11-04T11:00:00Z"), ZoneId.of("Europe/Paris"));
+
     @InjectMocks
     private IncidentService incidentService;
+
+    // RG1 : rattaché à un équipement, daté à l'instant de la déclaration, sans prestataire.
+    @Test
+    void declarer_rattacheLIncidentALEquipementEtDemarreSansPrestataire() {
+        Equipement equipement = incident(1L, IncidentStatut.OUVERT).getIdEquipement();
+        Utilisateur declarant = incident(1L, IncidentStatut.OUVERT).getIdUtilisateur();
+        when(equipementRepository.findById(10L)).thenReturn(Optional.of(equipement));
+        when(utilisateurRepository.findById(ID_AGENT_AUTEUR)).thenReturn(Optional.of(declarant));
+        when(incidentRepository.save(any(Incident.class))).then(AdditionalAnswers.returnsFirstArg());
+
+        IncidentResponse reponse = incidentService.declarer(new IncidentRequest(10L, "  Ascenseur bloqué au deuxième niveau  "), ID_AGENT_AUTEUR);
+
+        assertThat(reponse.idEquipement()).isEqualTo(10L);
+        assertThat(reponse.description()).isEqualTo("Ascenseur bloqué au deuxième niveau");
+        assertThat(reponse.statut()).isEqualTo(IncidentStatut.OUVERT);
+        assertThat(reponse.dateHeureOuverture()).isEqualTo(LocalDateTime.now(horloge));
+        assertThat(reponse.dateHeureResolution()).isNull();
+        assertThat(reponse.nomPrestataire()).isNull();
+        assertThat(equipement.getEtatFonctionnement()).isEqualTo(EquipementEtat.EN_PANNE);
+    }
 
     @Test
     void modifier_responsable_modifieUnIncidentAffecte() {
@@ -182,7 +212,7 @@ class IncidentServiceTest {
             IncidentDetailResponse reponse = incidentService.resoudre(1L, autorise);
 
             assertThat(reponse.statut()).isEqualTo(IncidentStatut.RESOLU);
-            assertThat(incident.getDateHeureResolution()).isNotNull();
+            assertThat(incident.getDateHeureResolution()).isEqualTo(LocalDateTime.now(horloge));
             assertThat(incident.getIdEquipement().getEtatFonctionnement()).isEqualTo(EquipementEtat.FONCTIONNEL);
         }
     }

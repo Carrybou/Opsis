@@ -92,9 +92,13 @@ En cas de problème :
 - Outils :
   - Services : JUnit 5 + Mockito, repositories simulés, aucune base nécessaire.
   - Contrôleurs : `@WebMvcTest` + MockMvc. Seule la couche web est chargée (contrôleurs, advices, intercepteurs de session et JWT), les services sont des `@MockitoBean`. Les templates Thymeleaf sont réellement rendus.
-  - Un test `@SpringBootTest` vérifie que le contexte complet démarre (base réelle).
-- Commande : `DB_PORT=3307 mvn test` (base démarrée et `.env` chargé, pour `OpsisApplicationTests`).
-- Couvert (78 tests, tous verts) :
+  - Intégration (`*IT`) : Testcontainers lance un vrai MySQL 8, créé par `bdd.sql` comme avec docker-compose. `@DataJpaTest` pour les requêtes et les contraintes du schéma, `@SpringBootTest` + MockMvc pour toute la pile sans simulation.
+  - Couverture : JaCoCo, rapport dans `target/site/jacoco/index.html` après `mvn verify`.
+  - Intégration continue : GitHub Actions (`.github/workflows/ci.yml`) lance `mvn verify` à chaque push et publie le rapport de couverture.
+- Commandes :
+  - `sh mvnw test` : tests unitaires et de contrôleurs, sans base, sans Docker et sans `.env`.
+  - `sh mvnw verify` : tous les tests et le rapport de couverture. Docker doit être démarré ; ni `.env` ni base locale ne sont nécessaires.
+- Couvert (92 tests, tous verts : 78 sans base, 14 sur vrai MySQL ; 86 % des lignes et 70 % des branches couvertes) :
 
   | Domaine | Tests | Ce qui est vérifié |
   |:--|:--|:--|
@@ -111,9 +115,12 @@ En cas de problème :
   | RG3 / RG4 hors tableau de bord | `EquipementViewControllerTest` | badge d'un incident non affecté selon son ancienneté (47 h vert, 48 h orange, 72 h rouge) ; badge distinct pour un incident affecté |
   | Création de compte par l'API (RG11) | `UtilisateurRestControllerTest` | agent et technicien : 403 ; responsable : 201 ; donnée invalide : 400 sans rien créer |
   | RG8 et RG10 | `IncidentRestControllerTest`, `IncidentViewControllerTest` | note décimale refusée (400) ; modification simultanée : 409 sur l'API, page d'erreur sur le site |
+  | Vraie base : requêtes et contraintes | `RepositoriesIT` | RG6, RG7 : requêtes et tris réels ; RG8 : une seule évaluation par incident, note hors de 1 à 5 refusée par la base ; RG9 : référence unique ; requête native des notes |
+  | Vraie base : vie d'un incident | `ParcoursIncidentIT` | déclaration, affectation, résolution, évaluation avec de vrais comptes et tokens : RG1, RG2, RG5, RG7, RG8, RG11 et état de l'équipement à chaque étape |
+  | Vraie base : écritures simultanées | `EcrituresSimultaneesIT` | RG10 : l'écriture périmée échoue entièrement, ni l'incident ni l'équipement ne changent |
   | F12 API | `IncidentRestControllerTest` | 401 sans token, 403 profil, 404 incident inexistant, 400 donnée invalide, 409 état incompatible, 200 / 201 sur chaque opération |
 
-- Non couvert : repositories (`@DataJpaTest`), prévus dans le lot alpha « Qualité renforcée » ; documentation Swagger de l'API (F12) non encore réalisée.
+- Non couvert : le code JavaScript (carte, tableau de bord), vérifié à la main ; une grande partie de la gestion des comptes côté service (`UtilisateurService` : 46 % des lignes) ; documentation Swagger de l'API (F12) non encore réalisée.
 
 ## CHOIX TECHNIQUES
 ### Droits par profil
@@ -219,6 +226,19 @@ En cas de problème :
   - Le nom `.carte` était déjà pris par la carte d'interface : les classes de cette page utilisent le préfixe `carto-`.
 - Reste à faire : le fond de carte et Leaflet exigent un accès à Internet ; héberger Leaflet dans le projet le rendrait indépendant d'unpkg. Tracé des lignes si le modèle de données l'intègre un jour.
 ### Fonctionnalité transverse 2 : Qualité renforcée
+- Besoin : les tests existants simulaient les services et les repositories. Ils ne pouvaient donc prouver ni les requêtes, ni les contraintes du schéma, ni le comportement réel des transactions. Un audit des règles de gestion a aussi montré des défauts que ces tests ne voyaient pas (note décimale tronquée, écritures simultanées). Enfin, `OpsisApplicationTests` exigeait une base locale et un `.env`.
+- Périmètre : tests d'intégration sur vrai MySQL, mesure de la couverture, intégration continue, et séparation entre tests rapides et tests avec Docker.
+- Choix :
+  - Testcontainers plutôt que H2 : `ddl-auto=none`, donc le schéma de référence est `bdd.sql`. Le test porte sur ce script, sur le même MySQL 8 que docker-compose, avec ses contraintes réelles.
+  - Failsafe pour les `*IT` : `mvn test` reste rapide et sans dépendance, `mvn verify` lance tout.
+  - Un seul conteneur partagé entre les tests d'intégration, pour ne pas recréer la base à chaque classe. Les tests qui écrivent réellement utilisent des données réservées (équipement 9, prestataire 5, incident 16).
+  - Pas de seuil de couverture bloquant : le chiffre sert à repérer ce qui n'est pas testé, pas à écrire des tests sans valeur (accesseurs, DTO).
+  - Horloge injectée dans `IncidentService` et `EvaluationService`, comme le conseille le sujet : les dates de RG1 et RG5 sont vérifiées exactement dans les tests.
+- Ce qui fonctionne : 14 tests sur vrai MySQL, couverture de 86 % des lignes et 70 % des branches, workflow GitHub Actions.
+- Difficultés :
+  - Premier test d'écritures simultanées bloqué 50 secondes : `resoudre` écrit dans la base dès sa requête de vérification (flush automatique), donc la seconde transaction attendait le verrou de ligne de la première. Le scénario a été réécrit dans le bon ordre : le premier lit, le second écrit, puis le premier tente d'écrire.
+  - Les tests sur l'historique et l'état de l'équipement dépendent des données de `bdd.sql` : modifier ces données peut les casser.
+- Reste à faire : couvrir davantage la gestion des comptes ; protéger aussi l'état de l'équipement contre les écritures simultanées (voir @Transactional).
 
 ## BILAN
 - Contribution de chacun : ...

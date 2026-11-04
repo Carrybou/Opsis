@@ -23,6 +23,7 @@ import altn72.opsis.security.UtilisateurConnecte;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -37,17 +38,20 @@ public class IncidentService implements IncidentInterface {
     private final UtilisateurRepository utilisateurRepository;
     private final EvaluationRepository evaluationRepository;
     private final PrestataireRepository prestataireRepository;
+    private final Clock horloge;
 
     public IncidentService(IncidentRepository incidentRepository,
                            EquipementRepository equipementRepository,
                            UtilisateurRepository utilisateurRepository,
                            EvaluationRepository evaluationRepository,
-                           PrestataireRepository prestataireRepository) {
+                           PrestataireRepository prestataireRepository,
+                           Clock horloge) {
         this.incidentRepository = incidentRepository;
         this.equipementRepository = equipementRepository;
         this.utilisateurRepository = utilisateurRepository;
         this.evaluationRepository = evaluationRepository;
         this.prestataireRepository = prestataireRepository;
+        this.horloge = horloge;
     }
 
     @Override
@@ -61,7 +65,7 @@ public class IncidentService implements IncidentInterface {
 
         Incident incident = new Incident();
         incident.setDescription(request.getDescription().trim());
-        incident.setDateHeureOuverture(LocalDateTime.now());
+        incident.setDateHeureOuverture(LocalDateTime.now(horloge));
         incident.setStatut(IncidentStatut.OUVERT);
         incident.setDateHeureResolution(null);
         incident.setIdEquipement(equipement);
@@ -170,7 +174,7 @@ public class IncidentService implements IncidentInterface {
         }
 
         incident.setStatut(IncidentStatut.RESOLU);
-        incident.setDateHeureResolution(LocalDateTime.now());
+        incident.setDateHeureResolution(LocalDateTime.now(horloge));
 
         Equipement equipement = incident.getIdEquipement();
         equipement.setEtatFonctionnement(etatApresResolution(equipement.getId(), id));

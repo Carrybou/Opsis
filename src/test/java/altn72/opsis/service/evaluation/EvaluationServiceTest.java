@@ -16,10 +16,14 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -41,6 +45,9 @@ class EvaluationServiceTest {
     @Mock
     private IncidentRepository incidentRepository;
 
+    @Spy
+    private Clock horloge = Clock.fixed(Instant.parse("2026-11-04T11:00:00Z"), ZoneId.of("Europe/Paris"));
+
     @InjectMocks
     private EvaluationService evaluationService;
 
@@ -57,7 +64,7 @@ class EvaluationServiceTest {
         ArgumentCaptor<Evaluation> captee = ArgumentCaptor.forClass(Evaluation.class);
         verify(evaluationRepository).save(captee.capture());
         assertThat(captee.getValue().getIdIncident()).isSameAs(incident);
-        assertThat(captee.getValue().getDate()).isEqualTo(LocalDate.now());
+        assertThat(captee.getValue().getDate()).isEqualTo(LocalDate.of(2026, 11, 4));
         assertThat(reponse.note()).isEqualTo(4);
         assertThat(reponse.commentaire()).isEqualTo("Intervention rapide");
     }
