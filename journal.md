@@ -257,7 +257,34 @@ Analyse critique :
 - Reste à faire : couvrir davantage la gestion des comptes ; protéger aussi l'état de l'équipement contre les écritures simultanées (voir @Transactional).
 
 ## BILAN
-- Contribution de chacun : ...
-- Plus grande difficulté et comment elle a été surmontée : ...
-- Fonctionnalités non réalisées et pourquoi : ...
-- Trois points à retenir du cours et du projet : ...
+### Contribution de chacun
+Le projet part du corrigé du TP 5. D'après l'historique Git de `master` au 4 novembre 2026, hors fusions :
+
+| | Thomas GUIBERT (`Carrybou`) | Roméo FROGER (`RomeoFroger49`) |
+|:--|:--|:--|
+| Commits | 18 | 26 |
+| Lignes ajoutées : code Java | 2 455 | 2 618 |
+| Lignes ajoutées : pages, CSS, JS | 2 766 | 1 235 |
+| Lignes ajoutées : tests | 2 096 | 1 232 |
+
+Ces chiffres donnent un ordre de grandeur, pas une mesure de l'effort : une ligne déplacée ou renommée compte autant qu'une ligne écrite.
+
+- **Thomas** : initialisation du projet, MCD et schéma d'architecture ; stations et équipements (F2, F3) ; harmonisation du front ; modification d'un incident (F6) ; affectation d'un prestataire (F7) ; évaluations et fiche prestataire (F10) ; tableau de bord (F11) ; gestion des comptes et matrice des droits ; premiers tests et grande partie du journal.
+- **Roméo** : base de données et Docker ; authentification JWT et session, contrôle des profils (F1) ; déclaration, détail et résolution d'un incident (F4, F5, F8) ; historique (F9) ; lot alpha (cartographie, qualité renforcée) ; vérification des règles de gestion et du §7, retrait des secrets, corrections qui en ont découlé.
+
+### Plus grande difficulté et comment elle a été surmontée
+La partie la plus difficile a été la sécurité, et en particulier l'authentification de l'API par JWT à côté de celle des pages.
+
+- **Deux mondes à faire cohabiter** : les pages utilisent une session, l'API un token JWT sans état. Comme le projet n'utilise pas Spring Security (seulement son module de hachage BCrypt), il a fallu écrire nous-mêmes la signature et la vérification des tokens (`JwtService`) et deux intercepteurs (`SessionInterceptor`, `JwtInterceptor`).
+- **Des droits au même endroit** : pour éviter de contrôler les profils de deux façons, les routes déclarent le profil requis avec `@ProfilRequis`, et les deux intercepteurs passent par le même `ControleProfil`. Les règles qui dépendent de l'incident (auteur, statut) restent dans les services.
+- **Des failles trouvées tard** : `POST /api/utilisateurs` n'exigeait qu'un token valide, si bien qu'un agent pouvait se créer un compte responsable. Le fichier `.env` et le mot de passe de la base étaient aussi versionnés. Ces défauts ne se voyaient pas à l'écran : c'est une relecture route par route, confrontée aux exigences du sujet, qui les a révélés. Depuis, le refus par profil est testé sur les routes protégées, et les secrets sont lus dans l'environnement.
+- **Ce qui reste imparfait** : un token reste valable 7 jours et garde le profil qu'il contient, donc un changement de droits n'est pris en compte qu'à la connexion suivante. Les anciens secrets restent lisibles dans l'historique Git.
+
+### Fonctionnalités non réalisées et pourquoi
+- **Rattachement des techniciens aux prestataires** : le sujet prévoit deux profils et nous en avons ajouté un troisième, le technicien. L'idée de départ allait plus loin : chaque technicien aurait appartenu à un prestataire, et, une fois un prestataire affecté à un incident, on aurait pu choisir l'un de ses techniciens pour intervenir. Cela demandait une relation entre utilisateur et prestataire, une affectation supplémentaire sur l'incident et de nouvelles règles de droits : nous y avons renoncé par manque de temps. Aujourd'hui, n'importe quel technicien peut donc résoudre n'importe quel incident.
+- **Déploiement (§7.9)** : pas encore réalisé.
+
+### Trois points à retenir du cours et du projet
+1. **Un droit se vérifie côté serveur.** Masquer un bouton ne protège rien : la faille la plus grave du projet se trouvait sur une route d'API qu'aucune page n'utilisait.
+2. **Un test ne prouve que ce qu'il exécute vraiment.** Nos tests avec services simulés ne pouvaient vérifier ni les requêtes, ni les contraintes du schéma, ni les écritures simultanées. Les tests sur un vrai MySQL ont couvert ces angles morts.
+3. **Une bonne architecture se voit quand on doit la modifier.** Grâce à la séparation entre contrôleurs, services et repositories et aux exceptions traitées par un advice, nous avons pu ajouter un service, renommer des champs d'entités ou réorganiser les exceptions en gardant des tests verts. À l'inverse, un secret commité une fois reste dans l'historique : certaines erreurs ne se corrigent pas après coup, d'où l'intérêt de se poser ces questions dès le début.
