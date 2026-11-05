@@ -3,10 +3,6 @@ package altn72.opsis.exception.gestion;
 import altn72.opsis.exception.acces.AccesRefuseException;
 import altn72.opsis.exception.acces.IdentifiantsInvalidesException;
 import altn72.opsis.exception.acces.ModificationIncidentInterditeException;
-import altn72.opsis.exception.conflit.AffectationIncidentImpossibleException;
-import altn72.opsis.exception.conflit.EvaluationImpossibleException;
-import altn72.opsis.exception.conflit.IdentifiantDejaUtiliseException;
-import altn72.opsis.exception.conflit.IncidentDejaResoluException;
 import altn72.opsis.exception.introuvable.RessourceIntrouvableException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,14 +35,9 @@ public class ApiExceptionHandler {
         return reponse(HttpStatus.FORBIDDEN, e.getMessage());
     }
 
-    @ExceptionHandler({AffectationIncidentImpossibleException.class, EvaluationImpossibleException.class,
-            IncidentDejaResoluException.class, IdentifiantDejaUtiliseException.class})
-    public ResponseEntity<ApiError> traiterConflit(RuntimeException e) {
-        return reponse(HttpStatus.CONFLICT, e.getMessage());
-    }
 
     @ExceptionHandler(OptimisticLockingFailureException.class)
-    public ResponseEntity<ApiError> traiterModificationSimultanee(OptimisticLockingFailureException e) {
+    public ResponseEntity<ApiError> traiterModificationSimultanee() {
         return reponse(HttpStatus.CONFLICT, "Ces données viennent d'être modifiées par un autre utilisateur : rechargez-les puis recommencez");
     }
 
@@ -65,7 +56,7 @@ public class ApiExceptionHandler {
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ResponseEntity<ApiError> traiterJsonIllisible(HttpMessageNotReadableException e) {
+    public ResponseEntity<ApiError> traiterJsonIllisible() {
         return reponse(HttpStatus.BAD_REQUEST, "Corps de requête invalide ou valeur inconnue");
     }
 
