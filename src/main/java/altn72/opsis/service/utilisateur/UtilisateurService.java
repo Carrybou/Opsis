@@ -1,10 +1,6 @@
 package altn72.opsis.service.utilisateur;
 
-import altn72.opsis.dto.utilisateur.CompteRequest;
-import altn72.opsis.dto.utilisateur.CompteResponse;
-import altn72.opsis.dto.utilisateur.GestionComptesResponse;
-import altn72.opsis.dto.utilisateur.UtilisateurRequest;
-import altn72.opsis.dto.utilisateur.UtilisateurResponse;
+import altn72.opsis.dto.utilisateur.*;
 import altn72.opsis.exception.acces.OperationCompteInterditeException;
 import altn72.opsis.exception.conflit.IdentifiantDejaUtiliseException;
 import altn72.opsis.exception.introuvable.UtilisateurIntrouvableException;

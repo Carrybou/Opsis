@@ -18,7 +18,4 @@ public class AffectationRequest {
         return idPrestataire;
     }
 
-    public void setIdPrestataire(Long idPrestataire) {
-        this.idPrestataire = idPrestataire;
-    }
 }

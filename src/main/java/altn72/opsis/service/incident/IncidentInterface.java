@@ -1,10 +1,6 @@
 package altn72.opsis.service.incident;
 
-import altn72.opsis.dto.incident.AffectationRequest;
-import altn72.opsis.dto.incident.IncidentDetailResponse;
-import altn72.opsis.dto.incident.IncidentModificationRequest;
-import altn72.opsis.dto.incident.IncidentRequest;
-import altn72.opsis.dto.incident.IncidentResponse;
+import altn72.opsis.dto.incident.*;
 import altn72.opsis.dto.tableaudebord.IncidentActifResponse;
 import altn72.opsis.security.UtilisateurConnecte;
 

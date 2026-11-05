@@ -4,11 +4,7 @@ import altn72.opsis.model.incident.NiveauAttention;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.SortedMap;
+import java.util.*;
 import java.util.stream.Collectors;
 
 // Vue du tableau de bord (F11). Le service fournit les comptages ; les pourcentages et le tracé SVG sont déduits ici pour que
@@ -119,7 +115,7 @@ public record TableauDeBordResponse(
         }
 
         public Point dernier() {
-            return points.get(points.size() - 1);
+            return points.getLast();
         }
     }
 

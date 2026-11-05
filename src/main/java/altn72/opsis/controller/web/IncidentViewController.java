@@ -2,11 +2,7 @@ package altn72.opsis.controller.web;
 
 import altn72.opsis.dto.evaluation.EvaluationRequest;
 import altn72.opsis.dto.evaluation.EvaluationResponse;
-import altn72.opsis.dto.incident.AffectationRequest;
-import altn72.opsis.dto.incident.IncidentDetailResponse;
-import altn72.opsis.dto.incident.IncidentModificationRequest;
-import altn72.opsis.dto.incident.IncidentRequest;
-import altn72.opsis.dto.incident.IncidentResponse;
+import altn72.opsis.dto.incident.*;
 import altn72.opsis.exception.conflit.IncidentDejaResoluException;
 import altn72.opsis.model.utilisateur.UtilisateurType;
 import altn72.opsis.security.ProfilRequis;
@@ -19,13 +15,7 @@ import jakarta.validation.Valid;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.SessionAttribute;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller

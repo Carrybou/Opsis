@@ -1,10 +1,6 @@
 package altn72.opsis.service.incident;
 
-import altn72.opsis.dto.incident.AffectationRequest;
-import altn72.opsis.dto.incident.IncidentDetailResponse;
-import altn72.opsis.dto.incident.IncidentModificationRequest;
-import altn72.opsis.dto.incident.IncidentRequest;
-import altn72.opsis.dto.incident.IncidentResponse;
+import altn72.opsis.dto.incident.*;
 import altn72.opsis.exception.acces.ModificationIncidentInterditeException;
 import altn72.opsis.exception.conflit.AffectationIncidentImpossibleException;
 import altn72.opsis.exception.conflit.IncidentDejaResoluException;
@@ -26,8 +22,8 @@ import altn72.opsis.model.utilisateur.UtilisateurType;
 import altn72.opsis.security.UtilisateurConnecte;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.AdditionalAnswers;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -75,7 +71,7 @@ class IncidentServiceTest {
     private EvaluationRepository evaluationRepository;
 
     @Spy
-    private Clock horloge = Clock.fixed(Instant.parse("2026-11-04T11:00:00Z"), ZoneId.of("Europe/Paris"));
+    private final Clock horloge = Clock.fixed(Instant.parse("2026-11-04T11:00:00Z"), ZoneId.of("Europe/Paris"));
 
     @InjectMocks
     private IncidentService incidentService;

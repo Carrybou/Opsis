@@ -39,7 +39,7 @@ class EquipementServiceTest {
     private IncidentRepository incidentRepository;
 
     @Spy
-    private Clock horloge = Clock.fixed(Instant.parse("2026-11-04T11:00:00Z"), ZoneId.of("Europe/Paris"));
+    private final Clock horloge = Clock.fixed(Instant.parse("2026-11-04T11:00:00Z"), ZoneId.of("Europe/Paris"));
 
     @InjectMocks
     private EquipementService equipementService;

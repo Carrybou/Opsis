@@ -22,15 +22,10 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import static org.hamcrest.Matchers.allOf;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.*;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(CarteViewController.class)
 class CarteViewControllerTest {

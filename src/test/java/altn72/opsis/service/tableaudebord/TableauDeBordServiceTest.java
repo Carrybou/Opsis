@@ -65,10 +65,10 @@ class TableauDeBordServiceTest {
 
         assertThat(tableau.groupes()).extracting(GroupeIncidents::niveau).containsExactly(
                 NiveauAttention.ROUGE, NiveauAttention.ORANGE, NiveauAttention.VERT, NiveauAttention.AFFECTE);
-        IncidentActifResponse vert = tableau.groupes().get(2).incidents().get(0);
+        IncidentActifResponse vert = tableau.groupes().get(2).incidents().getFirst();
         assertThat(vert.echeance()).isEqualTo("orange dans 4 h 0 min");
         assertThat(vert.progression()).isEqualTo(91);
-        assertThat(tableau.groupes().get(0).incidents().get(0).echeance()).isEqualTo("en retard de 8 h 0 min");
+        assertThat(tableau.groupes().getFirst().incidents().getFirst().echeance()).isEqualTo("en retard de 8 h 0 min");
 
         assertThat(tableau.indicateurs().actifs()).isEqualTo(4);
         assertThat(tableau.indicateurs().sansPrestataire()).isEqualTo(3);

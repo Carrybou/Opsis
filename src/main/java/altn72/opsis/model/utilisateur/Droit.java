@@ -4,9 +4,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
-import static altn72.opsis.model.utilisateur.UtilisateurType.ADMIN;
-import static altn72.opsis.model.utilisateur.UtilisateurType.AGENT;
-import static altn72.opsis.model.utilisateur.UtilisateurType.TECHNICIEN;
+import static altn72.opsis.model.utilisateur.UtilisateurType.*;
 
 // Droits de chaque profil, en un seul endroit : UtilisateurConnecte s'en sert pour afficher ou masquer les actions,
 // et la page de gestion des comptes pour les présenter. Les routes restent protégées par @ProfilRequis.

@@ -18,11 +18,11 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.math.BigDecimal;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -41,7 +41,7 @@ class CarteServiceTest {
     private IncidentRepository incidentRepository;
 
     @Spy
-    private Clock horloge = Clock.fixed(Instant.parse("2026-11-04T11:00:00Z"), ZoneId.of("Europe/Paris"));
+    private final Clock horloge = Clock.fixed(Instant.parse("2026-11-04T11:00:00Z"), ZoneId.of("Europe/Paris"));
 
     @InjectMocks
     private CarteService carteService;

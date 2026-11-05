@@ -3,12 +3,7 @@ package altn72.opsis.service.tableaudebord;
 import altn72.opsis.dto.tableaudebord.FiltresTableauDeBord;
 import altn72.opsis.dto.tableaudebord.IncidentActifResponse;
 import altn72.opsis.dto.tableaudebord.TableauDeBordResponse;
-import altn72.opsis.dto.tableaudebord.TableauDeBordResponse.ChargeStation;
-import altn72.opsis.dto.tableaudebord.TableauDeBordResponse.Courbe;
-import altn72.opsis.dto.tableaudebord.TableauDeBordResponse.GroupeIncidents;
-import altn72.opsis.dto.tableaudebord.TableauDeBordResponse.Indicateurs;
-import altn72.opsis.dto.tableaudebord.TableauDeBordResponse.Segment;
-import altn72.opsis.dto.tableaudebord.TableauDeBordResponse.TrancheAge;
+import altn72.opsis.dto.tableaudebord.TableauDeBordResponse.*;
 import altn72.opsis.model.equipement.Equipement;
 import altn72.opsis.model.equipement.EquipementEtat;
 import altn72.opsis.model.equipement.EquipementRepository;
@@ -20,19 +15,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.text.Normalizer;
-import java.time.Clock;
-import java.time.Duration;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.EnumMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.SortedMap;
-import java.util.TreeMap;
+import java.time.*;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -213,8 +197,8 @@ public class TableauDeBordService implements TableauDeBordInterface {
 
         return parStation.values().stream()
                 .sorted(Comparator.<List<IncidentActifResponse>>comparingInt(List::size).reversed()
-                        .thenComparing(liste -> liste.get(0).nomStation()))
-                .map(liste -> new ChargeStation(liste.get(0).idStation(), liste.get(0).nomStation(), liste.size(),
+                        .thenComparing(liste -> liste.getFirst().nomStation()))
+                .map(liste -> new ChargeStation(liste.getFirst().idStation(), liste.getFirst().nomStation(), liste.size(),
                         segments(liste), totalMaximal))
                 .toList();
     }
