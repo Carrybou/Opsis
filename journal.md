@@ -52,7 +52,11 @@ Dépôt : https://github.com/Carrybou/Opsis
 | `security` | Intercepteurs, contrôle des profils (`@ProfilRequis`) |
 | `config` | Intercepteurs, horloge, beans de sécurité, OpenAPI |
 
+## Architecture :
+
 ![architecture](docs/Architecture.png)
+
+## MCD :
 
 ![mcd](docs/MCD.png)
 
