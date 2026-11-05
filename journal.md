@@ -11,7 +11,7 @@ docker compose up -d      # MySQL (port 3307, schéma et données de bdd.sql) + 
 sh mvnw spring-boot:run   # l'application lit seule le fichier .env
 ```
 
-Puis ouvrir http://localhost:8080. Application déployée : https://...
+Puis ouvrir http://localhost:8080. Application déployée : https://opsis.thomas-guibert.com
 
 | Identifiant | Profil | Mot de passe |
 |:--|:--|:--|
@@ -163,6 +163,12 @@ Le projet part du corrigé du TP 5..
 
 ### Plus grande difficulté
 La sécurité : faire cohabiter une session pour les pages et un JWT pour l'API, sans Spring Security. Nous avons écrit `JwtService` et deux intercepteurs, qui passent par le même `ControleProfil`. Une relecture route par route, confrontée au sujet, a révélé des failles invisibles à l'écran : `POST /api/utilisateurs` laissait un agent se créer un compte responsable, et le `.env` était versionné. Ces cas sont désormais testés, et les secrets lus dans l'environnement.
+
+### Difficultés de mise en production
+- **Choix de l'hébergeur** : notre hébergement OVH Web Cloud sert des sites, mais ne fait pas tourner Java ni Docker en permanence. Nous avons donc choisi Railway, dont l'offre gratuite est limitée à un crédit d'essai : l'application peut s'arrêter s'il est épuisé.
+- **Chargement des données** : la base Railway est privée par défaut, et son adresse interne n'est pas joignable depuis nos machines. Il a fallu ouvrir un accès public temporaire pour lancer `bdd.sql`, puis le refermer. Ce script effaçant les tables, il ne doit pas être relancé une fois l'application utilisée, sauf pour remettre la démonstration à zéro.
+- **Fuseau horaire** : MySQL était en UTC et l'application en heure de Paris, ce qui décalait d'une heure l'ancienneté des incidents de démonstration et faussait les seuils de RG3. `bdd.sql` fixe désormais le fuseau lui-même.
+- **Ce qui reste imparfait** : nous avons désactivé le compte `admin`, mais les comptes de test restent publics pour l'évaluation : cette instance sert à la démonstration, pas à de vraies données.
 
 ### Fonctionnalités non réalisées
 - **Rattachement des techniciens aux prestataires** : il demandait une nouvelle relation et de nouvelles règles de droits, et nous avons manqué de temps. N'importe quel technicien peut donc résoudre n'importe quel incident.
