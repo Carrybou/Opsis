@@ -3,6 +3,10 @@ package altn72.opsis.exception.gestion;
 import altn72.opsis.exception.acces.AccesRefuseException;
 import altn72.opsis.exception.acces.IdentifiantsInvalidesException;
 import altn72.opsis.exception.acces.ModificationIncidentInterditeException;
+import altn72.opsis.exception.conflit.AffectationIncidentImpossibleException;
+import altn72.opsis.exception.conflit.EvaluationImpossibleException;
+import altn72.opsis.exception.conflit.IdentifiantDejaUtiliseException;
+import altn72.opsis.exception.conflit.IncidentDejaResoluException;
 import altn72.opsis.exception.introuvable.RessourceIntrouvableException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,6 +39,11 @@ public class ApiExceptionHandler {
         return reponse(HttpStatus.FORBIDDEN, e.getMessage());
     }
 
+    @ExceptionHandler({AffectationIncidentImpossibleException.class, EvaluationImpossibleException.class,
+            IncidentDejaResoluException.class, IdentifiantDejaUtiliseException.class})
+    public ResponseEntity<ApiError> traiterConflit(RuntimeException e) {
+        return reponse(HttpStatus.CONFLICT, e.getMessage());
+    }
 
     @ExceptionHandler(OptimisticLockingFailureException.class)
     public ResponseEntity<ApiError> traiterModificationSimultanee() {
